@@ -17,8 +17,8 @@ public static class CardLayout
     public static (Size win, Rect body) SubCard(int poolCount)
     {
         double w = Card.Width;
-        // 头部区(图标 + 两行名,中文字体行高偏大)→ 首行 y≈56
-        double h = Pt.P(56) + RowHeightPt * poolCount + Pt.P(24);
+        // 头部区(图标 + 两行名 + 下移留白)→ 首行 y≈58
+        double h = Pt.P(58) + RowHeightPt * poolCount + Pt.P(24);
         double m = Margin;
         return (new Size(w + m * 2, h + m * 2), new Rect(m, m, w, h));
     }
@@ -104,8 +104,8 @@ public sealed class CardWindow : Window
             dc.DrawText(capFt, new Point(px + contentW - capFt.Width, py - 1 + usedFt.Height + Pt.P(1)));
         }
 
-        // 三池行
-        double rowY = py + iconBox + Pt.P(14);
+        // 三池行(整体下移,头部与池行之间留出更从容的空间)
+        double rowY = py + iconBox + Pt.P(26);
         foreach (var pool in sub.Pools)
             rowY = DrawPoolRow(dc, pool, new Point(px, rowY), contentW, dpi);
     }
