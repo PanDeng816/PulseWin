@@ -40,15 +40,22 @@ public sealed class CardWindow : Window
         Native.ApplyToolWindowStyle(this);
     }
 
-    public void ShowSubCard(SubData sub, Size winSize, Point topLeft, Rect body)
+    public void Configure(SubData sub, Size winSize, Rect body)
     {
         _sub = sub;
         _body = body;
         Width = winSize.Width; Height = winSize.Height;
-        Left = topLeft.X; Top = topLeft.Y;
-        Show();
         InvalidateVisual();
     }
+
+    /// <summary>只移动位置不重绘(rail 滑入/拖动时让卡片跟着走,避免与 rail 重叠)。</summary>
+    public void MoveTo(Point topLeft)
+    {
+        Left = topLeft.X;
+        Top = topLeft.Y;
+    }
+
+    public void ShowCard() => Show();
 
     public void HideCard() { _sub = null; Hide(); }
 
@@ -75,6 +82,27 @@ public sealed class CardWindow : Window
         dc.DrawText(nameFt, new Point(px + iconBox + Pt.P(7), py + (iconBox - nameFt.Height) / 2));
         var acctFt = Text(sub.AccountLabel, Pt.P(11), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
         dc.DrawText(acctFt, new Point(px + iconBox + Pt.P(7), py + (iconBox - nameFt.Height) / 2 + nameFt.Height + 1));
+
+        // 头部右侧:总用量。有 token 数据的源(GOAT)显示"本月已用 X.X M token";
+        // 无 token 的源(GO)回退显示月度用量百分比。
+        if (sub.PeriodTokens is { } tokens)
+        {
+            var tokenFt = Text(FormatTokens(tokens), Pt.P(17), FontWeights.Bold,
+                Solid(PanelPalette.Primary), dpi);
+            dc.DrawText(tokenFt, new Point(px + contentW - tokenFt.Width, py - 1));
+            var labelFt = Text("本月已用 Token", Pt.P(10.5), FontWeights.Normal,
+                Solid(PanelPalette.Dim), dpi);
+            dc.DrawText(labelFt, new Point(px + contentW - labelFt.Width, py - 1 + tokenFt.Height + Pt.P(1)));
+        }
+        else if (sub.Pools.FirstOrDefault(p => p.PoolKind == "Monthly") is { IsAvailable: true } monthPool)
+        {
+            Color mt = UsageTint.For(monthPool.Fraction, monthPool.IsSpent);
+            var usedFt = Text(Amount(monthPool.Used, monthPool.Unit), Pt.P(17), FontWeights.Bold, Solid(mt), dpi);
+            dc.DrawText(usedFt, new Point(px + contentW - usedFt.Width, py - 1));
+            var capFt = Text("总 " + Amount(monthPool.Cap, monthPool.Unit), Pt.P(10.5),
+                FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+            dc.DrawText(capFt, new Point(px + contentW - capFt.Width, py - 1 + usedFt.Height + Pt.P(1)));
+        }
 
         // 三池行
         double rowY = py + iconBox + Pt.P(14);
@@ -118,6 +146,13 @@ public sealed class CardWindow : Window
 
     private static string Amount(double? v, string unit) =>
         v is { } n ? (unit == "$" ? "$" + n.ToString("0.00") : n.ToString("0") + "%") : "--";
+
+    /// <summary>Token 总量:≥1M 保留 1 位小数,<1M 保留 2 位小数,单位 M。</summary>
+    private static string FormatTokens(long tokens)
+    {
+        double m = tokens / 1_000_000d;
+        return m >= 1 ? m.ToString("0.0") + "M" : m.ToString("0.00") + "M";
+    }
 
     private void DrawLogo(DrawingContext dc, SubData sub, Rect box)
     {

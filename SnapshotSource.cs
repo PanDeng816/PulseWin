@@ -32,6 +32,7 @@ public sealed class SubData
     public required string Key { get; init; }
     public required string Name { get; init; }
     public required string AccountLabel { get; init; }
+    public long? PeriodTokens { get; init; }   // 本月已用 token(仅 GOAT 有)
     public List<PoolData> Pools { get; init; } = new();
 }
 
@@ -95,6 +96,7 @@ public static class SnapshotSource
                 Key = isGoat ? "goat" : "opencode",
                 Name = isGoat ? "GOAT" : "GO",
                 AccountLabel = snapshot.AccountLabel,
+                PeriodTokens = snapshot.PeriodTokens,
                 Pools = pools,
             };
         }

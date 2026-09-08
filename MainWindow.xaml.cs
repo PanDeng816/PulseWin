@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private bool _downArmed, _dragging;
     private Point _downDiu, _dragOffset;
     private int? _downRing, _hoverRing;
+    private int? _cardFor;
 
     // —— 点击刷新 ——
     private readonly double[] _refreshUntil = new double[8];
@@ -240,6 +241,9 @@ public partial class MainWindow : Window
 
         bool overContent = overBerth || ring != null || overCard || _dragging || leftDown;
         UpdatePeek(diu, overContent, leftDown);
+
+        // rail 滑入/拖动中位置在变:每帧把卡窗贴回 rail 旁
+        if (_card.IsVisible && _hoverRing is { }) PositionCard();
     }
 
     private void UpdatePeek(Point diu, bool overContent, bool leftDown)
@@ -375,35 +379,49 @@ public partial class MainWindow : Window
     private void ShowSubCard(int ringIndex)
     {
         if (ringIndex < 0 || ringIndex >= _subs.Count) return;
+        if (_card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
         var sub = _subs[ringIndex];
+        var (win, body) = CardLayout.SubCard(sub.Pools.Count);
+        _cardFor = ringIndex;
+        _card.Configure(sub, win, body);
+        _card.ShowCard();
+        PositionCard();
+    }
+
+    /// <summary>把卡窗放到当前 rail 位置旁。每帧调用,rail 滑入/拖动时卡片跟着走,不会与 rail 重叠。</summary>
+    private void PositionCard()
+    {
+        if (!_card.IsVisible || _cardFor is not { } ringIndex) return;
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         double gap = CardLayout.GapToRail;
-
-        var (win, body) = CardLayout.SubCard(sub.Pools.Count);
         Point c = RingCenter(ringIndex);
         Point ringWorld = new(Left + c.X, Top + c.Y);
         double winX, winY;
         if (IsVertical)
         {
             bool railOnLeft = (Left + Width / 2) <= wa.X + wa.Width / 2;
-            winX = railOnLeft ? Left + Width + gap : Left - gap - win.Width;
-            winY = ringWorld.Y - win.Height / 2;
+            winX = railOnLeft ? Left + Width + gap : Left - gap - _card.Width;
+            winY = ringWorld.Y - _card.Height / 2;
         }
         else
         {
-            winX = ringWorld.X - win.Width / 2;
+            winX = ringWorld.X - _card.Width / 2;
             winY = Top + Height + gap;
         }
 
-        double loY = wa.Y + 2, hiY = wa.Bottom - win.Height - 2;
+        double loY = wa.Y + 2, hiY = wa.Bottom - _card.Height - 2;
         winY = hiY >= loY ? Math.Clamp(winY, loY, hiY) : wa.Y + 2;
-        double loX = wa.X + 2, hiX = wa.Right - win.Width - 2;
+        double loX = wa.X + 2, hiX = wa.Right - _card.Width - 2;
         winX = hiX >= loX ? Math.Clamp(winX, loX, hiX) : wa.X + 2;
 
-        _card.ShowSubCard(sub, win, new Point(winX, winY), body);
+        _card.MoveTo(new Point(winX, winY));
     }
 
-    private void HideCard() => _card.HideCard();
+    private void HideCard()
+    {
+        _cardFor = null;
+        _card.HideCard();
+    }
 
     // ————————————————— 几何 —————————————————
 
