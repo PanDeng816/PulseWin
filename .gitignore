@@ -1,0 +1,16 @@
+# —— 构建产物(含运行时生成的敏感数据,绝不提交) ——
+bin/
+obj/
+publish/
+Data/
+
+# —— 本地数据目录:加密凭据(DPAPI)与用量快照都在这里 ——
+*.bin
+*.tmp
+
+# —— IDE / 系统 ——
+.vs/
+*.user
+*.suo
+.DS_Store
+Thumbs.db

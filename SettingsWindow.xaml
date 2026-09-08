@@ -1,0 +1,54 @@
+<Window x:Class="PulseWin.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pulse 设置" Width="440" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Background="#1C1C22" Foreground="#F5F5F7">
+    <StackPanel Margin="20">
+        <TextBlock Text="数据来源" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <TextBlock Text="凭据自动从环境变量 / CLI 登录态读取;也可以在下面手动输入 API Key(按当前 Windows 用户 DPAPI 加密保存)。" TextWrapping="Wrap" Foreground="#8CF5F5F7" Margin="0,0,0,14"/>
+
+        <!-- Command Code GOAT -->
+        <Border Background="#26262E" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                    <TextBlock Text="Command Code GOAT" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="GoatSource" FontSize="12" Foreground="#8CF5F5F7" Margin="10,2,0,0"/>
+                </StackPanel>
+                <TextBlock x:Name="GoatStatus" FontSize="12" Foreground="#8CF5F5F7" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="GoatKey" Height="28" VerticalContentAlignment="Center" Background="#141419" Foreground="#F5F5F7" BorderBrush="#3A3A44"/>
+                    <Button Grid.Column="1" Content="保存" Width="56" Height="28" Margin="8,0,0,0" Click="SaveGoat_Click"/>
+                </Grid>
+                <TextBlock x:Name="GoatHint" FontSize="11" Foreground="#8CF5F5F7" Margin="0,6,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- OpenCode Go -->
+        <Border Background="#26262E" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                    <TextBlock Text="OpenCode Go" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="GoSource" FontSize="12" Foreground="#8CF5F5F7" Margin="10,2,0,0"/>
+                </StackPanel>
+                <TextBlock x:Name="GoStatus" FontSize="12" Foreground="#8CF5F5F7" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="GoKey" Height="28" VerticalContentAlignment="Center" Background="#141419" Foreground="#F5F5F7" BorderBrush="#3A3A44"/>
+                    <Button Grid.Column="1" Content="保存" Width="56" Height="28" Margin="8,0,0,0" Click="SaveGo_Click"/>
+                </Grid>
+                <TextBlock x:Name="GoHint" FontSize="11" Foreground="#8CF5F5F7" Margin="0,6,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="DataDirText" FontSize="11" Foreground="#59F5F5F7" TextWrapping="Wrap" Margin="0,0,0,4"/>
+        <Button Content="关闭" Width="72" Height="26" HorizontalAlignment="Right" Click="Close_Click"/>
+    </StackPanel>
+</Window>

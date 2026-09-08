@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>PulseWin</AssemblyName>
+    <RootNamespace>PulseWin</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WinForms 仅用于托盘/屏幕枚举,它的隐式 using 会与 WPF 类型冲突 -->
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\goat-white.png" />
+    <Resource Include="Assets\opencode.svg" />
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
