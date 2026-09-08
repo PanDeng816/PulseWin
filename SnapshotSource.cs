@@ -24,6 +24,19 @@ public sealed class PoolData
     public string ResetText => ResetAt is { } t
         ? "重置 " + t.ToLocalTime().ToString("MM-dd HH:mm")
         : "尚未重置";
+
+    /// <summary>实时剩余时间:≥1 天显示"剩 X天 X小时",否则"剩 X小时 X分"。</summary>
+    public string RemainingText(DateTimeOffset? now = null)
+    {
+        if (ResetAt is not { } reset) return "尚未重置";
+        var diff = reset - (now ?? DateTimeOffset.UtcNow);
+        if (diff <= TimeSpan.Zero) return "即将重置";
+        if (diff.TotalDays >= 1)
+            return $"剩 {(int)diff.TotalDays}天 {(int)diff.Hours}小时";
+        if (diff.TotalHours >= 1)
+            return $"剩 {(int)diff.TotalHours}小时 {(int)diff.Minutes}分";
+        return $"剩 {(int)Math.Max(diff.TotalMinutes, 1)}分";
+    }
 }
 
 /// <summary>一个订阅(套餐)组。</summary>

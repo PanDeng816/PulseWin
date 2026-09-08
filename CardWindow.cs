@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace PulseWin;
 
@@ -29,6 +30,7 @@ public sealed class CardWindow : Window
 {
     private SubData? _sub;
     private Rect _body;
+    private readonly DispatcherTimer _ticker;
 
     public CardWindow()
     {
@@ -38,6 +40,14 @@ public sealed class CardWindow : Window
         ResizeMode = ResizeMode.NoResize;
         Topmost = true;
         Native.ApplyToolWindowStyle(this);
+
+        // 每秒重绘一次:剩余时间倒计时实时走动
+        _ticker = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _ticker.Tick += (_, _) =>
+        {
+            if (_sub is not null && IsVisible) InvalidateVisual();
+        };
+        _ticker.Start();
     }
 
     public void Configure(SubData sub, Size winSize, Rect body)
@@ -134,9 +144,9 @@ public sealed class CardWindow : Window
             dc.DrawRoundedRectangle(Solid(tint), null, fill, barH / 2, barH / 2);
         }
 
-        // 行3:用量 / 重置
+        // 行3:用量 / 剩余时间(倒计时实时)
         string detail = !avail ? "暂无读数"
-            : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.ResetText}";
+            : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText()}";
         var detailFt = Text(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
         double detailY = barY + barH + Pt.P(5);
         dc.DrawText(detailFt, new Point(p.X, detailY));

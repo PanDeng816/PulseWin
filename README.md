@@ -9,6 +9,12 @@ OpenCode Go,自动 60 秒同步,不依赖任何第三方服务。
 数据层移植自 [GOAT-Go-Usage-Monitor](https://github.com/qunqin24/GOAT-Go-Usage-Monitor)。
 见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
 
+## 下载
+
+**免安装**:到 [Releases 页面](https://github.com/PanDeng816/PulseWin/releases/latest)
+下载 `PulseWin.exe`,双击即用(自包含单文件,无需安装 .NET)。
+数据保存在 exe 同目录的 `Data\` 下,卸载 = 删除整个文件夹。
+
 ## 功能
 
 - 屏幕右/左/上边缘停靠或自由浮动;鼠标探到边缘滑出,移开 0.9s 自动隐藏
