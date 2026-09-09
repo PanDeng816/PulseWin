@@ -31,6 +31,23 @@ public static class Native
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int vKey);
 
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);
+
+    private static readonly IntPtr HWND_TOPMOST = new(-1);
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOACTIVATE = 0x0010;
+
+    /// <summary>把窗口提升到置顶层最上,防止被其他置顶/画中画窗口压住。</summary>
+    public static void BringToTopmost(Window w)
+    {
+        if (!w.IsVisible) return;
+        IntPtr h = new WindowInteropHelper(w).Handle;
+        if (h != IntPtr.Zero)
+            SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
     public const int VK_LBUTTON = 0x01;
     public static bool LeftButtonDown => (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 

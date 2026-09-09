@@ -176,8 +176,15 @@ public partial class MainWindow : Window
         }
 
         AnimatePeek();
+
+        // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住)
+        if (_peekVisible && (_tickCount++ % 60 == 0))
+            Native.BringToTopmost(this);
+
         InvalidateVisual();
     }
+
+    private int _tickCount;
 
     // ————————————————— 指针 —————————————————
 
@@ -292,6 +299,9 @@ public partial class MainWindow : Window
         }
         if (show) _hideSeconds = 0;
         else { HideCard(); _hoverRing = null; }
+
+        // 滑入/滑出后把窗口提到置顶最上,防止被其他置顶窗口压住
+        Native.BringToTopmost(this);
     }
 
     private void AnimatePeek()

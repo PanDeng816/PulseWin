@@ -65,7 +65,11 @@ public sealed class CardWindow : Window
         Top = topLeft.Y;
     }
 
-    public void ShowCard() => Show();
+    public void ShowCard()
+    {
+        Show();
+        Native.BringToTopmost(this); // 卡窗也要压在其他置顶窗口之上
+    }
 
     public void HideCard() { _sub = null; Hide(); }
 
