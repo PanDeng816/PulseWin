@@ -257,11 +257,19 @@ public partial class MainWindow : Window
     {
         if (!AutoHideEnabled || !_docked || _dragging) return;
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
+
+        // 热区只覆盖 rail 自己所在的那段区域(垂直居中的主界面高度范围),
+        // 避免把鼠标甩到屏边其它高度(如关窗口角)误触发。
+        double railTop = FitTop(wa, Height);
+        double railLeft = wa.X + Math.Max(0, (wa.Width - Width) / 2);
         bool inHot = _dockEdge switch
         {
-            DockEdge.Right => diu.X >= wa.Right - HotZoneWidth && diu.Y >= wa.Y && diu.Y <= wa.Bottom,
-            DockEdge.Left => diu.X <= wa.X + HotZoneWidth && diu.Y >= wa.Y && diu.Y <= wa.Bottom,
-            _ => diu.Y <= wa.Y + HotZoneWidth && diu.X >= wa.X && diu.X <= wa.Right,
+            DockEdge.Right => diu.X >= wa.Right - HotZoneWidth
+                && diu.Y >= railTop - 6 && diu.Y <= railTop + Height + 6,
+            DockEdge.Left => diu.X <= wa.X + HotZoneWidth
+                && diu.Y >= railTop - 6 && diu.Y <= railTop + Height + 6,
+            _ => diu.Y <= wa.Y + HotZoneWidth
+                && diu.X >= railLeft - 6 && diu.X <= railLeft + Width + 6,
         };
 
         if (_peekVisible)
