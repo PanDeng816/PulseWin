@@ -19,16 +19,30 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // 兜底:任何未处理异常都记进 diagnostics 并提示,而不是弹原始 .NET 崩溃框。
+        DispatcherUnhandledException += (_, args) =>
+        {
+            Diagnostics.Note("未处理异常", args.Exception);
+            System.Windows.MessageBox.Show(
+                $"Pulse 遇到一个错误,已记录到 Data\\diagnostics.json:\n\n{args.Exception.Message}",
+                "Pulse", MessageBoxButton.OK, MessageBoxImage.Warning);
+            args.Handled = true;
+        };
+
+        bool openSettings = e.Args.Any(a =>
+            string.Equals(a, "--settings", StringComparison.OrdinalIgnoreCase));
 
         // 只允许一个实例:两个 rail 会让 API 请求翻倍并互相争抢快照文件。
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)
         {
-            _instance.SignalExistingInstance();
+            _instance.SignalExistingInstance(openSettings);
             Shutdown();
             return;
         }
-        _instance.StartListening(() => Dispatcher.BeginInvoke(() => _main?.ShowRail()));
+        _instance.StartListening(
+            onShowRail: () => Dispatcher.BeginInvoke(() => _main?.ShowRail()),
+            onShowSettings: () => Dispatcher.BeginInvoke(OpenSettings));
 
         _main = new MainWindow();
 
@@ -42,6 +56,7 @@ public partial class App : System.Windows.Application
 
         _main.Show();
         SetupTray();
+        if (openSettings) OpenSettings();
     }
 
     private void SetupTray()
@@ -84,9 +99,19 @@ public partial class App : System.Windows.Application
             return;
         }
         if (_engine is null) return;
-        _settings = new SettingsWindow(_engine);
-        _settings.SettingsChanged += () => _main?.ApplySettings();
-        _settings.Show();
+        try
+        {
+            _settings = new SettingsWindow(_engine);
+            _settings.SettingsChanged += () => _main?.ApplySettings();
+            _settings.Show();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("打开设置窗口失败", ex);
+            System.Windows.MessageBox.Show(
+                $"无法打开设置窗口:\n\n{ex.Message}",
+                "Pulse", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private static bool IsStartupEnabled()
@@ -158,14 +183,21 @@ internal sealed class SingleInstance : IDisposable
         return new SingleInstance(mutex, createdNew);
     }
 
-    /// <summary>已有实例存在时调用:通知它显示界面。</summary>
-    public void SignalExistingInstance()
+    /// <summary>已有实例存在时调用:通知它显示界面(或直接打开设置)。</summary>
+    public void SignalExistingInstance(bool openSettings)
     {
         try
         {
-            if (EventWaitHandle.TryOpenExisting(SignalName, out var handle))
+            using var signal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName);
+            if (openSettings)
             {
-                using (handle) handle.Set();
+                var openName = SignalName + ".Settings";
+                using var open = new EventWaitHandle(false, EventResetMode.AutoReset, openName);
+                open.Set();
+            }
+            else
+            {
+                signal.Set();
             }
         }
         catch (Exception)
@@ -175,19 +207,24 @@ internal sealed class SingleInstance : IDisposable
     }
 
     /// <summary>主实例:后台等第二个实例的信号。</summary>
-    public void StartListening(Action onSignal)
+    public void StartListening(Action onShowRail, Action onShowSettings)
     {
         if (!IsOwner) return;
         _signal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName);
+        var settingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName + ".Settings");
+
         _listenCts = new CancellationTokenSource();
         var token = _listenCts.Token;
         _listener = new Thread(() =>
         {
+            var handles = new WaitHandle[] { _signal, settingsSignal };
             while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    if (_signal.WaitOne(500)) onSignal();
+                    int idx = WaitHandle.WaitAny(handles, 500);
+                    if (idx == 0) onShowRail();
+                    else if (idx == 1) onShowSettings();
                 }
                 catch (ObjectDisposedException) { return; }
             }

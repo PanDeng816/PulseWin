@@ -63,7 +63,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Slider x:Name="AlertSlider" Width="120" Minimum="50" Maximum="99"
-                                VerticalAlignment="Center" ValueChanged="AlertSlider_ValueChanged"/>
+                                VerticalAlignment="Center" ValueChanged="SettingSlider_ValueChanged"/>
                         <TextBlock x:Name="AlertValue" Width="42" TextAlignment="Right"
                                    VerticalAlignment="Center" FontSize="13"/>
                     </StackPanel>
@@ -80,7 +80,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Slider x:Name="OpacitySlider" Width="120" Minimum="30" Maximum="100"
-                                VerticalAlignment="Center" ValueChanged="OpacitySlider_ValueChanged"/>
+                                VerticalAlignment="Center" ValueChanged="SettingSlider_ValueChanged"/>
                         <TextBlock x:Name="OpacityValue" Width="42" TextAlignment="Right"
                                    VerticalAlignment="Center" FontSize="13"/>
                     </StackPanel>
@@ -97,7 +97,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Slider x:Name="IntervalSlider" Width="120" Minimum="15" Maximum="300"
-                                VerticalAlignment="Center" ValueChanged="IntervalSlider_ValueChanged"/>
+                                VerticalAlignment="Center" ValueChanged="SettingSlider_ValueChanged"/>
                         <TextBlock x:Name="IntervalValue" Width="42" TextAlignment="Right"
                                    VerticalAlignment="Center" FontSize="13"/>
                     </StackPanel>
