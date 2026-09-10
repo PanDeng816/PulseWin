@@ -46,7 +46,12 @@ public sealed class SubData
     public required string Name { get; init; }
     public required string AccountLabel { get; init; }
     public long? PeriodTokens { get; init; }   // 本月已用 token(仅 GOAT 有)
+    public DateTimeOffset? FetchedAt { get; init; }  // 引擎最后一次成功同步的时刻
     public List<PoolData> Pools { get; init; } = new();
+
+    /// <summary>数据是否已过期(超过 3 个同步周期没有更新)。</summary>
+    public bool IsStale(DateTimeOffset now) =>
+        FetchedAt is { } t && now - t > TimeSpan.FromMinutes(3);
 }
 
 /// <summary>
@@ -59,6 +64,27 @@ public static class SnapshotSource
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public static string DataDirectory => Paths.RootDirectory;
+
+    /// <summary>
+    /// 两个快照文件的修改时间戳之和。引擎每 60s 才落盘一次,主循环每 15s 轮询时
+    /// 先用它短路,可以省掉无谓的读文件+反序列化+重建对象。
+    /// </summary>
+    public static long Stamp()
+    {
+        long stamp = 0;
+        foreach (var file in new[] { Paths.SnapshotFile, Paths.OpenCodeSnapshotFile })
+        {
+            try
+            {
+                if (File.Exists(file)) stamp += File.GetLastWriteTimeUtc(file).Ticks;
+            }
+            catch (IOException)
+            {
+                // 文件正被替换:当作未变化,下轮再试
+            }
+        }
+        return stamp;
+    }
 
     public static List<SubData> LoadAll()
     {
@@ -110,9 +136,16 @@ public static class SnapshotSource
                 Name = isGoat ? "GOAT" : "GO",
                 AccountLabel = snapshot.AccountLabel,
                 PeriodTokens = snapshot.PeriodTokens,
+                FetchedAt = snapshot.FetchedAt,
                 Pools = pools,
             };
         }
-        catch { return null; }
+        catch (Exception ex)
+        {
+            // 不再静默吞掉:快照读取失败(文件被占/JSON 结构变化)留下痕迹,
+            // 否则只表现为"没有数据",排查全靠猜。
+            Diagnostics.Note($"读取快照失败 {Path.GetFileName(file)}: {ex.GetType().Name} {ex.Message}");
+            return null;
+        }
     }
 }

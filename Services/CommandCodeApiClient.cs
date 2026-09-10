@@ -17,6 +17,7 @@ public interface IUsageProvider
 public sealed class CommandCodeApiClient : IUsageProvider
 {
     public static readonly Uri ProductionBaseAddress = new("https://api.commandcode.ai/");
+    /// <summary>GOAT 套餐的基准月额度,仅作为推算总额度失败时的兜底(正常从服务端反推)。</summary>
     private const double GoatMonthlyCredits = 70d;
 
     private readonly HttpClient _httpClient;
@@ -81,7 +82,6 @@ public sealed class CommandCodeApiClient : IUsageProvider
         {
             ParseServerWindow(creditsRoot, "fiveHour", QuotaKind.FiveHour, "5 小时"),
             ParseServerWindow(creditsRoot, "weekly", QuotaKind.Weekly, "本周"),
-            BuildMonthlyWindow(planId, monthlyRemaining, currentPeriodEnd)
         };
 
         double? periodCost = null;
@@ -102,6 +102,9 @@ public sealed class CommandCodeApiClient : IUsageProvider
         {
             // Summary is diagnostic only. Billing meters remain authoritative.
         }
+
+        // 月窗口要在 summary 之后算:需要本周期实际花费来反推总额度。
+        windows.Add(BuildMonthlyWindow(planId, monthlyRemaining, currentPeriodEnd, periodCost));
 
         var studioUrl = $"https://commandcode.ai/{Uri.EscapeDataString(identity.StudioSlug)}/settings/usage";
         return new UsageSnapshot(
@@ -212,13 +215,21 @@ public sealed class CommandCodeApiClient : IUsageProvider
     private static QuotaWindow BuildMonthlyWindow(
         string planId,
         double? monthlyRemaining,
-        DateTimeOffset? resetAt)
+        DateTimeOffset? resetAt,
+        double? periodCost)
     {
         if (IsGoatPlan(planId) && monthlyRemaining is not null)
         {
-            // 服务端 monthlyCredits 即账户月额度（GOAT 固定 $70 credits）；
-            // 以服务端值为准，官方调额度时工具自动跟随。
-            var cap = Math.Max(monthlyRemaining.Value, GoatMonthlyCredits);
+            // 服务端的 monthlyCredits 是"剩余额度",不是总额度,也没有单独的总额度
+            // 字段。用本计费周期实际花费反推:cap ≈ 剩余 + 已花费。服务端调整基准
+            // 额度时这个推算能自动跟上(旧写法死守 70 会在提额后显示成 100%)。
+            // 上限取 3 倍基准,防止用加购 credits 付掉的费用把推算值撑飞。
+            double baseCap = Math.Max(monthlyRemaining.Value, GoatMonthlyCredits);
+            double cap = baseCap;
+            double derived = monthlyRemaining.Value + (periodCost ?? 0d);
+            if (periodCost is > 0 && derived > baseCap && derived <= baseCap * 3)
+                cap = derived;
+
             var used = Math.Clamp(cap - monthlyRemaining.Value, 0d, cap);
             return new QuotaWindow(
                 QuotaKind.Monthly,

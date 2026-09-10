@@ -42,6 +42,7 @@ public sealed class AppDataPaths
     public string OpenCodeSnapshotFile => Path.Combine(RootDirectory, "opencode-go-snapshot.json");
     public string CredentialFile => Path.Combine(RootDirectory, "credential.bin");
     public string OpenCodeCredentialFile => Path.Combine(RootDirectory, "opencode-go-credential.bin");
+    public string DiagnosticsFile => Path.Combine(RootDirectory, "diagnostics.json");
 
     /// <summary>首次启动:把旧目录的快照/加密凭据/设置复制过来(不删除旧目录)。</summary>
     public void MigrateFromLegacy()
@@ -73,18 +74,33 @@ public sealed class AppDataPaths
 
 internal static class AtomicFile
 {
+    /// <summary>
+    /// 先写 .tmp 再 Move。临时名带进程号:多个实例(或旧版 monitor)同时落盘时,
+    /// 共用同一个 .tmp 会互相踩,Move 抛 IOException 把快照写坏。
+    /// </summary>
+    private static string TempPath(string path) =>
+        $"{path}.{Environment.ProcessId}.tmp";
+
     public static async Task WriteTextAsync(string path, string content, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temporaryPath = path + ".tmp";
+        var temporaryPath = TempPath(path);
         await File.WriteAllTextAsync(temporaryPath, content, cancellationToken);
+        File.Move(temporaryPath, path, true);
+    }
+
+    public static void WriteText(string path, string content)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporaryPath = TempPath(path);
+        File.WriteAllText(temporaryPath, content);
         File.Move(temporaryPath, path, true);
     }
 
     public static void WriteBytes(string path, byte[] content)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temporaryPath = path + ".tmp";
+        var temporaryPath = TempPath(path);
         File.WriteAllBytes(temporaryPath, content);
         File.Move(temporaryPath, path, true);
     }

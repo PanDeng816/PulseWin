@@ -15,6 +15,8 @@ public static class Native
     public const int HTTRANSPARENT = -1;
     public const int HTCLIENT = 1;
     public const int HTCAPTION = 2;
+    public const int WM_DISPLAYCHANGE = 0x007E;
+    public const int WM_SETTINGCHANGE = 0x001A;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
@@ -97,15 +99,47 @@ public static class Native
     public static double Scale(Window w) =>
         VisualTreeHelper.GetDpi(w).DpiScaleX; // SystemAware:全系统一致
 
-    /// <summary>光标所在显示器的工作区(物理像素)。</summary>
+    // 光标屏幕工作区缓存:Screen.FromPoint 每次都会枚举显示器并分配对象,
+    // 主循环每帧要问 1~2 次,不缓存就是每秒上百次纯浪费。
+    private static System.Windows.Forms.Screen? _screenCache;
+    private static System.Windows.Rect _workAreaCache;
+    private static double _workAreaScale;
+
+    /// <summary>显示器或任务栏尺寸变化后作废缓存(由 HookScreenChanges 自动调用)。</summary>
+    public static void InvalidateScreenCache() => _screenCache = null;
+
+    /// <summary>订阅显示器/系统度量变化,及时作废工作区缓存。</summary>
+    public static void HookScreenChanges(Window w)
+    {
+        w.SourceInitialized += (_, _) =>
+        {
+            IntPtr h = new WindowInteropHelper(w).Handle;
+            HwndSource.FromHwnd(h)?.AddHook(
+                (IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+                {
+                    if (msg is WM_DISPLAYCHANGE or WM_SETTINGCHANGE) InvalidateScreenCache();
+                    return IntPtr.Zero;
+                });
+        };
+    }
+
+    /// <summary>光标所在显示器的工作区(DIU)。光标仍在缓存的那块屏内就直接复用。</summary>
     public static System.Windows.Rect WorkingAreaUnderPointer(double dpiScale)
     {
         var p = CursorPosition() ?? new Point(0, 0);
         // WinForms Screen 坐标是物理像素;转 DIU 与 WPF 窗口坐标一致。
-        var s = System.Windows.Forms.Screen.FromPoint(
-            new System.Drawing.Point((int)p.X, (int)p.Y));
-        return new System.Windows.Rect(s.WorkingArea.X / dpiScale, s.WorkingArea.Y / dpiScale,
-            s.WorkingArea.Width / dpiScale, s.WorkingArea.Height / dpiScale);
+        var phys = new System.Drawing.Point((int)p.X, (int)p.Y);
+        var s = _screenCache;
+        if (s is null || _workAreaScale != dpiScale || !s.Bounds.Contains(phys))
+        {
+            s = System.Windows.Forms.Screen.FromPoint(phys);
+            var wa = s.WorkingArea;
+            _workAreaCache = new System.Windows.Rect(wa.X / dpiScale, wa.Y / dpiScale,
+                wa.Width / dpiScale, wa.Height / dpiScale);
+            _screenCache = s;
+            _workAreaScale = dpiScale;
+        }
+        return _workAreaCache;
     }
 
     /// <summary>全虚拟屏边界(DIU),用于把停靠位换算成屏幕坐标。</summary>

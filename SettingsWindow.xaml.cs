@@ -7,15 +7,68 @@ public partial class SettingsWindow : Window
 {
     private readonly UsageEngine _engine;
     private readonly DispatcherTimer _statusTimer;
+    private bool _loading;   // 初始化滑块时抑制 ValueChanged 触发的保存
+
+    /// <summary>设置改动后通知主窗重绘(阈值/不透明度都属于渲染参数)。</summary>
+    public event Action? SettingsChanged;
 
     public SettingsWindow(UsageEngine engine)
     {
         InitializeComponent();
         _engine = engine;
+        LoadSettings();
+
         _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _statusTimer.Tick += (_, _) => RefreshStatus();
         _statusTimer.Start();
         RefreshStatus();
+    }
+
+    private void LoadSettings()
+    {
+        _loading = true;
+        var s = AppSettings.Current;
+        AlertSlider.Value = Math.Round(s.AlertThreshold * 100);
+        OpacitySlider.Value = Math.Round(s.SurfaceOpacity * 100);
+        IntervalSlider.Value = s.SyncIntervalSeconds;
+        UpdateLabels();
+        _loading = false;
+    }
+
+    private void UpdateLabels()
+    {
+        AlertValue.Text = $"{AlertSlider.Value:0}%";
+        OpacityValue.Text = $"{OpacitySlider.Value:0}%";
+        IntervalValue.Text = $"{IntervalSlider.Value:0}s";
+    }
+
+    private void Apply()
+    {
+        if (_loading) return;
+        var s = AppSettings.Current;
+        s.AlertThreshold = AlertSlider.Value / 100d;
+        s.SurfaceOpacity = OpacitySlider.Value / 100d;
+        s.SyncIntervalSeconds = (int)IntervalSlider.Value;
+        s.Save();
+        SettingsChanged?.Invoke();
+    }
+
+    private void AlertSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        UpdateLabels();
+        Apply();
+    }
+
+    private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        UpdateLabels();
+        Apply();
+    }
+
+    private void IntervalSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        UpdateLabels();
+        Apply();
     }
 
     private void RefreshStatus()

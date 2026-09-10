@@ -22,12 +22,13 @@ public partial class MainWindow : Window
     private readonly List<double> _ringY = new();     // 每订阅复合环中心(窗内 y)
     private double _railHeight;
     private double _lastReloadCheck;
+    private long _lastStamp = -1;      // 快照文件 mtime,未变化就不重建数据
 
     // —— 停靠 / 热区显隐 ——
     private DockEdge _dockEdge = DockEdge.Right;
     private bool _docked = true;
     private bool _peekVisible = true;
-    private double _hideSeconds;
+    private double _hideSince = -1;      // 指针离开内容的时刻(-1 = 已重置)
     private double _targetLeft, _targetTop = double.NaN;
 
     // —— 指针 / 拖拽 ——
@@ -37,15 +38,29 @@ public partial class MainWindow : Window
     private int? _cardFor;
 
     // —— 点击刷新 ——
-    private readonly double[] _refreshUntil = new double[8];
-    private readonly double[] _refreshStart = new double[8];
+    private double[] _refreshUntil = new double[4];
+    private double[] _refreshStart = new double[4];
+    private bool _refreshPending;   // 已请求 API,等数据回来结束动画
 
     private Geometry? _hitBerth;
+
+    // —— 渲染节流 ——
+    private bool _dirty = true;                  // 本帧内容是否有变化
+    private Geometry? _berthCache;               // berth 轮廓(约 200 点,重建最贵)
+    private Size _berthCacheSize;
+    private DockEdge _berthCacheEdge;
+    private bool _berthCacheDocked;
+    private readonly Dictionary<(string, double, FontWeight, Color), FormattedText> _textCache = new();
+
+    /// <summary>请求马上走一次真实 API 刷新(由 App 接到 UsageEngine)。</summary>
+    public event Action? RefreshRequested;
 
     private const bool AutoHideEnabled = true;
     private const double HotZoneWidth = 16;
     private const double HideDelaySeconds = 0.9;
     private const double PeekStep = 0.5;
+    /// <summary>点击刷新后动画的安全上限(正常情况下 SnapshotsChanged 会提前结束它)。</summary>
+    private const double RefreshAnimationTimeoutS = 45;
 
     // —— rail / 复合环几何(pt 单位,渲染 ×Pt.U) ——
     private const double RailWpt = 56;
@@ -55,7 +70,6 @@ public partial class MainWindow : Window
     private const double PadBottomPt = 22;
     private const double RingCenterInUnit = 30; // 环心距 unit 顶
 
-    private static readonly Brush SurfaceBrush = Frz(PanelPalette.Surface);
     private static readonly Brush TrackBrush = Frz(PanelPalette.Track);
     private static readonly Brush WhiteBrush = Frz(PanelPalette.Primary);
     private static readonly Brush DimBrush = Frz(PanelPalette.Dim);
@@ -70,10 +84,34 @@ public partial class MainWindow : Window
 
     private static Brush Frz(Color c) { var b = new SolidColorBrush(c); b.Freeze(); return b; }
 
+    /// <summary>
+    /// 画笔/Pen 缓存。每帧重建 SolidColorBrush 和 Pen 是纯浪费——颜色其实只有
+    /// 绿/红/深红三种加上几个透明度变体,按值复用即可。只在 UI 线程访问。
+    /// </summary>
+    private static readonly Dictionary<Color, Brush> BrushCache = new();
+    private static readonly Dictionary<(Brush, double), Pen> PenCache = new();
+
+    private static Brush CachedBrush(Color c)
+    {
+        if (BrushCache.TryGetValue(c, out var b)) return b;
+        b = Frz(c);
+        BrushCache[c] = b;
+        return b;
+    }
+
+    private static Pen CachedRingPen(Brush brush, double width)
+    {
+        if (PenCache.TryGetValue((brush, width), out var p)) return p;
+        p = RailGeometry.RingPen(brush, width);
+        PenCache[(brush, width)] = p;
+        return p;
+    }
+
     public MainWindow()
     {
         InitializeComponent();
         Native.ApplyToolWindowStyle(this);
+        Native.HookScreenChanges(this);
         _ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _ticker.Tick += (_, _) => Tick();
         _ticker.Start();
@@ -95,6 +133,21 @@ public partial class MainWindow : Window
         SetPeekVisible(!_peekVisible, wa);
     }
 
+    /// <summary>把 rail 显示出来(第二次启动本程序时,唤醒已有实例用)。</summary>
+    public void ShowRail()
+    {
+        if (!_docked)
+        {
+            // 浮动状态下"显示"= 提到最上层并回停靠位
+            var area = Native.WorkingAreaUnderPointer(DpiScale);
+            DockTo(DockEdge.Right, area);
+            return;
+        }
+        if (!_peekVisible)
+            SetPeekVisible(true, Native.WorkingAreaUnderPointer(DpiScale));
+        Native.BringToTopmost(this);
+    }
+
     private double DpiScale => Native.Scale(this);
     private bool IsVertical => !_docked || _dockEdge != DockEdge.Top;
 
@@ -112,7 +165,7 @@ public partial class MainWindow : Window
 
     // ————————————————— 数据 —————————————————
 
-    public void ReloadData()
+    public void ReloadData(bool fromEngine = false)
     {
         var subs = SnapshotSource.LoadAll();
         if (subs.Count == 0)
@@ -129,7 +182,23 @@ public partial class MainWindow : Window
             });
         }
         _subs = subs;
+        if (_refreshUntil.Length < subs.Count)
+        {
+            _refreshUntil = new double[subs.Count];
+            _refreshStart = new double[subs.Count];
+        }
+        _lastStamp = SnapshotSource.Stamp();
         RebuildLayout();
+
+        // 引擎回报了新数据:结束"刷新中"动画(点击环触发的)
+        if (fromEngine && _refreshPending)
+        {
+            _refreshPending = false;
+            Array.Clear(_refreshStart);
+            Array.Clear(_refreshUntil);
+        }
+
+        _dirty = true;
         InvalidateVisual();
     }
 
@@ -144,28 +213,44 @@ public partial class MainWindow : Window
             if (s < _subs.Count - 1) y += UnitGappt;
         }
         _railHeight = y + PadBottomPt;
+        // 池数变化会改变 rail 长度;窗口尺寸必须跟着走,否则环会画到窗外
+        ApplyRailSize();
     }
 
     private PoolData? PoolOf(SubData sub, string kind) =>
         sub.Pools.FirstOrDefault(p => p.PoolKind == kind);
 
+    /// <summary>设置里的渲染参数(报警阈值/不透明度)变了:作废缓存并重绘。</summary>
+    public void ApplySettings()
+    {
+        _textCache.Clear();
+        _dirty = true;
+        InvalidateVisual();
+    }
+
     private void Tick()
     {
         double now = _clock.Elapsed.TotalSeconds;
+        _dirty = false;
 
+        // 快照文件没变(mtime 相同)就不重建数据对象:引擎每 60s 才落盘一次
         if (_lastReloadCheck == 0 || now - _lastReloadCheck > 15)
         {
             _lastReloadCheck = now;
-            ReloadData();
+            if (SnapshotSource.Stamp() != _lastStamp) ReloadData();
         }
 
+        bool refreshing = false;
         for (int i = 0; i < _subs.Count; i++)
         {
             if (_refreshUntil[i] > 0 && now > _refreshUntil[i])
             {
                 _refreshStart[i] = 0;
                 _refreshUntil[i] = 0;
+                _refreshPending = false;
+                _dirty = true;
             }
+            if (_refreshStart[i] > 0 && now < _refreshUntil[i]) refreshing = true;
         }
 
         if (Native.CursorPosition() is { } px)
@@ -175,13 +260,15 @@ public partial class MainWindow : Window
             HandlePointer(diu, Native.LeftButtonDown, now);
         }
 
-        AnimatePeek();
+        if (AnimatePeek()) _dirty = true;
+        if (refreshing) _dirty = true;   // 亮段扫动是逐帧动画
 
         // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住)
         if (_peekVisible && (_tickCount++ % 60 == 0))
             Native.BringToTopmost(this);
 
-        InvalidateVisual();
+        // 只在内容真的变了才重绘:静止/藏屏外时一帧都不画
+        if (_dirty) InvalidateVisual();
     }
 
     private int _tickCount;
@@ -217,15 +304,23 @@ public partial class MainWindow : Window
             }
 
             if (_dragging)
+            {
                 MoveOrSnap(new Point(diu.X - _dragOffset.X, diu.Y - _dragOffset.Y));
+                _dirty = true;
+            }
         }
         else if (_downArmed)
         {
             if (!_dragging && _downRing is { } ri)
             {
+                // 点击环 = 立刻打一次真实 API。只重读本地快照是看不出变化的
+                // (引擎最多 60s 才落盘一次),所以这里同时通知引擎去拉新数据。
                 ReloadData();
+                RefreshRequested?.Invoke();
+                _refreshPending = true;
                 _refreshStart[ri] = now;
-                _refreshUntil[ri] = now + 0.9;
+                _refreshUntil[ri] = now + RefreshAnimationTimeoutS;
+                _dirty = true;
             }
             _downArmed = false;
             _dragging = false;
@@ -244,16 +339,17 @@ public partial class MainWindow : Window
             _hoverRing = newHover;
             if (newHover is { } hi) ShowSubCard(hi);
             else HideCard();
+            _dirty = true;
         }
 
         bool overContent = overBerth || ring != null || overCard || _dragging || leftDown;
-        UpdatePeek(diu, overContent, leftDown);
+        UpdatePeek(diu, overContent, leftDown, now);
 
         // rail 滑入/拖动中位置在变:每帧把卡窗贴回 rail 旁
         if (_card.IsVisible && _hoverRing is { }) PositionCard();
     }
 
-    private void UpdatePeek(Point diu, bool overContent, bool leftDown)
+    private void UpdatePeek(Point diu, bool overContent, bool leftDown, double now)
     {
         if (!AutoHideEnabled || !_docked || _dragging) return;
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
@@ -274,11 +370,12 @@ public partial class MainWindow : Window
 
         if (_peekVisible)
         {
-            if (overContent || inHot) _hideSeconds = 0;
+            if (overContent || inHot) _hideSince = -1;
             else
             {
-                _hideSeconds += 0.016;
-                if (_hideSeconds > HideDelaySeconds) SetPeekVisible(false, wa);
+                // 用真实时间差而非累加固定帧长:DispatcherTimer 在负载下会漂移
+                if (_hideSince < 0) _hideSince = now;
+                if (now - _hideSince > HideDelaySeconds) SetPeekVisible(false, wa);
             }
         }
         else if (inHot)
@@ -290,6 +387,7 @@ public partial class MainWindow : Window
     private void SetPeekVisible(bool show, Rect wa)
     {
         _peekVisible = show;
+        _hideSince = -1;
         switch (_dockEdge)
         {
             case DockEdge.Right:
@@ -305,18 +403,20 @@ public partial class MainWindow : Window
                 _targetTop = show ? wa.Y : wa.Y - Height - 2;
                 break;
         }
-        if (show) _hideSeconds = 0;
-        else { HideCard(); _hoverRing = null; }
+        if (!show) { HideCard(); _hoverRing = null; }
+        _dirty = true;
 
         // 滑入/滑出后把窗口提到置顶最上,防止被其他置顶窗口压住
         Native.BringToTopmost(this);
     }
 
-    private void AnimatePeek()
+    private bool AnimatePeek()
     {
-        if (!AutoHideEnabled || !_docked || _dragging || double.IsNaN(_targetTop)) return;
-        if (Math.Abs(Left - _targetLeft) > 0.5) Left += (_targetLeft - Left) * PeekStep;
-        if (Math.Abs(Top - _targetTop) > 0.5) Top += (_targetTop - Top) * PeekStep;
+        if (!AutoHideEnabled || !_docked || _dragging || double.IsNaN(_targetTop)) return false;
+        bool moved = false;
+        if (Math.Abs(Left - _targetLeft) > 0.5) { Left += (_targetLeft - Left) * PeekStep; moved = true; }
+        if (Math.Abs(Top - _targetTop) > 0.5) { Top += (_targetTop - Top) * PeekStep; moved = true; }
+        return moved;
     }
 
     // ————————————————— 拖拽 / 停靠 —————————————————
@@ -328,6 +428,7 @@ public partial class MainWindow : Window
         _dockEdge = DockEdge.Floating;
         HideCard();
         ApplyRailSize();
+        _dirty = true;
     }
 
     private void MoveOrSnap(Point tl)
@@ -357,7 +458,7 @@ public partial class MainWindow : Window
         _docked = true;
         _dockEdge = edge;
         _peekVisible = true;
-        _hideSeconds = 0;
+        _hideSince = -1;
         ApplyRailSize();
         switch (edge)
         {
@@ -373,6 +474,7 @@ public partial class MainWindow : Window
         }
         _targetLeft = Left;
         _targetTop = Top;
+        _dirty = true;
         InvalidateVisual();
     }
 
@@ -399,9 +501,10 @@ public partial class MainWindow : Window
         if (ringIndex < 0 || ringIndex >= _subs.Count) return;
         if (_card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
         var sub = _subs[ringIndex];
-        var (win, body) = CardLayout.SubCard(sub.Pools.Count);
+        bool stale = sub.IsStale(DateTimeOffset.UtcNow);
+        var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale);
         _cardFor = ringIndex;
-        _card.Configure(sub, win, body);
+        _card.Configure(sub, win, body, stale);
         _card.ShowCard();
         PositionCard();
     }
@@ -476,12 +579,29 @@ public partial class MainWindow : Window
         double now = _clock.Elapsed.TotalSeconds;
 
         var full = new Rect(0, 0, Width, Height);
-        var berth = RailGeometry.Berth(full, _docked ? _dockEdge : DockEdge.Floating, _docked, 1);
+        var berth = BerthGeometry(full);
         _hitBerth = berth;
-        dc.DrawGeometry(SurfaceBrush, HairlinePen, berth);
+        // 用缓存取画笔:设置里改了不透明度后自动跟着变
+        dc.DrawGeometry(CachedBrush(PanelPalette.Surface), HairlinePen, berth);
 
         for (int s = 0; s < _subs.Count; s++)
             DrawComposite(dc, _subs[s], RingCenter(s), s, now);
+    }
+
+    /// <summary>berth 轮廓约 200 个采样点,是每帧最贵的构建;尺寸/停靠不变时复用。</summary>
+    private Geometry BerthGeometry(Rect full)
+    {
+        if (_berthCache is not null && _berthCacheSize == full.Size &&
+            _berthCacheEdge == _dockEdge && _berthCacheDocked == _docked)
+        {
+            return _berthCache;
+        }
+        _berthCache = RailGeometry.Berth(full, _docked ? _dockEdge : DockEdge.Floating, _docked, 1);
+        _berthCache.Freeze();
+        _berthCacheSize = full.Size;
+        _berthCacheEdge = _dockEdge;
+        _berthCacheDocked = _docked;
+        return _berthCache;
     }
 
     private void DrawComposite(DrawingContext dc, SubData sub, Point c, int idx, double now)
@@ -512,16 +632,24 @@ public partial class MainWindow : Window
             dc.DrawGeometry(WhiteBrush, null, g);
         }
 
-        if (!vertical) return; // 顶轨信息看卡片
-
-        // 环下:总额度百分比(变色报警),不显示账户名
+        // 用量百分比(变色报警),不显示账户名。
         bool avail = month is { IsAvailable: true };
         double mf = avail ? Math.Clamp(month!.Fraction, 0, 1) : 0;
         Color mtint = avail ? UsageTint.For(mf, month!.IsSpent) : PanelPalette.Track;
         string pct = avail ? month!.PercentText : "--";
-        var pctFt = NewText(pct, Pt.P(13), FontWeights.SemiBold, Frz(mtint));
-        double pctTop = c.Y + Pt.P(OuterRingDpt) / 2 + Pt.P(6);
-        dc.DrawText(pctFt, new Point(c.X - pctFt.Width / 2, pctTop));
+        var pctFt = NewText(pct, Pt.P(13), FontWeights.SemiBold, CachedBrush(mtint));
+        double outerR = Pt.P(OuterRingDpt) / 2;
+        if (vertical)
+        {
+            // 侧轨:百分比放在环下方
+            double pctTop = c.Y + outerR + Pt.P(6);
+            dc.DrawText(pctFt, new Point(c.X - pctFt.Width / 2, pctTop));
+        }
+        else
+        {
+            // 顶轨:环下方没有空间(会画到窗外),改放环右侧
+            dc.DrawText(pctFt, new Point(c.X + outerR + Pt.P(5), c.Y - pctFt.Height / 2));
+        }
     }
 
     private void DrawArcLayer(DrawingContext dc, Point c, double midD, double lineW, PoolData? pool,
@@ -530,7 +658,7 @@ public partial class MainWindow : Window
         double midR = midD / 2;
 
         // 轨道(18% 白)恒画,表示该圈存在
-        dc.DrawEllipse(null, RailGeometry.RingPen(TrackBrush, lineW), c, midR, midR);
+        dc.DrawEllipse(null, CachedRingPen(TrackBrush, lineW), c, midR, midR);
 
         if (pool is null || !pool.IsAvailable) return;
 
@@ -541,8 +669,8 @@ public partial class MainWindow : Window
         // hover:给最外层月弧画光晕
         if (_hoverRing == idx && frac > 0.004 && pool.PoolKind == "Monthly")
         {
-            var glow = Frz(Color.FromArgb((byte)(0.35 * 255), tint.R, tint.G, tint.B));
-            dc.DrawGeometry(null, RailGeometry.RingPen(glow, lineW + Pt.P(8)),
+            dc.DrawGeometry(null,
+                CachedRingPen(CachedBrush(Color.FromArgb(0x59, tint.R, tint.G, tint.B)), lineW + Pt.P(8)),
                 RailGeometry.Arc(c, midR, -90, frac * 360));
         }
 
@@ -551,8 +679,8 @@ public partial class MainWindow : Window
         if (sweep > 0.5)
         {
             double op = refreshing ? 0.3 : 1;
-            var arc = Frz(Color.FromArgb((byte)(op * 255 * 0.98), tint.R, tint.G, tint.B));
-            dc.DrawGeometry(null, RailGeometry.RingPen(arc, lineW),
+            var arc = CachedBrush(Color.FromArgb((byte)(op * 255 * 0.98), tint.R, tint.G, tint.B));
+            dc.DrawGeometry(null, CachedRingPen(arc, lineW),
                 RailGeometry.Arc(c, midR, -90, sweep));
         }
 
@@ -561,13 +689,34 @@ public partial class MainWindow : Window
         {
             double phase = ((now - _refreshStart[idx]) % Dock.RefreshPeriodS) / Dock.RefreshPeriodS;
             if (phase < 0) phase = 0;
-            dc.DrawGeometry(null, RailGeometry.RingPen(Frz(tint), lineW),
+            dc.DrawGeometry(null, CachedRingPen(CachedBrush(tint), lineW),
                 RailGeometry.Arc(c, midR, -90 + phase * 360, Dock.RefreshSweep * 360));
         }
     }
 
-    private FormattedText NewText(string s, double fontSize, FontWeight weight, Brush brush) =>
-        new(s, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-            new Typeface(new FontFamily("Segoe UI, Microsoft YaHei UI"), FontStyles.Normal, weight, FontStretches.Normal),
-            fontSize, brush, DpiScale);
+    /// <summary>
+    /// 文字缓存:FormattedText 的构建(字体回退解析)不便宜,而内容变化很少。
+    /// DPI 变化时 FormattedText 需要重建,所以缓存键里带上 dpi。
+    /// </summary>
+    private FormattedText NewText(string s, double fontSize, FontWeight weight, Brush brush)
+    {
+        double dpi = DpiScale;
+        var color = brush is SolidColorBrush scb ? scb.Color : Colors.White;
+        var key = (s, fontSize, weight, color);
+        if (_textCacheScale != dpi)
+        {
+            _textCache.Clear();
+            _textCacheScale = dpi;
+        }
+        if (_textCache.TryGetValue(key, out var cached)) return cached;
+
+        var ft = new FormattedText(s, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+            new Typeface(TextFontFamily, FontStyles.Normal, weight, FontStretches.Normal),
+            fontSize, CachedBrush(color), dpi);
+        _textCache[key] = ft;
+        return ft;
+    }
+
+    private static readonly FontFamily TextFontFamily = new("Segoe UI, Microsoft YaHei UI");
+    private double _textCacheScale = -1;
 }

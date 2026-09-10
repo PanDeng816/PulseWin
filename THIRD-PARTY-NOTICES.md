@@ -10,7 +10,7 @@ License: Apache License 2.0,见 https://www.apache.org/licenses/LICENSE-2.0
 
 ## GOAT + Go Usage Monitor —— MIT
 数据层(Command Code / OpenCode Go 的 API 客户端、凭据发现与 DPAPI 加密存储、
-快照缓存)由 https://github.com/qunqin24/GOAT-Go-Usage-Monitor 移植,
+快照缓存)由 https://github.com/ahuud251/goat-go-usage-monitor 移植,
 文件位于 `Services/` 目录。
 
 > MIT License

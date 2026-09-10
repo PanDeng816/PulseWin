@@ -48,6 +48,63 @@
             </StackPanel>
         </Border>
 
+        <!-- 显示与刷新 -->
+        <TextBlock Text="显示与刷新" FontSize="18" FontWeight="SemiBold" Margin="0,4,0,10"/>
+        <Border Background="#26262E" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+            <StackPanel>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="报警阈值" FontSize="13"/>
+                        <TextBlock Text="用量超过该比例时圆环转红" FontSize="11" Foreground="#8CF5F5F7"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Slider x:Name="AlertSlider" Width="120" Minimum="50" Maximum="99"
+                                VerticalAlignment="Center" ValueChanged="AlertSlider_ValueChanged"/>
+                        <TextBlock x:Name="AlertValue" Width="42" TextAlignment="Right"
+                                   VerticalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="背景不透明度" FontSize="13"/>
+                        <TextBlock Text="rail 底板的透明程度" FontSize="11" Foreground="#8CF5F5F7"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Slider x:Name="OpacitySlider" Width="120" Minimum="30" Maximum="100"
+                                VerticalAlignment="Center" ValueChanged="OpacitySlider_ValueChanged"/>
+                        <TextBlock x:Name="OpacityValue" Width="42" TextAlignment="Right"
+                                   VerticalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="同步间隔" FontSize="13"/>
+                        <TextBlock Text="成功获取数据后等待多久再拉一次" FontSize="11" Foreground="#8CF5F5F7"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Slider x:Name="IntervalSlider" Width="120" Minimum="15" Maximum="300"
+                                VerticalAlignment="Center" ValueChanged="IntervalSlider_ValueChanged"/>
+                        <TextBlock x:Name="IntervalValue" Width="42" TextAlignment="Right"
+                                   VerticalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
         <TextBlock x:Name="DataDirText" FontSize="11" Foreground="#59F5F5F7" TextWrapping="Wrap" Margin="0,0,0,4"/>
         <Button Content="关闭" Width="72" Height="26" HorizontalAlignment="Right" Click="Close_Click"/>
     </StackPanel>

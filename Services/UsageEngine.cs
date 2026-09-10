@@ -30,8 +30,11 @@ public sealed class UsageEngine : IDisposable
     private readonly CancellationTokenSource _life = new();
     private readonly SemaphoreSlim _signal = new(0, 1);
 
-    private static readonly TimeSpan SuccessDelay = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan FailureDelay = TimeSpan.FromSeconds(60);
+
+    /// <summary>同步成功后的间隔,来自设置(默认 60s)。</summary>
+    private static TimeSpan SuccessDelay =>
+        TimeSpan.FromSeconds(AppSettings.Current.SyncIntervalSeconds);
 
     public SourceStatus Goat { get; } = new();
     public SourceStatus Go { get; } = new();
@@ -41,6 +44,8 @@ public sealed class UsageEngine : IDisposable
     {
         _paths = paths ?? new AppDataPaths();
         _paths.MigrateFromLegacy();
+        Diagnostics.Attach(_paths);
+        AppSettings.Attach(_paths);
         _goatCache = new SnapshotCache(_paths);
         _goCache = new SnapshotCache(_paths, _paths.OpenCodeSnapshotFile);
         _goatApi = new CommandCodeApiClient(new HttpClient());
@@ -54,36 +59,57 @@ public sealed class UsageEngine : IDisposable
     /// <summary>立即唤醒一次同步(跳过剩余等待)。</summary>
     public void RequestRefreshNow()
     {
-        try { _signal.Wait(0); } catch (ObjectDisposedException) { }
-        _signal.Release();
+        try
+        {
+            // 只唤醒不排队:连续点击"立即刷新"不该攒出多次同步
+            if (_signal.CurrentCount == 0) _signal.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     private async Task Loop(CancellationToken token)
     {
+        int consecutiveFailures = 0;
         while (!token.IsCancellationRequested)
         {
-            await SyncOnce(token);
-            // 成功 60s、失败 60s 后重试;RequestRefreshNow 可立即唤醒
+            bool ok = await SyncOnce(token);
+
+            // 成功按 60s 周期;失败逐步退避到 2 分钟,避免断网时每 60s 撞一次
+            consecutiveFailures = ok ? 0 : Math.Min(consecutiveFailures + 1, 3);
+            var delay = consecutiveFailures switch
+            {
+                0 => SuccessDelay,
+                1 => FailureDelay,
+                2 => TimeSpan.FromMinutes(2),
+                _ => TimeSpan.FromMinutes(5),
+            };
+
             try
             {
-                var delayed = Task.Delay(SuccessDelay, token);
-                if (await Task.WhenAny(delayed, Task.Run(() => _signal.Wait(60000), token)) == delayed)
-                    await delayed; // 正常计时结束
+                // WaitAsync 不占用线程池线程(旧写法 Task.Run + Wait(60000) 会阻塞一个)
+                var waiter = _signal.WaitAsync(delay, token);
+                try { await waiter; }
+                catch (OperationCanceledException) { throw; }
             }
             catch (OperationCanceledException) { return; }
         }
     }
 
-    private async Task SyncOnce(CancellationToken token)
+    /// <summary>同步一轮(两个源),返回是否全部成功。</summary>
+    private async Task<bool> SyncOnce(CancellationToken token)
     {
-        await SyncSourceAsync(MonitorSource.CommandCodeGoat, token);
-        await SyncSourceAsync(MonitorSource.OpenCodeGo, token);
+        bool goatOk = await SyncSourceAsync(MonitorSource.CommandCodeGoat, token);
+        bool goOk = await SyncSourceAsync(MonitorSource.OpenCodeGo, token);
         SnapshotsChanged?.Invoke();
+        return goatOk && goOk;
     }
 
-    private async Task SyncSourceAsync(MonitorSource source, CancellationToken token)
+    private async Task<bool> SyncSourceAsync(MonitorSource source, CancellationToken token)
     {
         var status = source == MonitorSource.CommandCodeGoat ? Goat : Go;
+        string name = source == MonitorSource.CommandCodeGoat ? "GOAT" : "OpenCode Go";
         try
         {
             var provider = source == MonitorSource.CommandCodeGoat ? (IUsageProvider)_goatApi : _goApi;
@@ -96,7 +122,7 @@ public sealed class UsageEngine : IDisposable
                 status.State = SourceState.AuthenticationRequired;
                 status.StatusText = "未配置凭据,请在设置中输入 API Key";
                 status.CredentialSource = "";
-                return;
+                return false;
             }
 
             // 逐个候选尝试,直到成功(monitor 同款策略)
@@ -114,7 +140,7 @@ public sealed class UsageEngine : IDisposable
                     status.StatusText = $"已连接 · {snapshot.AccountLabel}";
                     status.CredentialSource = candidate.SourceLabel;
                     status.FetchedAt = snapshot.FetchedAt;
-                    return;
+                    return true;
                 }
                 catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
                 {
@@ -135,6 +161,8 @@ public sealed class UsageEngine : IDisposable
                 ? SourceState.AuthenticationRequired
                 : SourceState.Stale;
             status.StatusText = ex.Message;
+            Diagnostics.Note($"{name} 同步失败", ex);
+            return false;
         }
     }
 

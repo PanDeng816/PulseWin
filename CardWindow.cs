@@ -13,13 +13,15 @@ public static class CardLayout
 
     // 与 CardWindow.DrawPoolRow 的行距保持一致(中文字体行高偏大,取足量防溢出)
     private static double RowHeightPt = 76;
+    private static double StaleRowPt = 22;
 
     /// <summary>账户卡(三池明细)的窗/内容框。高度按池数动态计算,防止文字溢出。</summary>
-    public static (Size win, Rect body) SubCard(int poolCount)
+    public static (Size win, Rect body) SubCard(int poolCount, bool showStale)
     {
         double w = Card.Width;
         // 头部区(图标 + 两行名 + 下移留白)→ 首行 y≈58
-        double h = Pt.P(58) + RowHeightPt * poolCount + Pt.P(24);
+        double h = Pt.P(58) + RowHeightPt * poolCount + Pt.P(24)
+            + (showStale ? StaleRowPt : 0);
         double m = Margin;
         return (new Size(w + m * 2, h + m * 2), new Rect(m, m, w, h));
     }
@@ -30,6 +32,7 @@ public sealed class CardWindow : Window
 {
     private SubData? _sub;
     private Rect _body;
+    private bool _showStale;
     private readonly DispatcherTimer _ticker;
 
     public CardWindow()
@@ -41,19 +44,19 @@ public sealed class CardWindow : Window
         Topmost = true;
         Native.ApplyToolWindowStyle(this);
 
-        // 每秒重绘一次:剩余时间倒计时实时走动
+        // 每秒重绘一次:剩余时间倒计时实时走动。隐藏时停表,不做无用重绘。
         _ticker = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _ticker.Tick += (_, _) =>
         {
             if (_sub is not null && IsVisible) InvalidateVisual();
         };
-        _ticker.Start();
     }
 
-    public void Configure(SubData sub, Size winSize, Rect body)
+    public void Configure(SubData sub, Size winSize, Rect body, bool showStale)
     {
         _sub = sub;
         _body = body;
+        _showStale = showStale;
         Width = winSize.Width; Height = winSize.Height;
         InvalidateVisual();
     }
@@ -67,11 +70,17 @@ public sealed class CardWindow : Window
 
     public void ShowCard()
     {
-        Show();
+        if (!IsVisible) Show();
+        if (!_ticker.IsEnabled) _ticker.Start();
         Native.BringToTopmost(this); // 卡窗也要压在其他置顶窗口之上
     }
 
-    public void HideCard() { _sub = null; Hide(); }
+    public void HideCard()
+    {
+        _sub = null;
+        _ticker.Stop();
+        Hide();
+    }
 
     protected override void OnRender(DrawingContext dc)
     {
@@ -122,6 +131,20 @@ public sealed class CardWindow : Window
         double rowY = py + iconBox + Pt.P(26);
         foreach (var pool in sub.Pools)
             rowY = DrawPoolRow(dc, pool, new Point(px, rowY), contentW, dpi);
+
+        // 数据陈旧提示:网络断了以后界面照旧显示最后一次成功数据,如果不标明
+        // 用户会以为看到的是最新值。
+        if (_showStale && sub.FetchedAt is { } fetched)
+        {
+            var age = DateTimeOffset.UtcNow - fetched;
+            string text = age.TotalMinutes < 60
+                ? $"数据 {(int)Math.Max(age.TotalMinutes, 1)} 分钟前"
+                : $"数据 {age.TotalHours:0.#} 小时前";
+            var staleFt = Text("⚠ " + text + " · 未能刷新", Pt.P(10.5), FontWeights.Normal,
+                Solid(UsageTint.Alarm), dpi);
+            double staleY = rowY - Pt.P(4);
+            dc.DrawText(staleFt, new Point(px, staleY));
+        }
     }
 
     private double DrawPoolRow(DrawingContext dc, PoolData pool, Point p, double wdt, double dpi)
