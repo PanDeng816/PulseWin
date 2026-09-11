@@ -27,6 +27,24 @@ OpenCode Go,自动 60 秒同步,不依赖任何第三方服务。
 - 托盘:双击显示/隐藏、右键菜单(立即刷新、设置、开机自动启动、退出)
 - 只允许运行一个实例:重复启动会唤醒已有窗口,不会起第二个浮窗
 
+## 额度口径(GOAT)
+
+Command Code 的服务端只发**剩余额度**、不发上限,而且 GOAT 的额度单位是
+**credits(用量价值单位)而不是美元**:满额模型(allowance $70)1 credit = $1 用量,
+allowance $60 的 DeepSeek 每 $1 用量要扣 70/60 个 credit。所以
+
+```
+月上限 = 70 credits(5小时 cap 14、周 cap 35 正是它的 20%/50%,同一刻度)
+已用   = 70 − 服务端 remaining
+美元   = 已用 credits × (模型 allowance / 70)     # DeepSeek 即 × 60/70
+```
+
+`ModelMonthlyAllowance` 常量在 `Services/CommandCodeApiClient.cs`,换模型要同步改
+(GLM-5.3 Flash $40、MiniMax M3 $47、Sol/Hy3/GLM-5.2 满额 $70)。
+
+**高峰/低谷已自动计入**:服务端按请求发生时刻的实际单价扣 credit(高峰价是错峰的
+2 倍),所以高峰时段额度掉得更快——百分比本身就是"实际花费"的口径,工具无需额外换算。
+
 ## 运行
 
 需要 Windows 10/11。两种方式:

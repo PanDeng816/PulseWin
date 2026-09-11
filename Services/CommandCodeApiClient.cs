@@ -17,8 +17,24 @@ public interface IUsageProvider
 public sealed class CommandCodeApiClient : IUsageProvider
 {
     public static readonly Uri ProductionBaseAddress = new("https://api.commandcode.ai/");
-    /// <summary>GOAT 套餐的基准月额度,仅作为推算总额度失败时的兜底(正常从服务端反推)。</summary>
+
+    /// <summary>
+    /// GOAT 的月额度池,单位是 credits(服务端口径)。5 小时 cap 14、周 cap 35 都是它的
+    /// 分片(20%/50%),三者同一刻度,所以窗口上限不用问服务端。
+    /// </summary>
     private const double GoatMonthlyCredits = 70d;
+
+    /// <summary>
+    /// 所选模型的 monthly allowance(美元)。credits 是"用量价值单位"而不是美元:满额
+    /// 模型(allowance $70)1 credit = $1 用量,allowance $60 的 DeepSeek 每 $1 用量要扣
+    /// 70/60 个 credit。用户只用 DeepSeek,所以按 $60 把 credits 折回美元显示,窗口上的
+    /// 数字就是"还能用多少 DeepSeek 用量"。若换模型需同步改这里:GLM-5.3 Flash $40、
+    /// MiniMax M3 $47、Sol/Hy3/GLM-5.2 为满额 $70。
+    /// </summary>
+    private const double ModelMonthlyAllowance = 60d;
+
+    /// <summary>服务端 credits → 所选模型的美元用量。</summary>
+    private const double CreditsToModelDollar = ModelMonthlyAllowance / GoatMonthlyCredits;
 
     private readonly HttpClient _httpClient;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -78,10 +94,12 @@ public sealed class CommandCodeApiClient : IUsageProvider
         var purchasedCredits = ReadDouble(credits, "purchasedCredits") ?? 0d;
         var freeCredits = ReadDouble(credits, "freeCredits") ?? 0d;
 
+        // 只有 GOAT 的 credits 需要折算成模型美元;其余套餐沿用服务端原值。
+        double creditToDollar = IsGoatPlan(planId) ? CreditsToModelDollar : 1d;
         var windows = new List<QuotaWindow>
         {
-            ParseServerWindow(creditsRoot, "fiveHour", QuotaKind.FiveHour, "5 小时"),
-            ParseServerWindow(creditsRoot, "weekly", QuotaKind.Weekly, "本周"),
+            ParseServerWindow(creditsRoot, "fiveHour", QuotaKind.FiveHour, "5 小时", creditToDollar),
+            ParseServerWindow(creditsRoot, "weekly", QuotaKind.Weekly, "本周", creditToDollar),
         };
 
         double? periodCost = null;
@@ -103,8 +121,8 @@ public sealed class CommandCodeApiClient : IUsageProvider
             // Summary is diagnostic only. Billing meters remain authoritative.
         }
 
-        // 月窗口要在 summary 之后算:需要本周期实际花费来反推总额度。
-        windows.Add(BuildMonthlyWindow(planId, monthlyRemaining, currentPeriodEnd, periodCost));
+        // 月窗口直接由服务端剩余 credits 换算,不再依赖 summary 的花费。
+        windows.Add(BuildMonthlyWindow(planId, monthlyRemaining, currentPeriodEnd));
 
         var studioUrl = $"https://commandcode.ai/{Uri.EscapeDataString(identity.StudioSlug)}/settings/usage";
         return new UsageSnapshot(
@@ -192,7 +210,8 @@ public sealed class CommandCodeApiClient : IUsageProvider
         JsonElement root,
         string propertyName,
         QuotaKind kind,
-        string label)
+        string label,
+        double creditToDollar)
     {
         var limits = TryObject(root, "windowLimits");
         var limited = ReadBoolean(limits, "limited") ?? true;
@@ -205,8 +224,8 @@ public sealed class CommandCodeApiClient : IUsageProvider
         return new QuotaWindow(
             kind,
             label,
-            used,
-            cap,
+            used * creditToDollar,
+            cap * creditToDollar,
             resetAt,
             available,
             available ? null : limited ? "服务端暂未返回该窗口" : "当前套餐不受此窗口限制");
@@ -215,27 +234,23 @@ public sealed class CommandCodeApiClient : IUsageProvider
     private static QuotaWindow BuildMonthlyWindow(
         string planId,
         double? monthlyRemaining,
-        DateTimeOffset? resetAt,
-        double? periodCost)
+        DateTimeOffset? resetAt)
     {
         if (IsGoatPlan(planId) && monthlyRemaining is not null)
         {
-            // 服务端的 monthlyCredits 是"剩余额度",不是总额度,也没有单独的总额度
-            // 字段。用本计费周期实际花费反推:cap ≈ 剩余 + 已花费。服务端调整基准
-            // 额度时这个推算能自动跟上(旧写法死守 70 会在提额后显示成 100%)。
-            // 上限取 3 倍基准,防止用加购 credits 付掉的费用把推算值撑飞。
-            double baseCap = Math.Max(monthlyRemaining.Value, GoatMonthlyCredits);
-            double cap = baseCap;
-            double derived = monthlyRemaining.Value + (periodCost ?? 0d);
-            if (periodCost is > 0 && derived > baseCap && derived <= baseCap * 3)
-                cap = derived;
-
-            var used = Math.Clamp(cap - monthlyRemaining.Value, 0d, cap);
+            // 服务端只发"剩余 credits"、不发上限。池子固定 70 credits —— 5 小时 14、周 35
+            // 正是它的 20%/50%,所以上限不必反推。
+            // 旧写法拿 summary 的 totalCost 反推(剩余 + 花费),但那是 API 标价口径的记录,
+            // 换 V4.1 Flash 后比池子实际扣减虚高,分母被撑到 77+,百分比偏大约 4 个点。
+            // 另外 credits 是"用量价值单位":DeepSeek(allowance $60)每 $1 用量扣 70/60 个
+            // credit,所以 70 credits 恰好等于 $60 DeepSeek 用量,按此折算成美元显示。
+            double creditsUsed = Math.Clamp(
+                GoatMonthlyCredits - monthlyRemaining.Value, 0d, GoatMonthlyCredits);
             return new QuotaWindow(
                 QuotaKind.Monthly,
                 "本月",
-                used,
-                cap,
+                creditsUsed * CreditsToModelDollar,
+                ModelMonthlyAllowance,
                 resetAt,
                 true);
         }
