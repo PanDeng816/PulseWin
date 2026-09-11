@@ -190,6 +190,11 @@ public partial class MainWindow : Window
         _lastStamp = SnapshotSource.Stamp();
         RebuildLayout();
 
+        // 正在悬停的卡片要跟着换成新数据:ShowSubCard 在同一条环上会提前返回,
+        // 不在这里重配的话,鼠标停在环上不动时卡片会一直显示打开那一刻的旧值。
+        if (_card.IsVisible && _cardFor is { } shown && shown < _subs.Count)
+            ShowSubCard(shown, force: true);
+
         // 引擎回报了新数据:结束"刷新中"动画(点击环触发的)
         if (fromEngine && _refreshPending)
         {
@@ -263,11 +268,16 @@ public partial class MainWindow : Window
         if (AnimatePeek()) _dirty = true;
         if (refreshing) _dirty = true;   // 亮段扫动是逐帧动画
 
-        // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住)
+        // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住),并强制重画一帧。
+        // 分层窗口(AllowsTransparency)滑出到屏外期间, WPF 会把失效请求丢掉且之后不再补:
+        // 只靠"数据变了才重绘"的话, 环上会永久停在旧数字(卡片是新的、环是旧的)。
         if (_peekVisible && (_tickCount++ % 60 == 0))
+        {
             Native.BringToTopmost(this);
+            _dirty = true;
+        }
 
-        // 只在内容真的变了才重绘:静止/藏屏外时一帧都不画
+        // 只在内容真的变了才重绘:静止且藏屏外时一帧都不画
         if (_dirty) InvalidateVisual();
     }
 
@@ -406,6 +416,10 @@ public partial class MainWindow : Window
         if (!show) { HideCard(); _hoverRing = null; }
         _dirty = true;
 
+        // 滑入的那一帧窗口还在屏外, 那次失效会被丢弃; 这里补提交一次, 保证滑进来的
+        // 第一帧就是当前数据, 而不是屏外时的旧内容。
+        if (show) InvalidateVisual();
+
         // 滑入/滑出后把窗口提到置顶最上,防止被其他置顶窗口压住
         Native.BringToTopmost(this);
     }
@@ -496,10 +510,10 @@ public partial class MainWindow : Window
 
     // ————————————————— 卡片 —————————————————
 
-    private void ShowSubCard(int ringIndex)
+    private void ShowSubCard(int ringIndex, bool force = false)
     {
         if (ringIndex < 0 || ringIndex >= _subs.Count) return;
-        if (_card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
+        if (!force && _card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
         var sub = _subs[ringIndex];
         bool stale = sub.IsStale(DateTimeOffset.UtcNow);
         var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale);
