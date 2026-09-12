@@ -10,6 +10,20 @@ OpenCode Go,自动 60 秒同步,不依赖任何第三方服务。
 [ahuud251/goat-go-usage-monitor](https://github.com/ahuud251/goat-go-usage-monitor)。
 见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
 
+## 预览
+
+贴边 rail 上的复合同心环:内细圈 = 5 小时用量,外粗圈 = 月总额度;
+阈值内绿色,超过报警线转红(下例中 GOAT 56% 绿、OpenCode Go 99% 红)。
+鼠标悬停弹出该订阅的明细卡——三个时间池各自的百分比条、已用金额与重置倒计时:
+
+| Command Code GOAT 明细卡 | OpenCode Go 明细卡 |
+|---|---|
+| ![GOAT 明细卡:5小时/本周/总额度三池与右侧复合环](docs/screenshot-goat-card.png) | ![OpenCode Go 明细卡:5小时/本周/本月三池,99% 转红报警](docs/screenshot-opencode-card.png) |
+
+托盘右键菜单:显示/隐藏浮窗、立即刷新、设置、开机自动启动、退出:
+
+<p align="center"><img src="docs/screenshot-tray-menu.png" width="200" alt="托盘右键菜单"></p>
+
 ## 下载
 
 **免安装**:到 [Releases 页面](https://github.com/PanDeng816/PulseWin/releases/latest)
