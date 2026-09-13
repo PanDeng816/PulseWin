@@ -23,10 +23,13 @@ public sealed class UsageEngine : IDisposable
     private readonly AppDataPaths _paths;
     private readonly SnapshotCache _goatCache;
     private readonly SnapshotCache _goCache;
+    private readonly SnapshotCache _deepSeekCache;
     private readonly CommandCodeApiClient _goatApi;
     private readonly OpenCodeGoApiClient _goApi;
+    private readonly DeepSeekApiClient _deepSeekApi;
     private readonly CredentialResolver _goatResolver;
     private readonly OpenCodeCredentialResolver _goResolver;
+    private readonly CredentialResolver _deepSeekResolver;
     private readonly CancellationTokenSource _life = new();
     private readonly SemaphoreSlim _signal = new(0, 1);
 
@@ -38,6 +41,7 @@ public sealed class UsageEngine : IDisposable
 
     public SourceStatus Goat { get; } = new();
     public SourceStatus Go { get; } = new();
+    public SourceStatus DeepSeek { get; } = new();
     public event Action? SnapshotsChanged;
 
     public UsageEngine(AppDataPaths? paths = null)
@@ -48,10 +52,19 @@ public sealed class UsageEngine : IDisposable
         AppSettings.Attach(_paths);
         _goatCache = new SnapshotCache(_paths);
         _goCache = new SnapshotCache(_paths, _paths.OpenCodeSnapshotFile);
+        _deepSeekCache = new SnapshotCache(_paths, _paths.DeepSeekSnapshotFile);
         _goatApi = new CommandCodeApiClient(new HttpClient());
         _goApi = new OpenCodeGoApiClient(new HttpClient());
+        _deepSeekApi = new DeepSeekApiClient(
+            new HttpClient(), new DeepSeekBaseline(_paths), new DeepSeekLedger(_paths));
         _goatResolver = new CredentialResolver(new DpapiSecretStore(_paths));
         _goResolver = new OpenCodeCredentialResolver(new DpapiSecretStore(_paths, _paths.OpenCodeCredentialFile));
+        // DeepSeek 没有 CLI 登录态可借用(Key 只存在于它的控制台)——
+        // 所以这里只有 环境变量 → 手动保存 两条路,没有 auth.json 那一档。
+        _deepSeekResolver = new CredentialResolver(
+            new DpapiSecretStore(_paths, _paths.DeepSeekCredentialFile, purpose: "deepseek"),
+            authFilePath: string.Empty,
+            environmentVariable: DeepSeekApiClient.ApiKeyEnvironmentVariable);
     }
 
     public void Start() => _ = Task.Run(() => Loop(_life.Token));
@@ -97,32 +110,62 @@ public sealed class UsageEngine : IDisposable
         }
     }
 
-    /// <summary>同步一轮(两个源),返回是否全部成功。</summary>
+    /// <summary>同步一轮(全部数据源),返回是否全部成功。</summary>
     private async Task<bool> SyncOnce(CancellationToken token)
     {
         bool goatOk = await SyncSourceAsync(MonitorSource.CommandCodeGoat, token);
         bool goOk = await SyncSourceAsync(MonitorSource.OpenCodeGo, token);
+        bool deepSeekOk = await SyncSourceAsync(MonitorSource.DeepSeek, token);
         SnapshotsChanged?.Invoke();
-        return goatOk && goOk;
+        return goatOk && goOk && deepSeekOk;
     }
+
+    private IUsageProvider ProviderFor(MonitorSource source) => source switch
+    {
+        MonitorSource.CommandCodeGoat => _goatApi,
+        MonitorSource.OpenCodeGo => _goApi,
+        _ => _deepSeekApi,
+    };
+
+    private SnapshotCache CacheFor(MonitorSource source) => source switch
+    {
+        MonitorSource.CommandCodeGoat => _goatCache,
+        MonitorSource.OpenCodeGo => _goCache,
+        _ => _deepSeekCache,
+    };
 
     private async Task<bool> SyncSourceAsync(MonitorSource source, CancellationToken token)
     {
-        var status = source == MonitorSource.CommandCodeGoat ? Goat : Go;
-        string name = source == MonitorSource.CommandCodeGoat ? "GOAT" : "OpenCode Go";
+        var status = source switch
+        {
+            MonitorSource.CommandCodeGoat => Goat,
+            MonitorSource.OpenCodeGo => Go,
+            _ => DeepSeek,
+        };
+        string name = source switch
+        {
+            MonitorSource.CommandCodeGoat => "GOAT",
+            MonitorSource.OpenCodeGo => "OpenCode Go",
+            _ => "DeepSeek",
+        };
+        var provider = ProviderFor(source);
+        var candidates = source switch
+        {
+            MonitorSource.CommandCodeGoat => _goatResolver.DiscoverCandidates(),
+            MonitorSource.OpenCodeGo => _goResolver.DiscoverCandidates(),
+            _ => _deepSeekResolver.DiscoverCandidates(),
+        };
+
         try
         {
-            var provider = source == MonitorSource.CommandCodeGoat ? (IUsageProvider)_goatApi : _goApi;
-            var candidates = source == MonitorSource.CommandCodeGoat
-                ? _goatResolver.DiscoverCandidates()
-                : _goResolver.DiscoverCandidates();
-
             if (candidates.Count == 0)
             {
                 status.State = SourceState.AuthenticationRequired;
                 status.StatusText = "未配置凭据,请在设置中输入 API Key";
                 status.CredentialSource = "";
-                return false;
+                // 没配凭据不是故障。若算作失败,退避会把已经配好的源一起拖慢,
+                // 而 DeepSeek 这种"先加进来、Key 回头再填"的源很常见。
+                return true;
             }
 
             // 逐个候选尝试,直到成功(monitor 同款策略)
@@ -132,10 +175,7 @@ public sealed class UsageEngine : IDisposable
                 try
                 {
                     var snapshot = await provider.GetUsageAsync(candidate, token);
-                    if (source == MonitorSource.CommandCodeGoat)
-                        await _goatCache.SaveAsync(snapshot, token);
-                    else
-                        await _goCache.SaveAsync(snapshot, token);
+                    await CacheFor(source).SaveAsync(snapshot, token);
                     status.State = SourceState.Connected;
                     status.StatusText = $"已连接 · {snapshot.AccountLabel}";
                     status.CredentialSource = candidate.SourceLabel;
@@ -169,21 +209,26 @@ public sealed class UsageEngine : IDisposable
     /// <summary>设置窗口保存手动 Key(DPAPI 加密保存)并立即刷新。</summary>
     public async Task<bool> SaveManualKeyAsync(MonitorSource source, string apiKey, CancellationToken token = default)
     {
-        var provider = source == MonitorSource.CommandCodeGoat ? (IUsageProvider)_goatApi : _goApi;
-        var validation = await provider.ValidateCredentialAsync(apiKey, token);
+        var validation = await ProviderFor(source).ValidateCredentialAsync(apiKey, token);
         if (!validation.IsValid) return false;
-        if (source == MonitorSource.CommandCodeGoat)
-            _goatResolver.SaveManualKey(apiKey);
-        else
-            _goResolver.SaveManualKey(apiKey);
+        switch (source)
+        {
+            case MonitorSource.CommandCodeGoat: _goatResolver.SaveManualKey(apiKey); break;
+            case MonitorSource.OpenCodeGo: _goResolver.SaveManualKey(apiKey); break;
+            default: _deepSeekResolver.SaveManualKey(apiKey); break;
+        }
         RequestRefreshNow();
         return true;
     }
 
     public void ClearManualKey(MonitorSource source)
     {
-        if (source == MonitorSource.CommandCodeGoat) _goatResolver.ClearManualKey();
-        else _goResolver.ClearManualKey();
+        switch (source)
+        {
+            case MonitorSource.CommandCodeGoat: _goatResolver.ClearManualKey(); break;
+            case MonitorSource.OpenCodeGo: _goResolver.ClearManualKey(); break;
+            default: _deepSeekResolver.ClearManualKey(); break;
+        }
         RequestRefreshNow();
     }
 

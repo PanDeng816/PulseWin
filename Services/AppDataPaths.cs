@@ -40,8 +40,16 @@ public sealed class AppDataPaths
     public string SettingsFile => Path.Combine(RootDirectory, "settings.json");
     public string SnapshotFile => Path.Combine(RootDirectory, "snapshot.json");
     public string OpenCodeSnapshotFile => Path.Combine(RootDirectory, "opencode-go-snapshot.json");
+    public string DeepSeekSnapshotFile => Path.Combine(RootDirectory, "deepseek-snapshot.json");
     public string CredentialFile => Path.Combine(RootDirectory, "credential.bin");
     public string OpenCodeCredentialFile => Path.Combine(RootDirectory, "opencode-go-credential.bin");
+    public string DeepSeekCredentialFile => Path.Combine(RootDirectory, "deepseek-credential.bin");
+
+    /// <summary>DeepSeek 余额的观测峰值(每币种一份),sinceTopUp 模式的分母来源。</summary>
+    public string DeepSeekBaselineFile => Path.Combine(RootDirectory, "deepseek-baseline.json");
+
+    /// <summary>DeepSeek 余额的按小时采样账本,"今日消耗"柱状图的数据来源。</summary>
+    public string DeepSeekLedgerFile => Path.Combine(RootDirectory, "deepseek-ledger.json");
     public string DiagnosticsFile => Path.Combine(RootDirectory, "diagnostics.json");
 
     /// <summary>首次启动:把旧目录的快照/加密凭据/设置复制过来(不删除旧目录)。</summary>

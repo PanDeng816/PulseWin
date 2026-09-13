@@ -63,12 +63,40 @@ public partial class MainWindow : Window
     private const double RefreshAnimationTimeoutS = 45;
 
     // —— rail / 复合环几何(pt 单位,渲染 ×Pt.U) ——
+    // 环尺寸**固定**,不随订阅数缩放:多一个源就整体变长,不缩小环。
+    // 单元高度由"环心 + 环半径 + 读数行高"加出来,所以环与环之间不留多余空白。
     private const double RailWpt = 56;
-    private const double UnitHpt = 84;
-    private const double UnitGappt = 10;
-    private const double PadTopPt = 26;
-    private const double PadBottomPt = 22;
-    private const double RingCenterInUnit = 30; // 环心距 unit 顶
+
+    /// <summary>环外缘半径 = 中线直径/2 + 线宽/2(环的最外沿,不是中心线)。</summary>
+    private const double RingOuterRadius = OuterRingDpt / 2 + OuterWpt / 2;
+
+    /// <summary>环心距单元顶,即环外缘上方留 4pt。</summary>
+    private const double RingCenterInUnit = 28;
+
+    /// <summary>
+    /// rail 两端的留白。两个约束决定了这两个数:
+    /// ① 都**大于 berth 的圆角半径(26pt)**——圆角是从上下边缘往里缩的,留白小于它,
+    ///    首尾读数就会落进圆角区域,看着像被挤出去;
+    /// ② `PadBottom = PadTop + (环外缘到单元顶那段)`,这样**第一个环到 rail 顶的距离
+    ///    和最后一个环(或它下方读数)到 rail 底的距离相等**,上下对称。
+    /// </summary>
+    private const double PadTopPt = 24;
+    private const double PadBottomPt = PadTopPt + (RingCenterInUnit - RingOuterRadius);
+
+    /// <summary>相邻单元之间的间距。</summary>
+    private const double UnitGappt = 4;
+    /// <summary>环外缘到读数的间距。</summary>
+    private const double RingToTextGap = 6;
+    /// <summary>读数行高(13pt)。中文字体行距比拉丁大,算小了文字会被下一个环压住。</summary>
+    private const double TextLineHeight = 17;
+
+    /// <summary>环下是否显示读数(设置项)。关掉后 rail 是一条纯环列。</summary>
+    private bool ShowPercent => AppSettings.Current.ShowPercent;
+
+    /// <summary>单元高度:显示读数时"环 + 读数",否则只装环。</summary>
+    private double UnitHpt => ShowPercent
+        ? RingCenterInUnit + RingOuterRadius + RingToTextGap + TextLineHeight
+        : RingCenterInUnit + RingOuterRadius;
 
     private static readonly Brush TrackBrush = Frz(PanelPalette.Track);
     private static readonly Brush WhiteBrush = Frz(PanelPalette.Primary);
@@ -225,12 +253,14 @@ public partial class MainWindow : Window
     private PoolData? PoolOf(SubData sub, string kind) =>
         sub.Pools.FirstOrDefault(p => p.PoolKind == kind);
 
-    /// <summary>设置里的渲染参数(报警阈值/不透明度)变了:作废缓存并重绘。</summary>
+    /// <summary>
+    /// 设置变了:作废缓存并按新设置重新布局。显示源/读数这两个开关会改变 rail
+    /// 的内容与长度,所以必须走一次 ReloadData(它会重算尺寸)——只重绘不够。
+    /// </summary>
     public void ApplySettings()
     {
         _textCache.Clear();
-        _dirty = true;
-        InvalidateVisual();
+        ReloadData();
     }
 
     private void Tick()
@@ -516,7 +546,7 @@ public partial class MainWindow : Window
         if (!force && _card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
         var sub = _subs[ringIndex];
         bool stale = sub.IsStale(DateTimeOffset.UtcNow);
-        var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale);
+        var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale, sub.HourlySpend is not null);
         _cardFor = ringIndex;
         _card.Configure(sub, win, body, stale);
         _card.ShowCard();
@@ -623,48 +653,107 @@ public partial class MainWindow : Window
         bool vertical = IsVertical;
         var five = PoolOf(sub, "FiveHour");
         var month = PoolOf(sub, "Monthly");
+        // 余额型数据源(DeepSeek)只有一个池:没有 5 小时/本月的分片,
+        // 钱也没有"窗口"这回事,所以它只占一圈。
+        var balance = PoolOf(sub, "Balance");
 
         bool refreshing = _refreshStart[idx] > 0 && now < _refreshUntil[idx];
 
-        // 从内到外两圈:5小时(内,细)→ 总额度(外,粗)
-        DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, idx, now, vertical, refreshing);
-        DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), month, idx, now, vertical, refreshing);
-
-        // 环心小图标(品牌:白羊剪影 / GO 方块)
-        double icon = Pt.P(14);
-        if (sub.Key == "goat")
+        if (balance is not null)
         {
-            var bmp = Icons.GoatBitmap();
-            if (bmp is not null)
-                dc.DrawImage(bmp, new Rect(c.X - icon / 2, c.Y - icon / 2, icon, icon));
+            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), balance, idx, now, vertical, refreshing);
         }
         else
         {
-            var g = Icons.OpenCodeGeometry().Clone();
-            double s = icon / 24.0;
-            g.Transform = new MatrixTransform(s, 0, 0, s, c.X - icon / 2, c.Y - icon / 2);
-            dc.DrawGeometry(WhiteBrush, null, g);
+            // 从内到外两圈:5小时(内,细)→ 总额度(外,粗)
+            DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, idx, now, vertical, refreshing);
+            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), month, idx, now, vertical, refreshing);
         }
 
-        // 用量百分比(变色报警),不显示账户名。
-        bool avail = month is { IsAvailable: true };
-        double mf = avail ? Math.Clamp(month!.Fraction, 0, 1) : 0;
-        Color mtint = avail ? UsageTint.For(mf, month!.IsSpent) : PanelPalette.Track;
-        string pct = avail ? month!.PercentText : "--";
-        var pctFt = NewText(pct, Pt.P(13), FontWeights.SemiBold, CachedBrush(mtint));
+        DrawCentreIcon(dc, sub, c);
+
+        // 环下的读数(变色报警),不显示账户名。余额型取它的唯一池。
+        // 设置里关掉读数后,这里什么都不画——rail 就是一条纯环列。
+        if (!ShowPercent) return;
+
+        var headline = balance ?? month;
+        bool avail = headline is { IsAvailable: true };
+        double mf = avail ? Math.Clamp(headline!.Fraction, 0, 1) : 0;
+        Color mtint = avail ? UsageTint.For(mf, headline!.IsSpent) : PanelPalette.Track;
+        string label = avail ? headline!.DisplayText : "--";
+        // 百分比只有 "100%" 这么宽,金额却没有上限("¥1234.5" 比它长得多),
+        // 所以余额型读数用小一号,再叠一层宽度保护,极端值也不会顶到 rail 边
+        bool moneyReadout = headline is { PoolKind: "Balance", HasPercent: false };
+        var labelFt = FitLabel(label, mtint, moneyReadout ? 12 : 13);
         double outerR = Pt.P(OuterRingDpt) / 2;
         if (vertical)
         {
-            // 侧轨:百分比放在环下方
-            double pctTop = c.Y + outerR + Pt.P(6);
-            dc.DrawText(pctFt, new Point(c.X - pctFt.Width / 2, pctTop));
+            // 侧轨:读数紧贴在环下方
+            double labelTop = c.Y + outerR + Pt.P(RingToTextGap);
+            dc.DrawText(labelFt, new Point(c.X - labelFt.Width / 2, labelTop));
         }
         else
         {
             // 顶轨:环下方没有空间(会画到窗外),改放环右侧
-            dc.DrawText(pctFt, new Point(c.X + outerR + Pt.P(5), c.Y - pctFt.Height / 2));
+            dc.DrawText(labelFt, new Point(c.X + outerR + Pt.P(5), c.Y - labelFt.Height / 2));
         }
     }
+
+    /// <summary>
+    /// 取一个能塞进 rail 宽度的读数:先按给定字号试,放不下就按比例缩。
+    /// 字号量化到 0.5pt —— 否则 FormattedText 缓存会被连续变化的字号撑爆。
+    /// </summary>
+    private FormattedText FitLabel(string text, Color color, double baseSizePt)
+    {
+        var brush = CachedBrush(color);
+        // 两侧各留 9pt 的呼吸空间:rail 只有 56pt 宽,读数紧贴边会显得要溢出来
+        double available = Pt.P(RailWpt) - Pt.P(18);
+        double size = Pt.P(baseSizePt);
+
+        var fitted = NewText(text, size, FontWeights.SemiBold, brush);
+        if (fitted.Width <= available) return fitted;
+
+        double step = Pt.P(0.5);
+        double target = Math.Max(size * available / fitted.Width, Pt.P(9));
+        double quantized = Math.Max(Math.Floor(target / step) * step, Pt.P(9));
+        return NewText(text, quantized, FontWeights.SemiBold, brush);
+    }
+
+    /// <summary>环心图标:GOAT 用官方羊,DeepSeek 用官方鲸鱼,其余用 GO 方块——都是白色单色。</summary>
+    private void DrawCentreIcon(DrawingContext dc, SubData sub, Point c)
+    {
+        // 鲸鱼在 24 viewBox 里是"宽而扁"的(24×17.7),同样宽度下比方形图标矮一截,
+        // 所以给它多 3pt 让细节看得清。
+        double box = Pt.P(sub.Key == "deepseek" ? 17 : 14);
+
+        switch (sub.Key)
+        {
+            case "goat":
+                var bitmap = Icons.GoatBitmap();
+                if (bitmap is not null)
+                    dc.DrawImage(bitmap, new Rect(c.X - box / 2, c.Y - box / 2, box, box));
+                break;
+
+            case "deepseek":
+                var whale = Icons.DeepSeekGeometry().Clone();
+                double whaleScale = box / 24.0;
+                whale.Transform = new MatrixTransform(
+                    whaleScale, 0, 0, whaleScale, c.X - box / 2, c.Y - box / 2);
+                dc.DrawGeometry(WhiteBrush, null, whale);
+                break;
+
+            default:
+                var geometry = Icons.OpenCodeGeometry().Clone();
+                double scale = box / 24.0;
+                geometry.Transform = new MatrixTransform(
+                    scale, 0, 0, scale, c.X - box / 2, c.Y - box / 2);
+                dc.DrawGeometry(WhiteBrush, null, geometry);
+                break;
+        }
+    }
+
+    /// <summary>最外圈:GOAT/GO 的月弧,或余额型数据源唯一的那一圈。</summary>
+    private static bool IsOutermost(string poolKind) => poolKind is "Monthly" or "Balance";
 
     private void DrawArcLayer(DrawingContext dc, Point c, double midD, double lineW, PoolData? pool,
         int idx, double now, bool vertical, bool refreshing)
@@ -680,8 +769,8 @@ public partial class MainWindow : Window
         double frac = Math.Clamp(pool.Fraction, 0, 1);
         Color tint = UsageTint.For(frac, spent);
 
-        // hover:给最外层月弧画光晕
-        if (_hoverRing == idx && frac > 0.004 && pool.PoolKind == "Monthly")
+        // hover:给最外层弧画光晕
+        if (_hoverRing == idx && frac > 0.004 && IsOutermost(pool.PoolKind))
         {
             dc.DrawGeometry(null,
                 CachedRingPen(CachedBrush(Color.FromArgb(0x59, tint.R, tint.G, tint.B)), lineW + Pt.P(8)),
@@ -699,7 +788,7 @@ public partial class MainWindow : Window
         }
 
         // 刷新亮段(画在最外圈)
-        if (refreshing && pool.PoolKind == "Monthly")
+        if (refreshing && IsOutermost(pool.PoolKind))
         {
             double phase = ((now - _refreshStart[idx]) % Dock.RefreshPeriodS) / Dock.RefreshPeriodS;
             if (phase < 0) phase = 0;

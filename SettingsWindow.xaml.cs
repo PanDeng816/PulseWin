@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace PulseWin;
@@ -25,6 +27,13 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         _engine = engine;
+
+        // 高度固定为工作区的 2/3,其余靠滚动条看。设置项只会越加越多,
+        // 让窗口跟着内容长高迟早顶出屏幕。
+        var workArea = SystemParameters.WorkArea;
+        Height = Math.Round(workArea.Height * 2 / 3);
+        MaxHeight = Math.Max(workArea.Height - 40, 240);
+
         LoadSettings();
 
         _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -48,6 +57,19 @@ public partial class SettingsWindow : Window
         AlertSlider.Value = Math.Round(s.AlertThreshold * 100);
         OpacitySlider.Value = Math.Round(s.SurfaceOpacity * 100);
         IntervalSlider.Value = s.SyncIntervalSeconds;
+        BasisCombo.SelectedIndex = s.DeepSeekBasis switch
+        {
+            BalanceBasis.BalanceOnly => 1,
+            BalanceBasis.Budget => 2,
+            _ => 0,
+        };
+        BudgetBox.Text = s.DeepSeekBudget?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
+        ShowGoatBox.IsChecked = s.ShowGoat;
+        ShowGoBox.IsChecked = s.ShowOpenCode;
+        ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
+        ShowPercentBox.IsChecked = s.ShowPercent;
+        UpdateBasisHint();
+        UpdatePercentHint();
         _loading = false;
         UpdateLabels();
     }
@@ -73,8 +95,64 @@ public partial class SettingsWindow : Window
         s.SurfaceOpacity = OpacitySlider.Value / 100d;
         s.SyncIntervalSeconds = (int)IntervalSlider.Value;
         SettingsChanged?.Invoke();   // 让浮窗立刻按新值重绘
+        SaveSoon();
+    }
+
+    /// <summary>拖动滑块会连续触发:界面立即生效,落盘延迟到停手之后。</summary>
+    private void SaveSoon()
+    {
         _saveTimer.Stop();
         _saveTimer.Start();
+    }
+
+    // ————————————————— DeepSeek —————————————————
+
+    private BalanceBasis SelectedBasis() => BasisCombo.SelectedIndex switch
+    {
+        1 => BalanceBasis.BalanceOnly,
+        2 => BalanceBasis.Budget,
+        _ => BalanceBasis.SinceTopUp,
+    };
+
+    private void UpdateBasisHint()
+    {
+        var basis = SelectedBasis();
+        BudgetRow.Visibility = basis == BalanceBasis.Budget ? Visibility.Visible : Visibility.Collapsed;
+        BasisHint.Text = basis switch
+        {
+            BalanceBasis.SinceTopUp =>
+                "以本程序观察到的最高余额为满分:余额上涨只可能是充值,所以一涨就重置回满。"
+                + "首次运行没有历史峰值,环会从 0% 开始,直到真的花了钱。",
+            BalanceBasis.BalanceOnly =>
+                "不画百分比,环上直接显示余额金额(短写法,精确值在悬停卡里)。",
+            _ => "以你填的金额为满分:(预算 − 余额) / 预算。留空或填 0 则退回只看余额。",
+        };
+    }
+
+    private void BasisCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.DeepSeekBasis = SelectedBasis();
+        UpdateBasisHint();
+        SettingsChanged?.Invoke();
+        SaveSoon();
+        _engine.RequestRefreshNow();   // 分母换了,立刻按新基准重算一次
+    }
+
+    private void BudgetBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        string text = BudgetBox.Text?.Trim() ?? "";
+        double? value = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            && double.IsFinite(parsed) && parsed > 0
+            ? parsed
+            : null;
+
+        AppSettings.Current.DeepSeekBudget = value;
+        BudgetBox.Text = value?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
+        SettingsChanged?.Invoke();
+        SaveSoon();
+        _engine.RequestRefreshNow();
     }
 
     private void RefreshStatus()
@@ -99,6 +177,16 @@ public partial class SettingsWindow : Window
             _ => "正在使用最后一次成功数据;恢复后自动更新。",
         };
 
+        var ds = _engine.DeepSeek;
+        DeepSeekSource.Text = string.IsNullOrEmpty(ds.CredentialSource) ? "" : $"凭据来源:{ds.CredentialSource}";
+        DeepSeekStatus.Text = ds.StatusText;
+        DeepSeekHint.Text = ds.State switch
+        {
+            SourceState.Connected => "",
+            SourceState.AuthenticationRequired => "未找到凭据:输入 DeepSeek API Key(在 platform.deepseek.com 控制台创建)。",
+            _ => "正在使用最后一次成功数据;恢复后自动更新。",
+        };
+
         DataDirText.Text = $"数据目录(便携):{SnapshotSource.DataDirectory}";
     }
 
@@ -120,6 +208,39 @@ public partial class SettingsWindow : Window
         bool ok = await _engine.SaveManualKeyAsync(MonitorSource.OpenCodeGo, key);
         GoHint.Text = ok ? "已保存并连接成功。" : "验证失败:Key 无效或网络异常。";
         if (ok) GoKey.Clear();
+    }
+
+    private async void SaveDeepSeek_Click(object sender, RoutedEventArgs e)
+    {
+        var key = DeepSeekKey.Text?.Trim();
+        if (string.IsNullOrEmpty(key)) return;
+        DeepSeekHint.Text = "正在验证 Key…";
+        bool ok = await _engine.SaveManualKeyAsync(MonitorSource.DeepSeek, key);
+        DeepSeekHint.Text = ok ? "已保存并连接成功。" : "验证失败:Key 无效或网络异常。";
+        if (ok) DeepSeekKey.Clear();
+    }
+
+    // ————————————————— 主界面(显示哪些环 / 是否显示读数) —————————————————
+
+    private void Visibility_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        var s = AppSettings.Current;
+        s.ShowGoat = ShowGoatBox.IsChecked == true;
+        s.ShowOpenCode = ShowGoBox.IsChecked == true;
+        s.ShowDeepSeek = ShowDeepSeekBox.IsChecked == true;
+        s.ShowPercent = ShowPercentBox.IsChecked == true;
+        UpdatePercentHint();
+        // 主窗会按新的勾选重新加载数据并重算单元高度,rail 长度随即跟着变
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    private void UpdatePercentHint()
+    {
+        PercentHint.Text = ShowPercentBox.IsChecked == true
+            ? "读数显示在圆环下方,每个单元更高。"
+            : "已隐藏读数:rail 上只有圆环,间距与整体高度都会收窄。";
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

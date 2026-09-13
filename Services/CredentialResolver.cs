@@ -82,14 +82,17 @@ public sealed class CredentialResolver
     private readonly ISecretStore _secretStore;
     private readonly Func<string, string?> _environmentReader;
     private readonly string _authFilePath;
+    private readonly string _environmentVariable;
 
     public CredentialResolver(
         ISecretStore secretStore,
         Func<string, string?>? environmentReader = null,
-        string? authFilePath = null)
+        string? authFilePath = null,
+        string environmentVariable = ApiKeyEnvironmentVariable)
     {
         _secretStore = secretStore;
         _environmentReader = environmentReader ?? Environment.GetEnvironmentVariable;
+        _environmentVariable = environmentVariable;
         _authFilePath = authFilePath ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".commandcode",
@@ -99,7 +102,7 @@ public sealed class CredentialResolver
     public IReadOnlyList<CredentialCandidate> DiscoverCandidates()
     {
         var candidates = new List<CredentialCandidate>();
-        AddIfPresent(candidates, CredentialSource.Environment, _environmentReader(ApiKeyEnvironmentVariable));
+        AddIfPresent(candidates, CredentialSource.Environment, _environmentReader(_environmentVariable));
         AddIfPresent(candidates, CredentialSource.CliAuthFile, ReadCliKey());
         AddIfPresent(candidates, CredentialSource.ProtectedStore, _secretStore.Read());
 

@@ -1,9 +1,10 @@
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
 namespace PulseWin;
 
-/// <summary>一个额度池(5小时/本周/总额度)。</summary>
+/// <summary>一个额度池(5小时/本周/总额度/余额)。</summary>
 public sealed class PoolData
 {
     public required string Label { get; init; }
@@ -14,12 +15,41 @@ public sealed class PoolData
     public DateTimeOffset? ResetAt { get; set; }
     public bool IsAvailable { get; set; }
 
+    /// <summary>余额型池(DeepSeek)的当前金额读数。</summary>
+    public double? Amount { get; init; }
+
+    /// <summary>分母是估算出来的,这里写明来源("自上次充值"/"自设预算")。</summary>
+    public string? EstimateFrom { get; init; }
+
+    /// <summary>服务端/客户端的注记(如"未设置预算""开始观察")。</summary>
+    public string? Note { get; init; }
+
+    /// <summary>赠送余额(DeepSeek 的 granted_balance)。</summary>
+    public double? GrantedAmount { get; init; }
+
+    /// <summary>自己充值的余额(DeepSeek 的 topped_up_balance)。</summary>
+    public double? ToppedUpAmount { get; init; }
+
     public double Fraction =>
         Used is { } u && Cap is > 0 ? Math.Clamp(u / Cap.Value, 0, 1.02) : 0;
 
     public bool IsSpent => IsAvailable && Used is { } u && Cap is { } c && u >= c;
 
     public string PercentText => !IsAvailable ? "--" : $"{Fraction * 100:0}%";
+
+    /// <summary>有分母才画得出百分比。</summary>
+    public bool HasPercent => IsAvailable && Used is not null && Cap is > 0;
+
+    /// <summary>
+    /// 环上那一行读数:有百分比用百分比;没有则退回金额——DeepSeek 的"只看余额"
+    /// 模式就是这样,环上没有分数可画,钱本身就是读数。
+    /// </summary>
+    public string DisplayText => HasPercent ? $"{Fraction * 100:0}%"
+        : Amount is { } amount ? Money.Short(amount, Unit)
+        : "--";
+
+    /// <summary>这一池是否至少有东西可显示(金额也算读数)。</summary>
+    public bool HasReading => IsAvailable && (Used is not null || Amount is not null);
 
     public string ResetText => ResetAt is { } t
         ? "重置 " + t.ToLocalTime().ToString("MM-dd HH:mm")
@@ -49,10 +79,51 @@ public sealed class SubData
     public DateTimeOffset? FetchedAt { get; init; }  // 引擎最后一次成功同步的时刻
     public List<PoolData> Pools { get; init; } = new();
 
+    /// <summary>
+    /// 今日 0~23 点每小时的消耗金额(索引 = 小时),仅 DeepSeek 有。
+    /// 来自本程序自己的余额采样,单位与账户币种一致。
+    /// </summary>
+    public double[]? HourlySpend { get; set; }
+
     /// <summary>数据是否已过期(超过 3 个同步周期没有更新)。</summary>
     public bool IsStale(DateTimeOffset now) =>
         FetchedAt is { } t && now - t > TimeSpan.FromMinutes(3);
 }
+
+/// <summary>
+/// 金额短格式:环上只有一行的位置,而钱是没有上限的(¥5,000.00 要 64pt,
+/// 百分比"100%"只要 38pt)。所以 rail 用短写法,精确值留给 hover 卡。
+/// **截断而非四舍五入**:显示得比实际多是错错了方向(999,999 是 ¥999k,
+/// 不是进位后的 ¥1,000k)。
+/// </summary>
+public static class Money
+{
+    public static string Short(double value, string unit)
+    {
+        double magnitude = Math.Abs(value);
+        if (magnitude >= 1_000_000) return unit + Trim(value / 1_000_000, 1) + "M";
+        if (magnitude >= 1_000) return unit + Trim(value / 1_000, 0) + "k";
+        if (magnitude >= 100) return unit + Trim(value, 0);
+        return unit + Trim(value, 1);
+    }
+
+    /// <summary>精确到分,用于卡片。</summary>
+    public static string Exact(double? value, string unit) =>
+        value is { } v ? unit + v.ToString("0.00", CultureInfo.InvariantCulture) : "--";
+
+    private static string Trim(double value, int decimals)
+    {
+        double factor = Math.Pow(10, decimals);
+        double truncated = Math.Truncate(value * factor) / factor;
+        return truncated.ToString(decimals == 0 ? "0" : "0.#", CultureInfo.InvariantCulture);
+    }
+}
+
+/// <summary>
+/// 一个数据源的显示身份。三个源的差别只在标题和"月池"的叫法上,
+/// 加载逻辑是同一套。
+/// </summary>
+public sealed record SourceProfile(string Key, string Name, string MonthlyLabel);
 
 /// <summary>
 /// 把内置引擎(移植自 GOAT-Go-Usage-Monitor)落盘的快照映射到 UI 模型。
@@ -63,16 +134,20 @@ public static class SnapshotSource
     private static readonly AppDataPaths Paths = new();
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
+    private static readonly SourceProfile GoatProfile = new("goat", "GOAT", "总额度");
+    private static readonly SourceProfile GoProfile = new("opencode", "GO", "本月");
+    private static readonly SourceProfile DeepSeekProfile = new("deepseek", "DeepSeek", "余额");
+
     public static string DataDirectory => Paths.RootDirectory;
 
     /// <summary>
-    /// 两个快照文件的修改时间戳之和。引擎每 60s 才落盘一次,主循环每 15s 轮询时
+    /// 各快照文件修改时间戳之和。引擎每 60s 才落盘一次,主循环每 15s 轮询时
     /// 先用它短路,可以省掉无谓的读文件+反序列化+重建对象。
     /// </summary>
     public static long Stamp()
     {
         long stamp = 0;
-        foreach (var file in new[] { Paths.SnapshotFile, Paths.OpenCodeSnapshotFile })
+        foreach (var file in new[] { Paths.SnapshotFile, Paths.OpenCodeSnapshotFile, Paths.DeepSeekSnapshotFile })
         {
             try
             {
@@ -86,17 +161,36 @@ public static class SnapshotSource
         return stamp;
     }
 
+    /// <summary>
+    /// 按设置里勾选的源加载。关掉的源连高度都不占——rail 长度直接跟着走,
+    /// 所以"只显示某几个"不需要 UI 另做隐藏逻辑。
+    /// </summary>
     public static List<SubData> LoadAll()
     {
-        var subs = new List<SubData>(2);
-        var goat = LoadOne(Paths.SnapshotFile, isGoat: true);
-        if (goat is not null) subs.Add(goat);
-        var go = LoadOne(Paths.OpenCodeSnapshotFile, isGoat: false);
-        if (go is not null) subs.Add(go);
+        var settings = AppSettings.Current;
+        var subs = new List<SubData>(3);
+        if (settings.ShowGoat) Add(subs, Paths.SnapshotFile, GoatProfile);
+        if (settings.ShowOpenCode) Add(subs, Paths.OpenCodeSnapshotFile, GoProfile);
+        if (settings.ShowDeepSeek)
+        {
+            // 余额型数据源额外带上"今日每小时消耗"——那不在快照里,
+            // 是本程序自己按小时采样攒出来的(见 DeepSeekLedger)
+            if (LoadOne(Paths.DeepSeekSnapshotFile, DeepSeekProfile) is { } deepSeek)
+            {
+                deepSeek.HourlySpend = new DeepSeekLedger(Paths)
+                    .TodayHourlySpend(deepSeek.AccountLabel, DateTimeOffset.UtcNow);
+                subs.Add(deepSeek);
+            }
+        }
         return subs;
+
+        static void Add(List<SubData> target, string file, SourceProfile profile)
+        {
+            if (LoadOne(file, profile) is { } sub) target.Add(sub);
+        }
     }
 
-    private static SubData? LoadOne(string file, bool isGoat)
+    private static SubData? LoadOne(string file, SourceProfile profile)
     {
         try
         {
@@ -111,13 +205,15 @@ public static class SnapshotSource
                 {
                     QuotaKind.FiveHour => "FiveHour",
                     QuotaKind.Weekly => "Weekly",
+                    QuotaKind.Balance => "Balance",
                     _ => "Monthly",
                 };
                 string label = kind switch
                 {
                     "FiveHour" => "5小时",
                     "Weekly" => "本周",
-                    _ => isGoat ? "总额度" : "本月",
+                    "Balance" => "余额",
+                    _ => profile.MonthlyLabel,
                 };
                 pools.Add(new PoolData
                 {
@@ -128,12 +224,17 @@ public static class SnapshotSource
                     Unit = w.Unit,
                     ResetAt = w.ResetAt,
                     IsAvailable = w.IsAvailable,
+                    Amount = w.Amount,
+                    EstimateFrom = w.EstimateFrom,
+                    Note = w.Note,
+                    GrantedAmount = w.GrantedAmount,
+                    ToppedUpAmount = w.ToppedUpAmount,
                 });
             }
             return new SubData
             {
-                Key = isGoat ? "goat" : "opencode",
-                Name = isGoat ? "GOAT" : "GO",
+                Key = profile.Key,
+                Name = profile.Name,
                 AccountLabel = snapshot.AccountLabel,
                 PeriodTokens = snapshot.PeriodTokens,
                 FetchedAt = snapshot.FetchedAt,

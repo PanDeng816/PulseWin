@@ -48,8 +48,10 @@ public static class RailGeometry
     /// <summary>
     /// berth 外形。canonical 是竖放(面向右)的 rail rect;edge 决定最后摆向。
     /// openness:1 全展开,0 折叠成贴边 sliver(仅 docked 有意义)。
+    /// scale:与 rail 几何同一档的缩放(三个订阅时收紧),圆角与喇叭口要跟着缩,
+    /// 否则窄 rail 上的喇叭口会被 clamp 掉、形状走样。
     /// </summary>
-    public static Geometry Berth(Rect rect, DockEdge edge, bool isDocked, double openness)
+    public static Geometry Berth(Rect rect, DockEdge edge, bool isDocked, double openness, double scale = 1)
     {
         if (!isDocked || edge == DockEdge.Floating)
         {
@@ -68,7 +70,7 @@ public static class RailGeometry
             ? new Rect(0, 0, rect.Height, rect.Width)
             : new Rect(0, 0, rect.Width, rect.Height);
 
-        var g = FacingRight(v, openness);
+        var g = FacingRight(v, openness, scale);
         switch (edge)
         {
             case DockEdge.Left:
@@ -82,13 +84,13 @@ public static class RailGeometry
     }
 
     /// <summary>面向右的 rail:右缘直边贴屏幕,上/下端凹弧 flare 融入边缘。</summary>
-    private static StreamGeometry FacingRight(Rect rect, double openness)
+    private static StreamGeometry FacingRight(Rect rect, double openness, double scale)
     {
         double w = rect.Width, h = rect.Height;
-        double flareH = Dock.FlareHeight * openness;
-        double flareW = Dock.FlareWidth * openness;
-        double collapsedR = Dock.CollapsedWidth;
-        double cornerR = collapsedR + (Dock.CornerRadius - collapsedR) * openness;
+        double flareH = Dock.FlareHeight * openness * scale;
+        double flareW = Dock.FlareWidth * openness * scale;
+        double collapsedR = Dock.CollapsedWidth * scale;
+        double cornerR = collapsedR + (Dock.CornerRadius * scale - collapsedR) * openness;
 
         double f = Math.Min(flareH, h / 2);
         double r = Math.Clamp(cornerR, 0, Math.Min(w, (h - f * 2) / 2));
