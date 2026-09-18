@@ -43,7 +43,10 @@ public sealed class CommandCodeApiClient : IUsageProvider
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress ??= ProductionBaseAddress;
-        _httpClient.Timeout = TimeSpan.FromSeconds(15);
+        // 30s,不是 15s:实测四个端点里 `billing/subscriptions` 常态 3~4s,但会偶发
+        // 超过 15s —— 那一轮就整轮算失败(诊断里见过"连接 Command Code 超时")。
+        // 用户感知上,"30 秒内拿到数据"远好于"15 秒就放弃、然后等下一轮"。
+        _httpClient.Timeout = TimeSpan.FromSeconds(30);
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
 

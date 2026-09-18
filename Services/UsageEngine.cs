@@ -33,8 +33,20 @@ public sealed class UsageEngine : IDisposable
     private readonly CancellationTokenSource _life = new();
     private readonly SemaphoreSlim _signal = new(0, 1);
 
-    /// <summary>每个源上一次记过的错误:同一个错误不重复刷诊断(见 SyncSourceAsync)。</summary>
-    private readonly Dictionary<string, string> _lastError = new(StringComparer.Ordinal);
+    /// <summary>每个源上一次记过的错误:同一个错误不重复刷诊断(见 SyncSourceAsync)。
+    /// 用并发字典是因为各源的同步现在是并行的。</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _lastError =
+        new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// 服务端明确说"不可用"的源(账户未订阅、Key 无权)下次允许重试的时刻。
+    ///
+    /// 这类错误**重试再快也不会成功**——每轮都撞一次只是白打请求;但也不能放弃,
+    /// 因为订阅续上之后应当自己恢复,不该要求用户记得回来手动打开。所以按一个较长
+    /// 周期静默重试;手动刷新(立即刷新 / 点环)会强制立即试一次。
+    /// </summary>
+    private readonly Dictionary<MonitorSource, DateTimeOffset> _retryAfter = new();
+    private static readonly TimeSpan PermissionRetryDelay = TimeSpan.FromMinutes(30);
 
     private static readonly TimeSpan FailureDelay = TimeSpan.FromSeconds(60);
 
@@ -72,11 +84,13 @@ public sealed class UsageEngine : IDisposable
 
     public void Start() => _ = Task.Run(() => Loop(_life.Token));
 
-    /// <summary>立即唤醒一次同步(跳过剩余等待)。</summary>
+    /// <summary>立即唤醒一次同步(跳过剩余等待与任何静默周期)。</summary>
     public void RequestRefreshNow()
     {
         try
         {
+            // 手动刷新要连"正在静默等待"的源也一起试(用户续订后点一下就该看到恢复)
+            _forceNextSync = true;
             // 只唤醒不排队:连续点击"立即刷新"不该攒出多次同步
             if (_signal.CurrentCount == 0) _signal.Release();
         }
@@ -84,6 +98,9 @@ public sealed class UsageEngine : IDisposable
         {
         }
     }
+
+    /// <summary>把手动刷新标记只交给紧随其后的那一轮。</summary>
+    private bool _forceNextSync;
 
     private async Task Loop(CancellationToken token)
     {
@@ -121,9 +138,34 @@ public sealed class UsageEngine : IDisposable
     /// <summary>同步一轮(全部数据源),并按源更新各自的失败计数。</summary>
     private async Task SyncOnce(CancellationToken token, Dictionary<MonitorSource, int> failures)
     {
-        foreach (var source in AllSources)
+        bool force = _forceNextSync;
+        _forceNextSync = false;
+        var now = DateTimeOffset.Now;
+
+        // 服务端明确拒绝过的源:在静默期内不再每轮去撞(手动刷新例外)。
+        // 续订之后最长等一个静默周期就会自己恢复,不需要用户记得回来手动打开。
+        var due = AllSources
+            .Where(source => force
+                || !_retryAfter.TryGetValue(source, out var until)
+                || now >= until)
+            .ToList();
+
+        // **三个源并行**发请求。串行时一个源卡住,后面的源就得排队等它——
+        // 实测见过 GOAT 单次请求超 15s,整轮就被拖长;而"按源独立退避"本来就
+        // 意味着它们互不牵连,那么同步也该并着做。
+        var results = await Task.WhenAll(due.Select(async source =>
+            (Source: source, Outcome: await SyncSourceAsync(source, token))));
+
+        foreach (var (source, (ok, denied)) in results)
         {
-            bool ok = await SyncSourceAsync(source, token);
+            if (denied)
+            {
+                // 权限类失败**既不记失败次数也不参与整轮节奏**:它已经在静默期里,
+                // 再让它拖慢别人就是 v1.2.1 修的那个 bug 的翻版。
+                _retryAfter[source] = DateTimeOffset.Now + PermissionRetryDelay;
+                continue;
+            }
+            _retryAfter.Remove(source);
             failures[source] = ok ? 0 : Math.Min(failures.GetValueOrDefault(source) + 1, 3);
         }
         SnapshotsChanged?.Invoke();
@@ -148,7 +190,11 @@ public sealed class UsageEngine : IDisposable
         _ => _deepSeekCache,
     };
 
-    private async Task<bool> SyncSourceAsync(MonitorSource source, CancellationToken token)
+    /// <summary>
+    /// 同步一个源。返回两件事:是否成功,以及是不是**被服务端明确拒绝**。
+    /// 后者要单独说出来——它不是"暂时失败",重试节奏完全不同(见 _retryAfter)。
+    /// </summary>
+    private async Task<(bool Ok, bool PermissionDenied)> SyncSourceAsync(MonitorSource source, CancellationToken token)
     {
         var status = source switch
         {
@@ -179,7 +225,7 @@ public sealed class UsageEngine : IDisposable
                 status.CredentialSource = "";
                 // 没配凭据不是故障。若算作失败,退避会把已经配好的源一起拖慢,
                 // 而 DeepSeek 这种"先加进来、Key 回头再填"的源很常见。
-                return true;
+                return (true, false);
             }
 
             // 逐个候选尝试,直到成功(monitor 同款策略)
@@ -194,8 +240,8 @@ public sealed class UsageEngine : IDisposable
                     status.StatusText = $"已连接 · {snapshot.AccountLabel}";
                     status.CredentialSource = candidate.SourceLabel;
                     status.FetchedAt = snapshot.FetchedAt;
-                    _lastError.Remove(name);
-                    return true;
+                    _lastError.TryRemove(name, out _);
+                    return (true, false);
                 }
                 catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
                 {
@@ -212,9 +258,8 @@ public sealed class UsageEngine : IDisposable
         catch (Exception ex)
         {
             // 保留最后一次成功快照,标记过期
-            status.State = ex is CommandCodeApiException { IsAuthenticationError: true }
-                ? SourceState.AuthenticationRequired
-                : SourceState.Stale;
+            bool denied = ex is CommandCodeApiException { IsAuthenticationError: true };
+            status.State = denied ? SourceState.AuthenticationRequired : SourceState.Stale;
             status.StatusText = ex.Message;
             // 同一个源反复报同一个错(账户未订阅、Key 失效)不必每次都记:诊断只留
             // 100 条,同一行刷屏会把真正有用的历史挤掉。错误内容变了才重新记一条。
@@ -223,7 +268,7 @@ public sealed class UsageEngine : IDisposable
                 Diagnostics.Note($"{name} 同步失败", ex);
                 _lastError[name] = ex.Message;
             }
-            return false;
+            return (false, denied);
         }
     }
 
