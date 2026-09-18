@@ -33,6 +33,9 @@ public sealed class UsageEngine : IDisposable
     private readonly CancellationTokenSource _life = new();
     private readonly SemaphoreSlim _signal = new(0, 1);
 
+    /// <summary>每个源上一次记过的错误:同一个错误不重复刷诊断(见 SyncSourceAsync)。</summary>
+    private readonly Dictionary<string, string> _lastError = new(StringComparer.Ordinal);
+
     private static readonly TimeSpan FailureDelay = TimeSpan.FromSeconds(60);
 
     /// <summary>同步成功后的间隔,来自设置(默认 60s)。</summary>
@@ -84,14 +87,19 @@ public sealed class UsageEngine : IDisposable
 
     private async Task Loop(CancellationToken token)
     {
-        int consecutiveFailures = 0;
+        // **每个源自己记失败次数**。整轮共用一个计数器是错的:一个源坏了会把
+        // 其它源一起拖进退避。实测过这个故障:OpenCode Go 的账户未订阅、每次同步
+        // 必然失败,于是整轮永远算失败、连续 3 次后退避到 5 分钟——GOAT 明明每轮
+        // 都成功,也只能 5 分钟更新一次,界面上就是"数据 X 分钟前 · 未能刷新"。
+        var failures = new Dictionary<MonitorSource, int>();
         while (!token.IsCancellationRequested)
         {
-            bool ok = await SyncOnce(token);
+            await SyncOnce(token, failures);
 
-            // 成功按 60s 周期;失败逐步退避到 2 分钟,避免断网时每 60s 撞一次
-            consecutiveFailures = ok ? 0 : Math.Min(consecutiveFailures + 1, 3);
-            var delay = consecutiveFailures switch
+            // 整轮的节奏取**最健康的那个源**:只要还有源在正常工作就按正常周期跑,
+            // 全都失败才退避(避免断网时每 60s 撞一次)。
+            int healthiest = failures.Count == 0 ? 0 : failures.Values.Min();
+            var delay = healthiest switch
             {
                 0 => SuccessDelay,
                 1 => FailureDelay,
@@ -110,15 +118,21 @@ public sealed class UsageEngine : IDisposable
         }
     }
 
-    /// <summary>同步一轮(全部数据源),返回是否全部成功。</summary>
-    private async Task<bool> SyncOnce(CancellationToken token)
+    /// <summary>同步一轮(全部数据源),并按源更新各自的失败计数。</summary>
+    private async Task SyncOnce(CancellationToken token, Dictionary<MonitorSource, int> failures)
     {
-        bool goatOk = await SyncSourceAsync(MonitorSource.CommandCodeGoat, token);
-        bool goOk = await SyncSourceAsync(MonitorSource.OpenCodeGo, token);
-        bool deepSeekOk = await SyncSourceAsync(MonitorSource.DeepSeek, token);
+        foreach (var source in AllSources)
+        {
+            bool ok = await SyncSourceAsync(source, token);
+            failures[source] = ok ? 0 : Math.Min(failures.GetValueOrDefault(source) + 1, 3);
+        }
         SnapshotsChanged?.Invoke();
-        return goatOk && goOk && deepSeekOk;
     }
+
+    private static readonly MonitorSource[] AllSources =
+    [
+        MonitorSource.CommandCodeGoat, MonitorSource.OpenCodeGo, MonitorSource.DeepSeek
+    ];
 
     private IUsageProvider ProviderFor(MonitorSource source) => source switch
     {
@@ -180,6 +194,7 @@ public sealed class UsageEngine : IDisposable
                     status.StatusText = $"已连接 · {snapshot.AccountLabel}";
                     status.CredentialSource = candidate.SourceLabel;
                     status.FetchedAt = snapshot.FetchedAt;
+                    _lastError.Remove(name);
                     return true;
                 }
                 catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
@@ -201,7 +216,13 @@ public sealed class UsageEngine : IDisposable
                 ? SourceState.AuthenticationRequired
                 : SourceState.Stale;
             status.StatusText = ex.Message;
-            Diagnostics.Note($"{name} 同步失败", ex);
+            // 同一个源反复报同一个错(账户未订阅、Key 失效)不必每次都记:诊断只留
+            // 100 条,同一行刷屏会把真正有用的历史挤掉。错误内容变了才重新记一条。
+            if (_lastError.GetValueOrDefault(name) != ex.Message)
+            {
+                Diagnostics.Note($"{name} 同步失败", ex);
+                _lastError[name] = ex.Message;
+            }
             return false;
         }
     }
