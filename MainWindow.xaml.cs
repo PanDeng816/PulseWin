@@ -55,12 +55,40 @@ public partial class MainWindow : Window
     /// <summary>请求马上走一次真实 API 刷新(由 App 接到 UsageEngine)。</summary>
     public event Action? RefreshRequested;
 
+    /// <summary>
+    /// 在 rail 形状上点了右键(屏幕 DIU 坐标)。菜单由 App 弹:只有它知道
+    /// 当前有哪些动作可用(设置 / 统计 / 有没有新版本)。
+    /// </summary>
+    public event Action<Point>? RailMenuRequested;
+
+    /// <summary>
+    /// 菜单是否开着。开着时**不许自动隐藏**——指针这会儿在菜单上,按面板的判定
+    /// 属于"离开了内容",不等这一条的话菜单一弹出来 rail 就收回去(上游专门记过这个坑)。
+    /// </summary>
+    private bool _menuOpen;
+
+    public void SetMenuOpen(bool open)
+    {
+        _menuOpen = open;
+        _hideSince = -1;
+        _dirty = true;
+    }
+
+    /// <summary>菜单弹出时用的锚点(rail 上的那个点),供 App 定位。</summary>
+    public Point MenuAnchor { get; private set; }
+
+    /// <summary>rail 当前是否露在外面(右键菜单与托盘菜单的文案要用)。</summary>
+    public bool IsRailVisible => !_docked || _peekVisible;
+
     private const bool AutoHideEnabled = true;
     private const double HotZoneWidth = 16;
     private const double HideDelaySeconds = 0.9;
     private const double PeekStep = 0.5;
     /// <summary>点击刷新后动画的安全上限(正常情况下 SnapshotsChanged 会提前结束它)。</summary>
     private const double RefreshAnimationTimeoutS = 45;
+
+    /// <summary>刷新亮段的最短显示时长:短于它,用户会以为没刷新(上游规格 650ms)。</summary>
+    private const double MinRefreshAnimationS = 0.65;
 
     // —— rail / 复合环几何(pt 单位,渲染 ×Pt.U) ——
     // 环尺寸**固定**,不随订阅数缩放:多一个源就整体变长,不缩小环。
@@ -140,6 +168,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         Native.ApplyToolWindowStyle(this);
         Native.HookScreenChanges(this);
+        // 右键走窗口过程,几何与拖动同一个形状:能拖的地方就能右键(细条状态也一样)
+        Native.HookContextMenu(this, HitArea, point =>
+        {
+            MenuAnchor = point;
+            RailMenuRequested?.Invoke(point);
+        });
         _ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _ticker.Tick += (_, _) => Tick();
         _ticker.Start();
@@ -153,10 +187,12 @@ public partial class MainWindow : Window
         Close();
     }
 
-    /// <summary>托盘"显示/隐藏":手动切换停靠 rail 的滑入滑出。</summary>
+    /// <summary>托盘菜单 / 全局快捷键:手动切换停靠 rail 的滑入滑出。</summary>
     public void ToggleRailVisible()
     {
         if (!_docked) return;
+        // 留一条诊断:"快捷键没反应"时,先分清是没触发,还是触发了但浮动状态不响应
+        Diagnostics.Note($"手动切换浮窗: {(_peekVisible ? "隐藏" : "显示")}");
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         SetPeekVisible(!_peekVisible, wa);
     }
@@ -227,8 +263,14 @@ public partial class MainWindow : Window
         if (fromEngine && _refreshPending)
         {
             _refreshPending = false;
-            Array.Clear(_refreshStart);
-            Array.Clear(_refreshUntil);
+            // **至少亮够 650ms**:本地读数常常几十毫秒就回来了,亮段一闪而过,
+            // 用户什么都没看见 = 以为没刷新(上游为此定了这条下限)。
+            double now = _clock.Elapsed.TotalSeconds;
+            for (int i = 0; i < _refreshStart.Length; i++)
+            {
+                if (_refreshStart[i] > 0)
+                    _refreshUntil[i] = Math.Max(_refreshStart[i] + MinRefreshAnimationS, now);
+            }
         }
 
         _dirty = true;
@@ -391,7 +433,7 @@ public partial class MainWindow : Window
 
     private void UpdatePeek(Point diu, bool overContent, bool leftDown, double now)
     {
-        if (!AutoHideEnabled || !_docked || _dragging) return;
+        if (!AutoHideEnabled || !_docked || _dragging || _menuOpen) return;
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
 
         // 热区只覆盖 rail 自己所在的那段区域(垂直居中的主界面高度范围),
@@ -661,13 +703,13 @@ public partial class MainWindow : Window
 
         if (balance is not null)
         {
-            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), balance, idx, now, vertical, refreshing);
+            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), balance, sub, idx, now, vertical, refreshing);
         }
         else
         {
             // 从内到外两圈:5小时(内,细)→ 总额度(外,粗)
-            DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, idx, now, vertical, refreshing);
-            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), month, idx, now, vertical, refreshing);
+            DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, sub, idx, now, vertical, refreshing);
+            DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), month, sub, idx, now, vertical, refreshing);
         }
 
         DrawCentreIcon(dc, sub, c);
@@ -679,7 +721,7 @@ public partial class MainWindow : Window
         var headline = balance ?? month;
         bool avail = headline is { IsAvailable: true };
         double mf = avail ? Math.Clamp(headline!.Fraction, 0, 1) : 0;
-        Color mtint = avail ? UsageTint.For(mf, headline!.IsSpent) : PanelPalette.Track;
+        Color mtint = avail ? TintFor(sub, mf, headline!.IsSpent) : PanelPalette.Track;
         string label = avail ? headline!.DisplayText : "--";
         // 百分比只有 "100%" 这么宽,金额却没有上限("¥1234.5" 比它长得多),
         // 所以余额型读数用小一号,再叠一层宽度保护,极端值也不会顶到 rail 边
@@ -752,11 +794,23 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 环的颜色。**默认含义是"离上限还有多远"**(绿→红),不是"这是哪个产品"
+    /// ——产品由环心图标表示。设置里给某个源固定颜色是可选的(per-account),
+    /// 但**封顶时一定是深红**:那是唯一不许被自定义色盖掉的状态。
+    /// </summary>
+    private static Color TintFor(SubData sub, double fraction, bool spent)
+    {
+        Color automatic = UsageTint.For(fraction, spent);
+        if (spent) return automatic;
+        return PanelPalette.Parse(AppSettings.Current.TintFor(sub.Key)) ?? automatic;
+    }
+
     /// <summary>最外圈:GOAT/GO 的月弧,或余额型数据源唯一的那一圈。</summary>
     private static bool IsOutermost(string poolKind) => poolKind is "Monthly" or "Balance";
 
     private void DrawArcLayer(DrawingContext dc, Point c, double midD, double lineW, PoolData? pool,
-        int idx, double now, bool vertical, bool refreshing)
+        SubData sub, int idx, double now, bool vertical, bool refreshing)
     {
         double midR = midD / 2;
 
@@ -767,7 +821,7 @@ public partial class MainWindow : Window
 
         bool spent = pool.IsSpent;
         double frac = Math.Clamp(pool.Fraction, 0, 1);
-        Color tint = UsageTint.For(frac, spent);
+        Color tint = TintFor(sub, frac, spent);
 
         // hover:给最外层弧画光晕
         if (_hoverRing == idx && frac > 0.004 && IsOutermost(pool.PoolKind))

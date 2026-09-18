@@ -52,6 +52,12 @@ public sealed class AppDataPaths
     public string DeepSeekLedgerFile => Path.Combine(RootDirectory, "deepseek-ledger.json");
     public string DiagnosticsFile => Path.Combine(RootDirectory, "diagnostics.json");
 
+    /// <summary>模型牌价缓存(从 models.dev 拉取后裁剪;不存在时用内置表)。</summary>
+    public string ModelPricesFile => Path.Combine(RootDirectory, "model-prices.json");
+
+    /// <summary>通知状态(哪些池已经提过哪一档、上次看到的重置时刻)。</summary>
+    public string AlertStateFile => Path.Combine(RootDirectory, "alert-state.json");
+
     /// <summary>首次启动:把旧目录的快照/加密凭据/设置复制过来(不删除旧目录)。</summary>
     public void MigrateFromLegacy()
     {

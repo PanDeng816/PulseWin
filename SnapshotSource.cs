@@ -140,6 +140,9 @@ public static class SnapshotSource
 
     public static string DataDirectory => Paths.RootDirectory;
 
+    /// <summary>数据目录路径对象(用量统计等模块要拿同一份,避免各建各的)。</summary>
+    public static AppDataPaths DataPaths => Paths;
+
     /// <summary>
     /// 各快照文件修改时间戳之和。引擎每 60s 才落盘一次,主循环每 15s 轮询时
     /// 先用它短路,可以省掉无谓的读文件+反序列化+重建对象。

@@ -37,4 +37,30 @@ public static class PanelPalette
     public static readonly Color Dim = Color.FromArgb(0x8C, 0xF5, 0xF5, 0xF7);
     /// <summary>更淡(组名/辅助)。</summary>
     public static readonly Color Faint = Color.FromArgb(0x59, 0xF5, 0xF5, 0xF7);
+
+    /// <summary>把设置里存的 "#RRGGBB"/"#AARRGGBB" 解析成颜色;解析不了返回 null(不猜)。</summary>
+    public static Color? Parse(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        string value = text.Trim().TrimStart('#');
+        if (value.Length is not (6 or 8)) return null;
+        try
+        {
+            byte a = 0xFF, r, g, b;
+            int offset = 0;
+            if (value.Length == 8)
+            {
+                a = Convert.ToByte(value[..2], 16);
+                offset = 2;
+            }
+            r = Convert.ToByte(value.Substring(offset, 2), 16);
+            g = Convert.ToByte(value.Substring(offset + 2, 2), 16);
+            b = Convert.ToByte(value.Substring(offset + 4, 2), 16);
+            return Color.FromArgb(a, r, g, b);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

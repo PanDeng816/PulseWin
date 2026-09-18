@@ -9,8 +9,13 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>PulseWin</AssemblyName>
     <RootNamespace>PulseWin</RootNamespace>
+    <!-- 更新检查要拿它和 GitHub 上的 tag 比 -->
+    <Version>1.2.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- 用量统计要读 SQLite(Microsoft.Data.Sqlite 带原生 e_sqlite3.dll);
+         单文件发布必须让它自解压,否则运行时报"找不到指定的模块"。 -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 内置模型牌价(从 models.dev 裁剪:第一方 + 套餐厂商,约 47KB)。
+         运行时会被 Data\model-prices.json 的下载版覆盖。 -->
+    <EmbeddedResource Include="Services\Spend\model-prices.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
