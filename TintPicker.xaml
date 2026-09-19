@@ -1,0 +1,90 @@
+<UserControl x:Class="PulseWin.TintPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="Chip" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4"
+                                BorderThickness="2" BorderBrush="Transparent"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#CCFFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="selected">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <ToggleButton x:Name="SwatchButton" Click="Swatch_Click" Width="96" Height="26" Cursor="Hand"
+                      Focusable="False">
+            <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" Background="#141419" BorderBrush="#3A3A44" BorderThickness="1"
+                            CornerRadius="4">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#5A5A66"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#5A5A66"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </ToggleButton.Template>
+            <!-- 色块与文字放 Content 里(名字在窗口名字域内,代码可直接引用) -->
+            <Grid Margin="4,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="SwatchFill" Width="30" Height="16" CornerRadius="3"/>
+                <TextBlock x:Name="SwatchText" Grid.Column="1" Margin="6,0,0,0" FontSize="11"
+                           VerticalAlignment="Center" Foreground="#8CF5F5F7"/>
+            </Grid>
+        </ToggleButton>
+
+        <!-- 色板弹层:与设置窗卡片同风格(暗色圆角),点色即生效并关闭 -->
+        <Popup x:Name="PalettePopup" AllowsTransparency="True" StaysOpen="False"
+               Placement="Bottom" PlacementTarget="{Binding ElementName=SwatchButton}"
+               VerticalOffset="4">
+            <Border Background="#26262E" BorderBrush="#3A3A44" BorderThickness="1" CornerRadius="10"
+                    Padding="12" Margin="10" Width="236">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="固定环色" FontSize="12" Foreground="#8CF5F5F7" Margin="2,0,0,8"/>
+                    <UniformGrid x:Name="Palette" Columns="5" Rows="4"/>
+                    <Button Content="按用量着色(自动)" Click="Auto_Click" Height="26" Margin="0,10,0,0"
+                            FontSize="12"/>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="HexBox" Height="26" VerticalContentAlignment="Center" FontSize="12"
+                                 Background="#141419" Foreground="#F5F5F7" BorderBrush="#3A3A44"
+                                 KeyDown="Hex_KeyDown" LostFocus="Hex_LostFocus"/>
+                        <Button Grid.Column="1" Content="填入" Width="44" Height="26" Margin="6,0,0,0"
+                                Click="HexApply_Click" FontSize="12"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

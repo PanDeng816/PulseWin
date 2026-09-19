@@ -187,11 +187,10 @@ public partial class MainWindow : Window
         Close();
     }
 
-    /// <summary>托盘菜单 / 全局快捷键:手动切换停靠 rail 的滑入滑出。</summary>
+    /// <summary>托盘菜单:手动切换停靠 rail 的滑入滑出。</summary>
     public void ToggleRailVisible()
     {
         if (!_docked) return;
-        // 留一条诊断:"快捷键没反应"时,先分清是没触发,还是触发了但浮动状态不响应
         Diagnostics.Note($"手动切换浮窗: {(_peekVisible ? "隐藏" : "显示")}");
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         SetPeekVisible(!_peekVisible, wa);
@@ -343,7 +342,9 @@ public partial class MainWindow : Window
         // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住),并强制重画一帧。
         // 分层窗口(AllowsTransparency)滑出到屏外期间, WPF 会把失效请求丢掉且之后不再补:
         // 只靠"数据变了才重绘"的话, 环上会永久停在旧数字(卡片是新的、环是旧的)。
-        if (_peekVisible && (_tickCount++ % 60 == 0))
+        // **菜单开着时必须跳过**:菜单窗也是 topmost 且激活在前,这一下会把 rail 提到
+        // 菜单上面——右键菜单弹两秒后被 rail 盖住,就是它干的。
+        if (_peekVisible && !_menuOpen && (_tickCount++ % 60 == 0))
         {
             Native.BringToTopmost(this);
             _dirty = true;

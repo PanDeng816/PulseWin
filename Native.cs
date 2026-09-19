@@ -18,15 +18,6 @@ public static class Native
     public const int WM_DISPLAYCHANGE = 0x007E;
     public const int WM_SETTINGCHANGE = 0x001A;
     public const int WM_RBUTTONUP = 0x0205;
-    public const int WM_HOTKEY = 0x0312;
-
-    // 热键修饰键。**要求至少带一个**:只按 Shift 或只按一个字母的组合,
-    // 等于替没提要求的人从别的程序手里拿走一个键(见 RegisterHotkey 的说明)。
-    public const uint MOD_ALT = 0x0001;
-    public const uint MOD_CONTROL = 0x0002;
-    public const uint MOD_SHIFT = 0x0004;
-    public const uint MOD_WIN = 0x0008;
-    public const uint MOD_NOREPEAT = 0x4000;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
@@ -56,6 +47,16 @@ public static class Native
     {
         if (!w.IsVisible) return;
         IntPtr h = new WindowInteropHelper(w).Handle;
+        if (h != IntPtr.Zero)
+            SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
+    /// <summary>
+    /// 把任意 HWND 提到置顶层最上(不激活)。托盘/后台弹出的菜单是普通层级的
+    /// 独立 HWND,会被前台窗口整个盖住——弹出时必须提一次才看得见。
+    /// </summary>
+    public static void BringHwndTopmost(IntPtr h)
+    {
         if (h != IntPtr.Zero)
             SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }
@@ -140,120 +141,6 @@ public static class Native
                     return IntPtr.Zero;
                 });
         };
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-
-    /// <summary>
-    /// 注册一个全局快捷键。返回 false 表示注册失败(组合被别的程序占了,或和自己
-    /// 另一个快捷键撞了)——**必须把这个说出来**,一个悄悄不生效的快捷键比没有更糟,
-    /// 因为用户会去怪功能本身。
-    /// </summary>
-    public static bool RegisterHotkey(Window w, int id, uint modifiers, uint virtualKey)
-    {
-        IntPtr h = new WindowInteropHelper(w).Handle;
-        return h != IntPtr.Zero && RegisterHotKey(h, id, modifiers | MOD_NOREPEAT, virtualKey);
-    }
-
-    public static void UnregisterHotkey(Window w, int id)
-    {
-        IntPtr h = new WindowInteropHelper(w).Handle;
-        if (h != IntPtr.Zero) UnregisterHotKey(h, id);
-    }
-
-    /// <summary>接 <c>WM_HOTKEY</c>,把注册号交回调用方。</summary>
-    public static void HookHotkey(Window w, Action<int> pressed)
-    {
-        w.SourceInitialized += (_, _) =>
-        {
-            IntPtr h = new WindowInteropHelper(w).Handle;
-            HwndSource.FromHwnd(h)?.AddHook(
-                (IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
-                {
-                    if (msg != WM_HOTKEY) return IntPtr.Zero;
-                    pressed(wParam.ToInt32());
-                    handled = true;
-                    return IntPtr.Zero;
-                });
-        };
-    }
-
-    /// <summary>把 "Ctrl+Alt+P" 这样的写法解析成 (修饰键, 虚拟键码)。空/非法返回 null。</summary>
-    public static (uint Modifiers, uint Key)? ParseHotkey(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return null;
-        uint modifiers = 0;
-        uint key = 0;
-        foreach (var rawPart in text.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            string part = rawPart.ToLowerInvariant();
-            switch (part)
-            {
-                case "ctrl" or "control": modifiers |= MOD_CONTROL; continue;
-                case "alt": modifiers |= MOD_ALT; continue;
-                case "shift": modifiers |= MOD_SHIFT; continue;
-                case "win" or "windows": modifiers |= MOD_WIN; continue;
-            }
-            var parsed = ParseKey(part);
-            if (parsed is null) return null;
-            key = parsed.Value;
-        }
-        // 必须含 Ctrl/Alt/Win 之一;只带 Shift 或什么都不带的组合会被拒——
-        // 那种键等于从所有程序的输入框里拿走一个字母。
-        if (key == 0) return null;
-        if ((modifiers & (MOD_CONTROL | MOD_ALT | MOD_WIN)) == 0) return null;
-        return (modifiers, key);
-    }
-
-    private static uint? ParseKey(string part)
-    {
-        if (part.Length == 1 && part[0] is >= 'a' and <= 'z')
-            return (uint)char.ToUpperInvariant(part[0]);
-        if (part.Length == 1 && part[0] is >= '0' and <= '9')
-            return (uint)part[0];
-        if (part.StartsWith('f') && int.TryParse(part[1..], out int fn) && fn is >= 1 and <= 24)
-            return (uint)(0x70 + fn - 1);   // VK_F1
-        return part switch
-        {
-            "space" => 0x20,
-            "tab" => 0x09,
-            "enter" or "return" => 0x0D,
-            "esc" or "escape" => 0x1B,
-            "backspace" => 0x08,
-            "insert" => 0x2D,
-            "delete" or "del" => 0x2E,
-            "home" => 0x24,
-            "end" => 0x23,
-            "pageup" => 0x21,
-            "pagedown" => 0x22,
-            _ => null
-        };
-    }
-
-    /// <summary>把解析过的组合倒回可显示的写法(设置界面回显)。</summary>
-    public static string DescribeHotkey(uint modifiers, uint key)
-    {
-        var parts = new List<string>();
-        if ((modifiers & MOD_CONTROL) != 0) parts.Add("Ctrl");
-        if ((modifiers & MOD_ALT) != 0) parts.Add("Alt");
-        if ((modifiers & MOD_SHIFT) != 0) parts.Add("Shift");
-        if ((modifiers & MOD_WIN) != 0) parts.Add("Win");
-        parts.Add(key switch
-        {
-            >= 0x41 and <= 0x5A => ((char)key).ToString(),
-            >= 0x30 and <= 0x39 => ((char)key).ToString(),
-            >= 0x70 and <= 0x87 => "F" + (key - 0x70 + 1),
-            0x20 => "Space",
-            0x09 => "Tab",
-            0x0D => "Enter",
-            0x1B => "Esc",
-            _ => "?"
-        });
-        return string.Join("+", parts);
     }
 
     // 光标屏幕工作区缓存:Screen.FromPoint 每次都会枚举显示器并分配对象,

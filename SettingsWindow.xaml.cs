@@ -68,84 +68,27 @@ public partial class SettingsWindow : Window
         ShowGoBox.IsChecked = s.ShowOpenCode;
         ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
         ShowPercentBox.IsChecked = s.ShowPercent;
-        GoatTintBox.Text = s.GoatTint ?? "";
-        GoTintBox.Text = s.OpenCodeTint ?? "";
-        DeepSeekTintBox.Text = s.DeepSeekTint ?? "";
-        AlertLevelCombo.SelectedIndex = s.AlertPercent switch
-        {
-            75 => 1, 80 => 2, 90 => 3, 95 => 4, _ => 0
-        };
-        NotifyResetBox.IsChecked = s.NotifyOnReset;
-        HotkeyToggleBox.Text = s.HotkeyToggleRail ?? "";
-        HotkeySettingsBox.Text = s.HotkeyOpenSettings ?? "";
-        UpdateHotkeyHint();
+        GoatTintPick.Value = s.GoatTint;
+        GoTintPick.Value = s.OpenCodeTint;
+        DeepSeekTintPick.Value = s.DeepSeekTint;
         UpdateBasisHint();
         UpdatePercentHint();
         _loading = false;
         UpdateLabels();
     }
 
-    // ————————————————— 环色 / 通知 / 快捷键 —————————————————
+    // ————————————————— 环色 —————————————————
 
-    private static string? TextOrNull(TextBox box) =>
-        string.IsNullOrWhiteSpace(box.Text) ? null : box.Text.Trim();
-
-    /// <summary>
-    /// 环色填完失焦时保存。**存完要回填**:写法不合法的会被 Sanitized 丢掉,
-    /// 界面上不回填的话用户以为填进去了,其实下一次启动就没了。
-    /// </summary>
-    private void Tint_LostFocus(object sender, RoutedEventArgs e)
+    /// <summary>色板里选了颜色(或切回自动):只更新变化的那一项,存盘并让浮窗立刻重绘。</summary>
+    private void Tint_ValueChanged(object? sender, EventArgs e)
     {
         if (_loading) return;
         var s = AppSettings.Current;
-        s.GoatTint = TextOrNull(GoatTintBox);
-        s.OpenCodeTint = TextOrNull(GoTintBox);
-        s.DeepSeekTint = TextOrNull(DeepSeekTintBox);
+        if (sender == GoatTintPick) s.GoatTint = GoatTintPick.Value;
+        else if (sender == GoTintPick) s.OpenCodeTint = GoTintPick.Value;
+        else s.DeepSeekTint = DeepSeekTintPick.Value;
         s.Save();
-        GoatTintBox.Text = s.GoatTint ?? "";
-        GoTintBox.Text = s.OpenCodeTint ?? "";
-        DeepSeekTintBox.Text = s.DeepSeekTint ?? "";
         SettingsChanged?.Invoke();
-    }
-
-    private void AlertLevel_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading) return;
-        AppSettings.Current.AlertPercent = AlertLevelCombo.SelectedIndex switch
-        {
-            1 => 75, 2 => 80, 3 => 90, 4 => 95, _ => 0
-        };
-        AppSettings.Current.Save();
-    }
-
-    private void NotifyReset_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        AppSettings.Current.NotifyOnReset = NotifyResetBox.IsChecked == true;
-        AppSettings.Current.Save();
-    }
-
-    /// <summary>
-    /// 快捷键填完失焦时保存并**立刻重新注册**。注册失败要说出来——
-    /// 一个悄悄不生效的快捷键比没有更糟,用户会去怪功能本身。
-    /// </summary>
-    private void Hotkey_LostFocus(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        var s = AppSettings.Current;
-        s.HotkeyToggleRail = TextOrNull(HotkeyToggleBox);
-        s.HotkeyOpenSettings = TextOrNull(HotkeySettingsBox);
-        s.Save();
-        // 写法不合法的会被丢掉,回填成实际生效的值(空 = 没绑上)
-        HotkeyToggleBox.Text = s.HotkeyToggleRail ?? "";
-        HotkeySettingsBox.Text = s.HotkeyOpenSettings ?? "";
-        GlobalHotkeys.Apply(s);
-        UpdateHotkeyHint();
-    }
-
-    private void UpdateHotkeyHint()
-    {
-        HotkeyHint.Text = GlobalHotkeys.Describe(AppSettings.Current);
     }
 
     private void UpdateLabels()

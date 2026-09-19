@@ -102,8 +102,11 @@ public sealed class ZCodeUsageStore : IUsageStore
         var columns = UsageStoreSupport.Columns(connection, "model_usage");
         if (columns.Count == 0) return records;
 
-        bool hasSession = UsageStoreSupport.TableExists(connection, "session");
-        string prefix = hasSession ? "mu." : "";
+        // 会话索引先读:子代理记录要归根到主会话,项目与标题都取根会话的。
+        var sessions = UsageStoreSupport.TableExists(connection, "session")
+            ? ZCodeSessionIndex.Read(connection)
+            : ZCodeSessionIndex.Empty;
+
         var selected = new List<string>();
         foreach (var name in new[]
                  {
@@ -112,37 +115,25 @@ public sealed class ZCodeUsageStore : IUsageStore
                      "cache_read_input_tokens", "cache_creation_input_tokens", "computed_total_tokens"
                  })
         {
-            if (columns.Contains(name)) selected.Add(prefix + name);
+            if (columns.Contains(name)) selected.Add(name);
         }
-        if (hasSession)
-        {
-            selected.Add("s.directory");
-            selected.Add("s.path");
-            selected.Add("s.title");
-        }
-
-        string sql = "SELECT " + string.Join(", ", selected) + " FROM model_usage"
-            + (hasSession ? " mu LEFT JOIN session s ON s.id = mu.session_id" : "");
 
         using var command = connection.CreateCommand();
-        command.CommandText = sql;
+        command.CommandText = "SELECT " + string.Join(", ", selected) + " FROM model_usage";
         using var reader = command.ExecuteReader();
 
         // SELECT 的列顺序就是 selected 的顺序,序号直接按它取。
-        int iId = selected.IndexOf(prefix + "id");
-        int iSession = selected.IndexOf(prefix + "session_id");
-        int iModel = selected.IndexOf(prefix + "model_id");
-        int iProvider = selected.IndexOf(prefix + "provider_id");
-        int iStarted = selected.IndexOf(prefix + "started_at");
-        int iCompleted = selected.IndexOf(prefix + "completed_at");
-        int iInput = selected.IndexOf(prefix + "input_tokens");
-        int iOutput = selected.IndexOf(prefix + "output_tokens");
-        int iCacheRead = selected.IndexOf(prefix + "cache_read_input_tokens");
-        int iCacheWrite = selected.IndexOf(prefix + "cache_creation_input_tokens");
-        int iComputed = selected.IndexOf(prefix + "computed_total_tokens");
-        int iDirectory = hasSession ? selected.IndexOf("s.directory") : -1;
-        int iPath = hasSession ? selected.IndexOf("s.path") : -1;
-        int iTitle = hasSession ? selected.IndexOf("s.title") : -1;
+        int iId = selected.IndexOf("id");
+        int iSession = selected.IndexOf("session_id");
+        int iModel = selected.IndexOf("model_id");
+        int iProvider = selected.IndexOf("provider_id");
+        int iStarted = selected.IndexOf("started_at");
+        int iCompleted = selected.IndexOf("completed_at");
+        int iInput = selected.IndexOf("input_tokens");
+        int iOutput = selected.IndexOf("output_tokens");
+        int iCacheRead = selected.IndexOf("cache_read_input_tokens");
+        int iCacheWrite = selected.IndexOf("cache_creation_input_tokens");
+        int iComputed = selected.IndexOf("computed_total_tokens");
 
         while (reader.Read())
         {
@@ -166,8 +157,7 @@ public sealed class ZCodeUsageStore : IUsageStore
             var tally = new TokenTally(freshInput, cacheWrite, cacheRead, rawOutput);
             if (tally.Total <= 0 && unclassified <= 0) continue;
 
-            string? project = UsageStoreSupport.ProjectName(ReadText(reader, iDirectory))
-                ?? UsageStoreSupport.ProjectName(ReadText(reader, iPath));
+            var (rootId, project, title) = sessions.Resolve(sessionId);
             records.Add(new AgentUsageRecord(
                 timestamp.Value,
                 ReadText(reader, iModel) ?? "auto",
@@ -175,9 +165,9 @@ public sealed class ZCodeUsageStore : IUsageStore
                 unclassified,
                 Name,
                 ReadText(reader, iProvider),
-                sessionId,
+                rootId,
                 project,
-                ReadText(reader, iTitle)));
+                title));
         }
         return records;
     }
@@ -193,6 +183,102 @@ public sealed class ZCodeUsageStore : IUsageStore
 
     private static DateTime? ReadTime(SqliteDataReader reader, int index) =>
         index < 0 ? null : UsageStoreSupport.FromUnixMilliseconds(reader.IsDBNull(index) ? null : reader.GetValue(index));
+}
+
+/// <summary>
+/// ZCode <c>session</c> 表的内存索引。**子会话沿 parent_id 链归根到主会话**:
+/// 子代理在库里是独立 session 行,directory 记的是它当时干活的子目录(比如
+/// <c>06Learning\03_工作资料</c>),直接取最后一段当项目名会拆出一堆并不存在的
+/// "项目",标题也是任务描述的开头而不是会话框的名字。项目、标题、会话分组
+/// 一律以根会话为准,子会话的用量在统计里跟着主会话走。
+/// </summary>
+internal sealed class ZCodeSessionIndex
+{
+    private sealed record SessionInfo(string? Directory, string? Path, string? Title, string? ParentId);
+
+    public static ZCodeSessionIndex Empty { get; } = new(new Dictionary<string, SessionInfo>());
+
+    private readonly Dictionary<string, SessionInfo> rows;
+    private readonly Dictionary<string, string> rootCache = new(StringComparer.Ordinal);
+
+    private ZCodeSessionIndex(Dictionary<string, SessionInfo> rows) => this.rows = rows;
+
+    public static ZCodeSessionIndex Read(SqliteConnection connection)
+    {
+        var columns = UsageStoreSupport.Columns(connection, "session");
+        if (!columns.Contains("id")) return Empty;
+
+        bool hasParent = columns.Contains("parent_id");
+        bool hasDirectory = columns.Contains("directory");
+        bool hasPath = columns.Contains("path");
+        bool hasTitle = columns.Contains("title");
+
+        var selected = new List<string> { "id" };
+        if (hasParent) selected.Add("parent_id");
+        if (hasDirectory) selected.Add("directory");
+        if (hasPath) selected.Add("path");
+        if (hasTitle) selected.Add("title");
+
+        var rows = new Dictionary<string, SessionInfo>(StringComparer.Ordinal);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT " + string.Join(", ", selected) + " FROM session";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            string id = reader.GetString(0);
+            if (string.IsNullOrEmpty(id)) continue;
+            int i = 1;
+            string? parent = hasParent ? ReadText(reader, i++) : null;
+            string? directory = hasDirectory ? ReadText(reader, i++) : null;
+            string? path = hasPath ? ReadText(reader, i++) : null;
+            string? title = hasTitle ? ReadText(reader, i) : null;
+            rows[id] = new SessionInfo(directory, path, title, parent);
+        }
+        return new ZCodeSessionIndex(rows);
+    }
+
+    /// <summary>
+    /// 归根:返回 (根会话 id, 项目名, 标题)。parent 链缺行、成环都停在链上最后一个
+    /// 可用节点;根会话缺目录/标题时用子会话自己的兜底;库里没有这个会话时原样返回。
+    /// </summary>
+    public (string RootId, string? Project, string? Title) Resolve(string sessionId)
+    {
+        string rootId = ResolveRoot(sessionId);
+        rows.TryGetValue(rootId, out var root);
+        rows.TryGetValue(sessionId, out var self);
+
+        string? project = root is not null
+            ? UsageStoreSupport.ProjectName(root.Directory) ?? UsageStoreSupport.ProjectName(root.Path)
+            : null;
+        if (project is null && self is not null)
+            project = UsageStoreSupport.ProjectName(self.Directory) ?? UsageStoreSupport.ProjectName(self.Path);
+
+        string? title = NonEmpty(root?.Title) ?? NonEmpty(self?.Title);
+        return (rootId, project, title);
+    }
+
+    private string ResolveRoot(string sessionId)
+    {
+        if (rootCache.TryGetValue(sessionId, out var cached)) return cached;
+        var chain = new List<string> { sessionId };
+        var visited = new HashSet<string>(StringComparer.Ordinal) { sessionId };
+        string current = sessionId;
+        while (rows.TryGetValue(current, out var row)
+               && !string.IsNullOrWhiteSpace(row.ParentId)
+               && visited.Add(row.ParentId))
+        {
+            current = row.ParentId;
+            chain.Add(current);
+        }
+        foreach (var id in chain) rootCache[id] = current;
+        return current;
+    }
+
+    private static string? NonEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private static string? ReadText(SqliteDataReader reader, int index) =>
+        reader.IsDBNull(index) ? null : reader.GetValue(index)?.ToString();
 }
 
 /// <summary>

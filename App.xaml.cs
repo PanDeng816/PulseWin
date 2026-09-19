@@ -14,7 +14,6 @@ public partial class App : System.Windows.Application
     private UsageEngine? _engine;
     private SettingsWindow? _settings;
     private SpendWindow? _spend;
-    private Notifier? _notifier;
     private SingleInstance? _instance;
 
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -61,20 +60,12 @@ public partial class App : System.Windows.Application
 
         _engine = new UsageEngine();
         _engine.SnapshotsChanged += () =>
-            Dispatcher.BeginInvoke(() =>
-            {
-                _main?.ReloadData(fromEngine: true);
-                // 通知判定用与界面同一份快照,而不是另走一条读文件的路径
-                _notifier?.Inspect(SnapshotSource.LoadAll());
-            });
+            Dispatcher.BeginInvoke(() => _main?.ReloadData(fromEngine: true));
         _engine.Start();
 
         // 点击圆环 = 立刻同步一次真实 API(不只是重读本地快照)
         _main.RefreshRequested += () => _engine?.RequestRefreshNow();
 
-        _notifier = new Notifier(SnapshotSource.DataPaths, Notify);
-        GlobalHotkeys.Attach(_main, () => _main?.ToggleRailVisible(), OpenSettings);
-        GlobalHotkeys.Apply(AppSettings.Current);
         UpdateChecker.Start();
 
         _main.Show();
@@ -158,41 +149,60 @@ public partial class App : System.Windows.Application
         _main.SetMenuOpen(true);
         try
         {
-            double scale = Native.Scale(_main);
-            var menu = new System.Windows.Forms.ContextMenuStrip();
-
-            var toggle = new System.Windows.Forms.ToolStripMenuItem(
-                _main.IsRailVisible ? "隐藏浮窗" : "显示浮窗");
-            toggle.Click += (_, _) => _main?.ToggleRailVisible();
-            var refresh = new System.Windows.Forms.ToolStripMenuItem("立即刷新");
-            refresh.Click += (_, _) => _engine?.RequestRefreshNow();
-            var spend = new System.Windows.Forms.ToolStripMenuItem("用量统计…");
-            spend.Click += (_, _) => OpenSpend();
-            var settings = new System.Windows.Forms.ToolStripMenuItem("设置…");
-            settings.Click += (_, _) => OpenSettings();
-
-            menu.Items.AddRange([toggle, refresh, spend, settings]);
-            if (UpdateChecker.Available is { } release)
-            {
-                menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-                var update = new System.Windows.Forms.ToolStripMenuItem($"有可用更新 {release.Tag}");
-                update.Click += (_, _) => OpenReleasePage(release.Url);
-                menu.Items.Add(update);
-            }
-            menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            var exit = new System.Windows.Forms.ToolStripMenuItem("退出 Pulse");
-            exit.Click += (_, _) => ExitApp();
-            menu.Items.Add(exit);
-
-            menu.Closed += (_, _) => _main?.SetMenuOpen(false);
-            menu.Show(new System.Drawing.Point(
-                (int)Math.Round(anchorDiu.X * scale), (int)Math.Round(anchorDiu.Y * scale)));
+            FlyoutMenu.Show(_main, anchorDiu, MenuEntries(includeStartup: false),
+                closed: () => _main.SetMenuOpen(false));
         }
         catch (Exception ex)
         {
             Diagnostics.Note("弹出 rail 菜单失败", ex);
             _main.SetMenuOpen(false);
         }
+    }
+
+    /// <summary>
+    /// 托盘右键菜单。不再用 NotifyIcon.ContextMenuStrip(样式与 rail 菜单不一致),
+    /// 改为右键抬起时在光标处弹同一个 FlyoutMenu。
+    /// </summary>
+    private void TrayMenuRequested()
+    {
+        if (_main is null) return;
+        Diagnostics.Note("托盘右键菜单");
+        var cursor = Native.CursorPosition() ?? new Point(0, 0);
+        double scale = Native.Scale(_main);
+        FlyoutMenu.Show(_main, new Point(cursor.X / scale, cursor.Y / scale),
+            MenuEntries(includeStartup: true));
+    }
+
+    /// <summary>
+    /// 两个菜单共用一份条目。托盘多一项"开机自动启动";更新条目只在真有新版本时出现。
+    /// </summary>
+    private List<object> MenuEntries(bool includeStartup)
+    {
+        var entries = new List<object>
+        {
+            new FlyoutMenu.Item(
+                _main!.IsRailVisible ? "隐藏浮窗" : "显示浮窗", () => _main.ToggleRailVisible()),
+            new FlyoutMenu.Item("立即刷新", () => _engine?.RequestRefreshNow()),
+            new FlyoutMenu.Gap(),
+            new FlyoutMenu.Item("用量统计…", OpenSpend),
+            new FlyoutMenu.Item("设置…", OpenSettings),
+        };
+
+        if (includeStartup)
+        {
+            entries.Add(new FlyoutMenu.Item("开机自动启动",
+                () => SetStartupEnabled(!IsStartupEnabled()), IsStartupEnabled()));
+        }
+
+        if (UpdateChecker.Available is { } release)
+        {
+            entries.Add(new FlyoutMenu.Gap());
+            entries.Add(new FlyoutMenu.Item($"有可用更新 {release.Tag}", () => OpenReleasePage(release.Url)));
+        }
+
+        entries.Add(new FlyoutMenu.Gap());
+        entries.Add(new FlyoutMenu.Item("退出 Pulse", ExitApp));
+        return entries;
     }
 
     private static void OpenReleasePage(string url)
@@ -208,19 +218,6 @@ public partial class App : System.Windows.Application
         }
     }
 
-    /// <summary>系统通知(经过托盘气泡,不抢焦点)。</summary>
-    private void Notify(string title, string body)
-    {
-        try
-        {
-            _tray?.ShowBalloonTip(6000, title, body, System.Windows.Forms.ToolTipIcon.Info);
-        }
-        catch (Exception ex)
-        {
-            Diagnostics.Note("弹出通知失败", ex);
-        }
-    }
-
     private void SetupTray()    {
         var stream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"))?.Stream;
         _icon = stream is { } s ? new System.Drawing.Icon(s) : System.Drawing.SystemIcons.Application;
@@ -232,43 +229,13 @@ public partial class App : System.Windows.Application
             Visible = true,
         };
 
-        var menu = new System.Windows.Forms.ContextMenuStrip();
-        // 每次打开现构建:这样"刚查到的更新"就在里面,不用等下次重启
-        menu.Opening += (_, _) => RebuildTrayMenu(menu);
-        RebuildTrayMenu(menu);
-        _tray.ContextMenuStrip = menu;
-        _tray.DoubleClick += (_, _) => _main?.ToggleRailVisible();
-    }
-
-    private void RebuildTrayMenu(System.Windows.Forms.ContextMenuStrip menu)
-    {
-        menu.Items.Clear();
-        var toggle = new System.Windows.Forms.ToolStripMenuItem(
-            _main?.IsRailVisible == true ? "隐藏浮窗" : "显示浮窗");
-        toggle.Click += (_, _) => _main?.ToggleRailVisible();
-        var refresh = new System.Windows.Forms.ToolStripMenuItem("立即刷新");
-        refresh.Click += (_, _) => _engine?.RequestRefreshNow();
-        var spend = new System.Windows.Forms.ToolStripMenuItem("用量统计…");
-        spend.Click += (_, _) => OpenSpend();
-        var settings = new System.Windows.Forms.ToolStripMenuItem("设置…");
-        settings.Click += (_, _) => OpenSettings();
-        var startup = new System.Windows.Forms.ToolStripMenuItem("开机自动启动");
-        startup.CheckOnClick = true;
-        startup.Checked = IsStartupEnabled();
-        startup.CheckedChanged += (_, _) => SetStartupEnabled(startup.Checked);
-        var exit = new System.Windows.Forms.ToolStripMenuItem("退出 Pulse");
-        exit.Click += (_, _) => ExitApp();
-
-        menu.Items.AddRange([toggle, refresh, spend, settings,
-            new System.Windows.Forms.ToolStripSeparator(), startup]);
-        if (UpdateChecker.Available is { } release)
+        // 右键菜单不走 NotifyIcon.ContextMenuStrip(那是 WinForms 系统样式),
+        // 在 MouseUp 里手动弹 FlyoutMenu,和 rail 菜单共用一份条目与样式。
+        _tray.MouseUp += (_, e) =>
         {
-            var update = new System.Windows.Forms.ToolStripMenuItem($"有可用更新 {release.Tag}");
-            update.Click += (_, _) => OpenReleasePage(release.Url);
-            menu.Items.Add(update);
-        }
-        menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-        menu.Items.Add(exit);
+            if (e.Button == System.Windows.Forms.MouseButtons.Right) TrayMenuRequested();
+        };
+        _tray.DoubleClick += (_, _) => _main?.ToggleRailVisible();
     }
 
     /// <summary>用量统计窗口(单例:再点就把它亮出来)。</summary>
