@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -113,7 +114,8 @@ public partial class SpendWindow : Window
         TallyLine.Text = $"输入 {SpendFormat.Tokens(summary.Tally.Input)}   ·   "
             + $"缓存写 {SpendFormat.Tokens(summary.Tally.CacheWrite)}   ·   "
             + $"缓存读 {SpendFormat.Tokens(summary.Tally.CacheRead)}   ·   "
-            + $"输出 {SpendFormat.Tokens(summary.Tally.Output)}";
+            + $"输出 {SpendFormat.Tokens(summary.Tally.Output)}"
+            + (summary.CacheHit is { } hit ? $"   ·   缓存命中 {hit:P1}" : "");
 
         string range = summary.Span == SpendSpan.All
             ? $"全部记录(自 {summary.FirstDay:yyyy-MM-dd} 起)"
@@ -122,6 +124,7 @@ public partial class SpendWindow : Window
             + (summary.PeakHour is { } peak ? $"   ·   最忙 {peak}:00" : "");
 
         RenderChart(summary);
+        RenderHeatmap();
         RenderModels(summary);
         RenderList(AgentList, summary.Agents.Select(a => new RowVm
         {
@@ -137,7 +140,9 @@ public partial class SpendWindow : Window
             Name = p.Project,
             Tokens = SpendFormat.Tokens(p.Tokens),
             Amount = SpendFormat.Money(p.Cost),
-            Detail = $"{p.Sessions} 个会话",
+            Detail = p.Sessions > 0 || !p.HasArchivedDetail
+                ? $"{p.Sessions} 个会话"
+                : "明细已归档进本地仓库",
             BarWidth = Fraction(p.Tokens, summary.ProjectRows.FirstOrDefault()?.Tokens ?? 0) * BarBase,
             BarBrush = BarProjects
         }).ToList());
@@ -149,7 +154,8 @@ public partial class SpendWindow : Window
             Detail = $"{x.Agent} · {x.Project ?? "无项目"} · {x.Last:MM-dd HH:mm}",
             BarWidth = Fraction(x.Tokens, summary.SessionRows.FirstOrDefault()?.Tokens ?? 0) * BarBase,
             BarBrush = BarSessions,
-            AmountTip = SpendFormat.MoneyExact(x.Cost)
+            AmountTip = SpendFormat.MoneyExact(x.Cost),
+            SessionId = x.SessionId
         }).ToList());
 
         Footnote.Text = "数据来自本机各客户端的记录库(ZCode 的 model_usage、OpenCode 的会话消息),"
@@ -167,6 +173,7 @@ public partial class SpendWindow : Window
             Amount = SpendFormat.Money(m.Amount),
             AmountTip = m.Priced ? SpendFormat.MoneyExact(m.Amount) : "该模型没有公开牌价,只统计 token",
             Detail = $"输入 {SpendFormat.Tokens(m.Tally.Input)} · 缓存读 {SpendFormat.Tokens(m.Tally.CacheRead)} · 输出 {SpendFormat.Tokens(m.Tally.Output)}"
+                + (m.CacheHit is { } hit ? $" · 命中 {hit:P1}" : "")
                 + (m.Unclassified > 0 ? $" · 未分类 {SpendFormat.Tokens(m.Unclassified)}" : "")
                 + (m.Priced ? "" : " · 无公开价"),
             BarWidth = Fraction(m.Tokens, max) * BarBase,
@@ -275,6 +282,135 @@ public partial class SpendWindow : Window
         }
     }
 
+    /// <summary>
+    /// 活动热图(GitHub 贡献格):列 = 周、行 = 周一~周日,颜色越亮当天 token 越多。
+    /// **不受区间选择影响**——它回答的是"这段时间的作息/节奏",区间按钮切到"今天"
+    /// 时只剩一格就没意思了,所以永远画全量记录(受窗口宽度限制取最近的周数)。
+    /// </summary>
+    private void RenderHeatmap()
+    {
+        HeatCanvas.Children.Clear();
+        if (_ledger is null || _ledger.Entries.Count == 0)
+        {
+            HeatHint.Text = "还没有记录。";
+            return;
+        }
+
+        var byDay = new Dictionary<DateOnly, (long Tokens, double Cost)>();
+        foreach (var entry in _ledger.Entries)
+        {
+            if (entry.Kind == SpendAggKind.Hour) continue;
+            var acc = byDay.TryGetValue(entry.Day, out var a) ? a : (0L, 0d);
+            byDay[entry.Day] = (acc.Item1 + entry.TotalTokens, acc.Item2 + entry.Cost.Total);
+        }
+        if (byDay.Count == 0)
+        {
+            HeatHint.Text = "还没有记录。";
+            return;
+        }
+
+        double cell = 12, gap = 3, step = cell + gap;
+        int weekColumns = Math.Max(1, (int)(HeatCanvas.ActualWidth > 0 ? HeatCanvas.ActualWidth / step : 33));
+        var today = DateTime.Today;
+        // 本周周一为最后一列;往回数 weekColumns 列
+        var lastMonday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+        var firstMonday = lastMonday.AddDays(-7 * (weekColumns - 1));
+        long max = byDay.Values.Max(v => v.Tokens);
+        var monthLabels = new List<(int Column, string Label)>();
+
+        for (int col = 0; col < weekColumns; col++)
+        {
+            for (int row = 0; row < 7; row++)
+            {
+                var day = firstMonday.AddDays(col * 7 + row);
+                if (day > today) break;
+                var key = DateOnly.FromDateTime(day);
+                long tokens = byDay.TryGetValue(key, out var v) ? v.Tokens : 0;
+
+                var rect = new Rectangle
+                {
+                    Width = cell,
+                    Height = cell,
+                    RadiusX = 2.5,
+                    RadiusY = 2.5,
+                    Fill = HeatBrush(tokens, max)
+                };
+                if (tokens > 0)
+                {
+                    rect.ToolTip = $"{day:yyyy-MM-dd}\n{SpendFormat.TokensExact(tokens)} tokens\n{SpendFormat.MoneyExact(byDay[key].Cost)}";
+                }
+                else
+                {
+                    rect.ToolTip = $"{day:yyyy-MM-dd}\n没有记录";
+                    rect.Stroke = Frozen(Color.FromArgb(0x22, 0xF5, 0xF5, 0xF7));
+                    rect.StrokeThickness = 0.5;
+                }
+                Canvas.SetLeft(rect, col * step);
+                Canvas.SetTop(rect, row * step);
+                HeatCanvas.Children.Add(rect);
+            }
+
+            // 列首恰逢月初(或第一列)时,在顶部标月份
+            var colFirst = firstMonday.AddDays(col * 7);
+            if (colFirst.Month != (col > 0 ? firstMonday.AddDays((col - 1) * 7).Month : 0) || col == 0)
+                monthLabels.Add((col, colFirst.ToString("M月")));
+        }
+
+        foreach (var (column, label) in monthLabels)
+        {
+            var labelBlock = new TextBlock
+            {
+                Text = label,
+                FontSize = 10.5,
+                Foreground = Frozen(Color.FromArgb(0x8C, 0xF5, 0xF5, 0xF7))
+            };
+            Canvas.SetLeft(labelBlock, column * step);
+            Canvas.SetTop(labelBlock, 7 * step - 2);
+            HeatCanvas.Children.Add(labelBlock);
+        }
+
+        HeatHint.Text = $"共 {byDay.Count} 天有记录   ·   最忙 {byDay.Aggregate((a, b) => a.Value.Tokens > b.Value.Tokens ? a : b).Key:yyyy-MM-dd}"
+            + $"   ·   (格色越亮当天用量越大)";
+    }
+
+    private static Brush HeatBrush(long tokens, long max)
+    {
+        Color color = max <= 0 || tokens <= 0
+            ? Color.FromRgb(0x22, 0x22, 0x2A)
+            : (tokens * 4d / max) switch
+            {
+                < 1 => Color.FromArgb(0x38, 0x00, 0xE6, 0x8C),
+                < 2 => Color.FromArgb(0x73, 0x00, 0xE6, 0x8C),
+                < 3 => Color.FromArgb(0xB3, 0x00, 0xE6, 0x8C),
+                _ => Color.FromRgb(0x00, 0xE6, 0x8C)
+            };
+        return Frozen(color);
+    }
+
+    /// <summary>点"最近会话"的行 → 弹该会话的下钻窗口。</summary>
+    private void Row_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_ledger is null) return;
+        if (sender is not FrameworkElement { DataContext: RowVm { SessionId: { } sessionId } }) return;
+
+        // 必须从 LiveEntries(源库原始明细)取:明细几乎全部进了用量仓库的聚合,
+        // Entries 里只剩聚合行和老于灌入窗口的散行——从 Entries 找会话永远是空的。
+        var entries = _ledger.LiveEntries
+            .Where(en => en.Kind == SpendAggKind.Live && en.SessionId == sessionId)
+            .ToList();
+        if (entries.Count == 0) return;
+        try
+        {
+            var window = new SessionWindow(entries);
+            window.Owner = this;
+            window.Show();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("打开会话下钻失败", ex);
+        }
+    }
+
     private static double Fraction(long value, long max) =>
         max <= 0 ? 0 : Math.Clamp((double)value / max, 0, 1) * 1.0;
 
@@ -288,5 +424,11 @@ public partial class SpendWindow : Window
         public string Detail { get; init; } = "";
         public double BarWidth { get; init; }
         public Brush BarBrush { get; init; } = Brushes.Gray;
+
+        /// <summary>非空 = 这行可以点开下钻(最近会话);null = 普通行,箭头光标。</summary>
+        public string? SessionId { get; init; }
+
+        public System.Windows.Input.Cursor RowCursor =>
+            SessionId is null ? System.Windows.Input.Cursors.Arrow : System.Windows.Input.Cursors.Hand;
     }
 }

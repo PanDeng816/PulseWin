@@ -15,6 +15,7 @@ public partial class App : System.Windows.Application
     private SettingsWindow? _settings;
     private SpendWindow? _spend;
     private SingleInstance? _instance;
+    private readonly TrayIconMeter _trayMeter = new();
 
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunValueName = "PulseWin";
@@ -60,7 +61,11 @@ public partial class App : System.Windows.Application
 
         _engine = new UsageEngine();
         _engine.SnapshotsChanged += () =>
-            Dispatcher.BeginInvoke(() => _main?.ReloadData(fromEngine: true));
+            Dispatcher.BeginInvoke(() =>
+            {
+                _main?.ReloadData(fromEngine: true);
+                UpdateTrayMeter();
+            });
         _engine.Start();
 
         // 点击圆环 = 立刻同步一次真实 API(不只是重读本地快照)
@@ -236,6 +241,32 @@ public partial class App : System.Windows.Application
             if (e.Button == System.Windows.Forms.MouseButtons.Right) TrayMenuRequested();
         };
         _tray.DoubleClick += (_, _) => _main?.ToggleRailVisible();
+
+        // 托盘图标本身就是仪表:最紧张的源画成小环。快照到达时更新,
+        // 启动时也立即试一次(引擎还没同步完时快照文件已有上一轮的数据)。
+        UpdateTrayMeter();
+    }
+
+    /// <summary>
+    /// 把托盘图标换成最紧张源的小环。任何失败都退回品牌图标——仪表只是锦上添花,
+    /// 不能因为它托盘没图标。
+    /// </summary>
+    private void UpdateTrayMeter()
+    {
+        if (_tray is null || _icon is null) return;
+        try
+        {
+            var subs = SnapshotSource.LoadAll();
+            var (icon, tooltip) = _trayMeter.Build(subs, _icon);
+            _tray.Icon = icon ?? _icon;
+            if (tooltip.Length > 63) tooltip = tooltip[..63];
+            _tray.Text = tooltip;
+        }
+        catch (Exception ex)
+        {
+            _tray.Icon = _icon;
+            Diagnostics.Note("托盘仪表更新失败,回退品牌图标", ex);
+        }
     }
 
     /// <summary>用量统计窗口(单例:再点就把它亮出来)。</summary>
@@ -315,6 +346,7 @@ public partial class App : System.Windows.Application
     {
         UpdateChecker.Stop();
         _tray?.Dispose();
+        _trayMeter.Dispose();
         _icon?.Dispose();
         _settings?.Close();
         _spend?.Close();

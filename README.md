@@ -162,11 +162,12 @@ dotnet run
 dotnet publish -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -o publish
-.\publish\PulseWin.exe
+.\PulseWin.exe
 ```
 
 `EnableCompressionInSingleFile` 把自包含产物从 ~154MB 压到 ~70MB,代价是首次
-启动多花一点解压时间。
+启动多花一点解压时间。日常使用的 `PulseWin.exe` 放在仓库根目录,便携数据
+`Data\`(凭据/用量历史)必须与它同目录,挪 exe 时记得一起挪。
 
 ## 设置与数据
 

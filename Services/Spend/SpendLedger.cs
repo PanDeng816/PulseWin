@@ -4,6 +4,21 @@ using System.Text.Json;
 namespace PulseWin;
 
 /// <summary>
+/// 一条记录的来源形态。<see cref="SpendAggKind.Day"/>/<see cref="SpendAggKind.Hour"/>
+/// 是本地用量仓库(<see cref="UsageRepository"/>)生成的**聚合行**——源库被客户端清理后,
+/// 明细没有了,聚合还在。聚合行没有会话号,只喂给它们各自能回答的桶。
+/// </summary>
+public enum SpendAggKind
+{
+    /// <summary>源库里的原始明细:喂所有桶。</summary>
+    Live,
+    /// <summary>按(日,模型,项目)聚合的历史行:喂日/模型/项目/来源/总数,不喂 24 小时分布。</summary>
+    Day,
+    /// <summary>按(小时,来源)聚合的近期行:**只**喂 24 小时分布。</summary>
+    Hour
+}
+
+/// <summary>
 /// 一条已经定好价的用量记录(或"定了价"的否定:Price 为 null = 该模型无公开价,
 /// 只计 token 不显示金额)。
 /// </summary>
@@ -17,17 +32,40 @@ public sealed record SpendEntry(
     string? Title,
     TokenTally Tally,
     long UnclassifiedTokens,
-    ModelPrice? Price)
+    ModelPrice? Price,
+    /// <summary>聚合行的金额:建仓当天已按当时的牌价算好,**不随价目表更新重算**(历史账单语义)。</summary>
+    double? PrecomputedCost = null,
+    SpendAggKind Kind = SpendAggKind.Live,
+    /// <summary>聚合行代表多少次调用;明细行恒为 1。</summary>
+    long RequestCount = 1)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
 
-    /// <summary>只有四类被计价;未分类部分**永不参与金额**(它没有类别可算)。</summary>
-    public TokenCost Cost => Price?.Cost(Tally) ?? TokenCost.Zero;
+    /// <summary>金额字段怎么显示,取决于这个模型有没有价(聚合行直接给已算好的数)。</summary>
+    public double? Amount => PrecomputedCost is { } c ? c : Price is null ? null : Cost.Total;
 
-    /// <summary>金额字段怎么显示,取决于这个模型有没有价。</summary>
-    public double? Amount => Price is null ? null : Cost.Total;
+    /// <summary>只有四类被计价;未分类部分**永不参与金额**(它没有类别可算)。</summary>
+    public TokenCost Cost => PrecomputedCost is { } c
+        ? new TokenCost(c, 0, 0, 0)
+        : Price?.Cost(Tally) ?? TokenCost.Zero;
 
     public DateOnly Day => DateOnly.FromDateTime(Timestamp);
+
+    /// <summary>该行代表的调用次数(明细=1,聚合=N)。</summary>
+    public long Requests => RequestCount;
+
+    /// <summary>
+    /// 缓存命中率(输入侧):缓存读占全部输入的比例。没有输入就没有命中率(null),
+    /// 不要显示成 0%——0% 和"不适用"是两回事。
+    /// </summary>
+    public double? CacheHit
+    {
+        get
+        {
+            long inputTotal = Tally.Input + Tally.CacheWrite + Tally.CacheRead;
+            return inputTotal > 0 ? (double)Tally.CacheRead / inputTotal : null;
+        }
+    }
 }
 
 /// <summary>
@@ -39,6 +77,12 @@ public sealed record SpendEntry(
 public sealed class SpendLedger
 {
     public IReadOnlyList<SpendEntry> Entries { get; }
+    /// <summary>
+    /// 源库的原始明细(未经仓库聚合)。会话列表与下钻**只从这里取**:
+    /// 聚合行没有会话号,而"会话"这个维度只在源库里存在——源库清了会话,
+    /// 总量由仓库兜底,但会话行少掉是诚实的(那里确实没有明细了)。
+    /// </summary>
+    public IReadOnlyList<SpendEntry> LiveEntries { get; }
     /// <summary>读不出来的来源(库被锁、坏了):说出来,不要静默少一块。</summary>
     public IReadOnlyList<string> Notes { get; }
     public IReadOnlyList<string> PresentStores { get; }
@@ -47,11 +91,13 @@ public sealed class SpendLedger
 
     private SpendLedger(
         List<SpendEntry> entries,
+        IReadOnlyList<SpendEntry> liveEntries,
         List<string> notes,
         List<string> present,
         List<string> missing)
     {
         Entries = entries;
+        LiveEntries = liveEntries;
         Notes = notes;
         PresentStores = present;
         MissingStores = missing;
@@ -121,8 +167,17 @@ public sealed class SpendLedger
 
         if (duplicates > 0)
             notes.Add($"忽略 {duplicates} 条重复记录");
-        entries.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
-        return new SpendLedger(entries, notes, present, missing);
+
+        // 本地用量仓库:先把源库明细吸进去(去重、只增),再拿"聚合行 ∪ 未进仓库
+        // 的明细"当统计输入。源库哪天清理旧记录,已经进仓库的那些天还在;
+        // 仓库读写失败时返回空聚合 + 全部明细,等价于只用源库的旧口径。
+        var live = entries;
+        var (aggregated, remaining) = UsageRepository.MergeIn(live);
+        var merged = new List<SpendEntry>(aggregated.Count + remaining.Count);
+        merged.AddRange(aggregated);
+        merged.AddRange(remaining);
+        merged.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+        return new SpendLedger(merged, live, notes, present, missing);
     }
 
     /// <summary>最早的记录时间(界面用来判断"全部"到底覆盖多久)。</summary>
@@ -161,9 +216,21 @@ public sealed class SpendSummary
     public long UnpricedTokens { get; }
     /// <summary>无公开价的模型个数。</summary>
     public int UnpricedModels { get; }
-    public int Requests { get; }
+    public long Requests { get; }
     public int Sessions { get; }
     public int Projects { get; }
+    /// <summary>
+    /// 区间缓存命中率(输入侧:缓存读 / 全部输入)。没有输入时为 null——
+    /// "不适用"不能显示成 0%。
+    /// </summary>
+    public double? CacheHit
+    {
+        get
+        {
+            long inputTotal = Tally.Input + Tally.CacheWrite + Tally.CacheRead;
+            return inputTotal > 0 ? (double)Tally.CacheRead / inputTotal : null;
+        }
+    }
 
     public IReadOnlyList<DayRow> Days { get; }
     public IReadOnlyList<ModelRow> Models { get; }
@@ -180,15 +247,15 @@ public sealed class SpendSummary
         : Enumerable.Range(0, 24).OrderByDescending(h => HourlyTokens[h]).First();
 
     public sealed record DayRow(DateOnly Day, long Tokens, double Cost, bool HasUnpriced);
-    public sealed record ModelRow(string Model, string? VendorName, long Tokens, double? Amount, TokenTally Tally, long Unclassified, int Requests, bool Priced);
-    public sealed record ProjectRow(string Project, long Tokens, double Cost, int Sessions);
+    public sealed record ModelRow(string Model, string? VendorName, long Tokens, double? Amount, TokenTally Tally, long Unclassified, long Requests, bool Priced, double? CacheHit);
+    public sealed record ProjectRow(string Project, long Tokens, double Cost, int Sessions, bool HasArchivedDetail);
     public sealed record SessionRow(string SessionId, string? Title, string Agent, string? Project, long Tokens, double Cost, DateTime Last);
-    public sealed record AgentRow(string Agent, long Tokens, double Cost, int Requests);
+    public sealed record AgentRow(string Agent, long Tokens, double Cost, long Requests);
 
     private SpendSummary(
         SpendSpan span, DateTime from, DateTime to, DateOnly firstDay,
         long totalTokens, double totalCost, TokenTally tally, TokenCost cost,
-        long unclassified, long unpricedTokens, int unpricedModels, int requests,
+        long unclassified, long unpricedTokens, int unpricedModels, long requests,
         int sessions, int projects,
         List<DayRow> days, List<ModelRow> models, List<ProjectRow> projectRows,
         List<SessionRow> sessionRows, List<AgentRow> agents, long[] hourly)
@@ -241,54 +308,81 @@ public sealed class SpendSummary
 
         var dayBuckets = new Dictionary<DateOnly, (long Tokens, double Cost, bool HasUnpriced)>();
         var modelBuckets = new Dictionary<string, ModelAccumulator>(StringComparer.Ordinal);
-        var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<string> Sessions)>(StringComparer.Ordinal);
+        // 会话集合用引用类型 HashSet:元组在字典里是值副本,但共享同一个集合对象,
+// 明细循环里直接 Add 即可去重——项目行"会话数"必须是去重后的会话框数,不是行数
+var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<string> Sessions, bool HasArchived)>(StringComparer.Ordinal);
         var sessionBuckets = new Dictionary<string, SessionAccumulator>(StringComparer.Ordinal);
-        var agentBuckets = new Dictionary<string, (long Tokens, double Cost, int Requests)>(StringComparer.Ordinal);
+        var agentBuckets = new Dictionary<string, (long Tokens, double Cost, long Requests)>(StringComparer.Ordinal);
         var hourly = new long[24];
 
         foreach (var entry in selected)
         {
             long tokens = entry.TotalTokens;
-            totalTokens += tokens;
-            unclassified += entry.UnclassifiedTokens;
-            tally += entry.Tally;
-            cost += entry.Cost;
-            if (entry.Price is null)
+            bool isHourRow = entry.Kind == SpendAggKind.Hour;
+
+            // 小时聚合行**只**喂 24 小时分布:它的模型/项目维度没有存,喂给别的桶
+            // 会错算;其余行(明细 + 天级聚合)喂除 24 小时分布以外的一切。
+            if (!isHourRow)
             {
-                unpricedTokens += tokens;
-                unpricedModels.Add(ModelPrices.DisplayName(entry.Model));
+                totalTokens += tokens;
+                unclassified += entry.UnclassifiedTokens;
+                tally += entry.Tally;
+                cost += entry.Cost;
+                if (entry.Price is null && entry.PrecomputedCost is null)
+                {
+                    unpricedTokens += tokens;
+                    unpricedModels.Add(ModelPrices.DisplayName(entry.Model));
+                }
+
+                var dayAcc = dayBuckets.TryGetValue(entry.Day, out var d) ? d : (0L, 0d, false);
+                dayBuckets[entry.Day] = (dayAcc.Item1 + tokens, dayAcc.Item2 + entry.Cost.Total,
+                    dayAcc.Item3 || (entry.Price is null && entry.PrecomputedCost is null));
+
+                // 按显示名归并:`deepseek/deepseek-v4-flash` 与 `deepseek-v4-flash` 是同一个模型。
+                string modelKey = ModelPrices.DisplayName(entry.Model);
+                if (!modelBuckets.TryGetValue(modelKey, out var modelAcc))
+                    modelAcc = new ModelAccumulator();
+                modelAcc.Add(entry);
+                modelBuckets[modelKey] = modelAcc;
+
+                string projectKey = entry.Project ?? "（无项目）";
+                var projectAcc = projectBuckets.TryGetValue(projectKey, out var p)
+                    ? p
+                    : (0L, 0d, new HashSet<string>(StringComparer.Ordinal), false);
+                projectAcc.Item1 += tokens;
+                projectAcc.Item2 += entry.Cost.Total;
+                // 天级聚合行的存在 = 这个项目的部分明细已归档(会话数只数得到还没归档的)
+                projectAcc.Item4 |= entry.Kind == SpendAggKind.Day;
+                projectBuckets[projectKey] = projectAcc;
+
+                var agentAcc = agentBuckets.TryGetValue(entry.Agent, out var a) ? a : (0L, 0d, 0L);
+                agentBuckets[entry.Agent] = (agentAcc.Item1 + tokens, agentAcc.Item2 + entry.Cost.Total, agentAcc.Item3 + entry.Requests);
             }
 
-            var day = entry.Day;
-            var dayAcc = dayBuckets.TryGetValue(day, out var d) ? d : (0L, 0d, false);
-            dayBuckets[day] = (dayAcc.Item1 + tokens, dayAcc.Item2 + entry.Cost.Total, dayAcc.Item3 || entry.Price is null);
+            hourly[entry.Timestamp.Hour] += tokens;
+        }
 
-            // 按显示名归并:`deepseek/deepseek-v4-flash` 与 `deepseek-v4-flash` 是同一个模型。
-            string modelKey = ModelPrices.DisplayName(entry.Model);
-            if (!modelBuckets.TryGetValue(modelKey, out var modelAcc))
-                modelAcc = new ModelAccumulator();
-            modelAcc.Add(entry);
-            modelBuckets[modelKey] = modelAcc;
+        // 会话桶只由源库明细喂(与仓库聚合无关):会话的 token/金额从明细算,
+        // 所以"最近会话"的数字之和与顶部总量不必相等——两套口径,各自诚实。
+        // 聚合行(天级)有 token 却没有会话号,用它的存在标记"这个项目有明细已归档"。
+        foreach (var entry in ledger.LiveEntries)
+        {
+            if (entry.Timestamp < from || entry.Timestamp >= to) continue;
+            if (entry.Kind != SpendAggKind.Live) continue;
 
-            string projectKey = entry.Project ?? "（无项目）";
-            var projectAcc = projectBuckets.TryGetValue(projectKey, out var p)
-                ? p
-                : (0L, 0d, new HashSet<string>(StringComparer.Ordinal));
-            projectAcc.Item1 += tokens;
-            projectAcc.Item2 += entry.Cost.Total;
-            if (entry.SessionId is not null) projectAcc.Item3.Add(entry.SessionId);
-            projectBuckets[projectKey] = projectAcc;
+            if (entry.Project is not null)
+            {
+                var projectKey = entry.Project;
+                if (projectBuckets.TryGetValue(projectKey, out var acc) && entry.SessionId is not null)
+                    acc.Item3.Add(entry.SessionId);
+            }
+            if (entry.SessionId is null) continue;
 
-            string sessionKey = entry.SessionId ?? $"{entry.Agent}|{entry.Timestamp:yyyyMMddHH}";
+            string sessionKey = entry.SessionId;
             if (!sessionBuckets.TryGetValue(sessionKey, out var sessionAcc))
                 sessionAcc = new SessionAccumulator(entry);
             sessionAcc.Add(entry);
             sessionBuckets[sessionKey] = sessionAcc;
-
-            var agentAcc = agentBuckets.TryGetValue(entry.Agent, out var a) ? a : (0L, 0d, 0);
-            agentBuckets[entry.Agent] = (agentAcc.Item1 + tokens, agentAcc.Item2 + entry.Cost.Total, agentAcc.Item3 + 1);
-
-            hourly[entry.Timestamp.Hour] += tokens;
         }
 
         // 空白的日子也要在图上占一格(否则柱状图会把稀疏的用量画成连着的)
@@ -308,7 +402,7 @@ public sealed class SpendSummary
             .ToList();
 
         var projectRows = projectBuckets
-            .Select(kv => new ProjectRow(kv.Key, kv.Value.Item1, kv.Value.Item2, kv.Value.Item3.Count))
+            .Select(kv => new ProjectRow(kv.Key, kv.Value.Item1, kv.Value.Item2, kv.Value.Item3.Count, kv.Value.Item4))
             .OrderByDescending(p => p.Tokens)
             .ToList();
 
@@ -324,7 +418,7 @@ public sealed class SpendSummary
 
         return new SpendSummary(
             span, from, to, firstDay, totalTokens, cost.Total, tally, cost, unclassified,
-            unpricedTokens, unpricedModels.Count, selected.Count,
+            unpricedTokens, unpricedModels.Count, selected.Sum(e => e.Requests),
             sessionBuckets.Count, projectBuckets.Count(p => p.Key != "（无项目）"),
             days, models, projectRows, sessionRows, agentRows, hourly);
     }
@@ -333,7 +427,7 @@ public sealed class SpendSummary
     {
         private TokenTally _tally;
         private long _unclassified;
-        private int _requests;
+        private long _requests;
         private double? _amount;
         private string? _vendor;
         private bool _anyPriced;
@@ -342,7 +436,7 @@ public sealed class SpendSummary
         {
             _tally += entry.Tally;
             _unclassified += entry.UnclassifiedTokens;
-            _requests++;
+            _requests += entry.Requests;
             if (entry.Price is not null)
             {
                 _anyPriced = true;
@@ -351,15 +445,20 @@ public sealed class SpendSummary
             }
         }
 
-        public ModelRow ToRow(string model) => new(
-            model,
-            _vendor,
-            _tally.Total + _unclassified,
-            _anyPriced ? _amount ?? 0 : null,
-            _tally,
-            _unclassified,
-            _requests,
-            _anyPriced);
+        public ModelRow ToRow(string model)
+        {
+            long inputTotal = _tally.Input + _tally.CacheWrite + _tally.CacheRead;
+            return new(
+                model,
+                _vendor,
+                _tally.Total + _unclassified,
+                _anyPriced ? _amount ?? 0 : null,
+                _tally,
+                _unclassified,
+                _requests,
+                _anyPriced,
+                inputTotal > 0 ? (double)_tally.CacheRead / inputTotal : null);
+        }
     }
 
     private sealed class SessionAccumulator

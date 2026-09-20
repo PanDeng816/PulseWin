@@ -72,9 +72,10 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
-        <!-- 列表行:名称 / 数字 / 金额 / 比例条 -->
+        <!-- 列表行:名称 / 数字 / 金额 / 比例条。可下钻的行(最近会话)显手型光标 -->
         <DataTemplate x:Key="RowTemplate">
-            <Grid Margin="0,3">
+            <Grid Margin="0,3" Background="Transparent" MouseLeftButtonDown="Row_MouseDown"
+                  Cursor="{Binding RowCursor}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -128,6 +129,15 @@
                         <TextBlock x:Name="CostNote" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
                         <TextBlock x:Name="TallyLine" Style="{StaticResource Dim}" Margin="0,9,0,0" TextWrapping="Wrap"/>
                         <TextBlock x:Name="ScopeLine" Style="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 活动热图:不受区间选择影响,永远画仓库/源库覆盖到的全部日子 -->
+                <TextBlock Text="活动热图" Style="{StaticResource SectionTitle}"/>
+                <Border Style="{StaticResource Card}" Padding="14,12,14,8">
+                    <StackPanel>
+                        <Canvas x:Name="HeatCanvas" Height="118" ClipToBounds="True"/>
+                        <TextBlock x:Name="HeatHint" Style="{StaticResource Dim}" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Border>
 
