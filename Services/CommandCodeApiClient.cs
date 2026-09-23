@@ -25,16 +25,18 @@ public sealed class CommandCodeApiClient : IUsageProvider
     private const double GoatMonthlyCredits = 70d;
 
     /// <summary>
-    /// 所选模型的 monthly allowance(美元)。credits 是"用量价值单位"而不是美元:满额
-    /// 模型(allowance $70)1 credit = $1 用量,allowance $60 的 DeepSeek 每 $1 用量要扣
-    /// 70/60 个 credit。用户只用 DeepSeek,所以按 $60 把 credits 折回美元显示,窗口上的
-    /// 数字就是"还能用多少 DeepSeek 用量"。若换模型需同步改这里:GLM-5.3 Flash $40、
-    /// MiniMax M3 $47、Sol/Hy3/GLM-5.2 为满额 $70。
+    /// GOAT 的窗口读数一律以 **credits** 为单位,不做美元折算。
+    ///
+    /// 服务端只发 credits(月池 70,且没有模型级额度接口),而"1 credit 值多少美元"取决于
+    /// 所选模型的 monthly allowance —— 那是个官方随时会调的数(V4.1 Flash 常态 $40,
+    /// 2026-09-11~09-20 曾"限时提升"到 $60,之后又回落)。把显示建立在这个数上,官方一调、
+    /// 或换一个 allowance 不同的模型,同一份服务端数据就会被折算成另一个金额,切换日还会
+    /// 看到"已用"凭空跳变 —— 而那已经不是服务端给的原始事实了。
+    ///
+    /// 所以这里只呈现服务端原值:每池的 credits 读数 + 百分比。百分比 = used / 70,只依赖
+    /// 固定的池子,与 allowance 无关,换模型、官方调额度都不会变。
     /// </summary>
-    private const double ModelMonthlyAllowance = 60d;
-
-    /// <summary>服务端 credits → 所选模型的美元用量。</summary>
-    private const double CreditsToModelDollar = ModelMonthlyAllowance / GoatMonthlyCredits;
+    private const string CreditUnit = "cr";
 
     private readonly HttpClient _httpClient;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -97,12 +99,12 @@ public sealed class CommandCodeApiClient : IUsageProvider
         var purchasedCredits = ReadDouble(credits, "purchasedCredits") ?? 0d;
         var freeCredits = ReadDouble(credits, "freeCredits") ?? 0d;
 
-        // 只有 GOAT 的 credits 需要折算成模型美元;其余套餐沿用服务端原值。
-        double creditToDollar = IsGoatPlan(planId) ? CreditsToModelDollar : 1d;
+        // GOAT 的窗口以 credits 计;其余套餐服务端本来就发美元,原样用。
+        string windowUnit = IsGoatPlan(planId) ? CreditUnit : "$";
         var windows = new List<QuotaWindow>
         {
-            ParseServerWindow(creditsRoot, "fiveHour", QuotaKind.FiveHour, "5 小时", creditToDollar),
-            ParseServerWindow(creditsRoot, "weekly", QuotaKind.Weekly, "本周", creditToDollar),
+            ParseServerWindow(creditsRoot, "fiveHour", QuotaKind.FiveHour, "5 小时", windowUnit),
+            ParseServerWindow(creditsRoot, "weekly", QuotaKind.Weekly, "本周", windowUnit),
         };
 
         double? periodCost = null;
@@ -214,7 +216,7 @@ public sealed class CommandCodeApiClient : IUsageProvider
         string propertyName,
         QuotaKind kind,
         string label,
-        double creditToDollar)
+        string unit)
     {
         var limits = TryObject(root, "windowLimits");
         var limited = ReadBoolean(limits, "limited") ?? true;
@@ -227,14 +229,15 @@ public sealed class CommandCodeApiClient : IUsageProvider
         return new QuotaWindow(
             kind,
             label,
-            used * creditToDollar,
-            cap * creditToDollar,
+            used,
+            cap,
             resetAt,
             available,
-            available ? null : limited ? "服务端暂未返回该窗口" : "当前套餐不受此窗口限制");
+            available ? null : limited ? "服务端暂未返回该窗口" : "当前套餐不受此窗口限制",
+            unit);
     }
 
-    private static QuotaWindow BuildMonthlyWindow(
+    private QuotaWindow BuildMonthlyWindow(
         string planId,
         double? monthlyRemaining,
         DateTimeOffset? resetAt)
@@ -245,17 +248,18 @@ public sealed class CommandCodeApiClient : IUsageProvider
             // 正是它的 20%/50%,所以上限不必反推。
             // 旧写法拿 summary 的 totalCost 反推(剩余 + 花费),但那是 API 标价口径的记录,
             // 换 V4.1 Flash 后比池子实际扣减虚高,分母被撑到 77+,百分比偏大约 4 个点。
-            // 另外 credits 是"用量价值单位":DeepSeek(allowance $60)每 $1 用量扣 70/60 个
-            // credit,所以 70 credits 恰好等于 $60 DeepSeek 用量,按此折算成美元显示。
+            // 全是服务端原值:已用/满额都是 credits(不折算美元,见 CreditUnit 的说明)。
             double creditsUsed = Math.Clamp(
                 GoatMonthlyCredits - monthlyRemaining.Value, 0d, GoatMonthlyCredits);
             return new QuotaWindow(
                 QuotaKind.Monthly,
                 "本月",
-                creditsUsed * CreditsToModelDollar,
-                ModelMonthlyAllowance,
+                creditsUsed,
+                GoatMonthlyCredits,
                 resetAt,
-                true);
+                true,
+                null,
+                CreditUnit);
         }
 
         return new QuotaWindow(

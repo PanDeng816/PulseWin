@@ -128,12 +128,16 @@ public sealed class CardWindow : Window
         }
         else if (sub.Pools.FirstOrDefault(p => p.PoolKind == "Monthly") is { IsAvailable: true } monthPool)
         {
+            // 头部只报百分比,不报金额。金额要先乘"1 credit 值多少美元"(模型的 monthly
+            // allowance),而那个数官方随时会调、换个模型也会变(见 CommandCodeApiClient
+            // 的 CreditUnit 说明)—— 写在这里等于把服务端原值换成一个会飘的推算值。
+            // 绝对量放在下面的池行里,以 credits(服务端原值)呈现。
             Color mt = UsageTint.For(monthPool.Fraction, monthPool.IsSpent);
-            var usedFt = Text(Amount(monthPool.Used, monthPool.Unit), Pt.P(17), FontWeights.Bold, Solid(mt), dpi);
+            var usedFt = Text(monthPool.PercentText, Pt.P(17), FontWeights.Bold, Solid(mt), dpi);
             dc.DrawText(usedFt, new Point(px + contentW - usedFt.Width, py - 1));
-            var capFt = Text("总 " + Amount(monthPool.Cap, monthPool.Unit), Pt.P(10.5),
+            var labelFt = Text("本月额度已用", Pt.P(10.5),
                 FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
-            dc.DrawText(capFt, new Point(px + contentW - capFt.Width, py - 1 + usedFt.Height + Pt.P(1)));
+            dc.DrawText(labelFt, new Point(px + contentW - labelFt.Width, py - 1 + usedFt.Height + Pt.P(1)));
         }
         else if (sub.Pools.FirstOrDefault(p => p.PoolKind == "Balance") is { IsAvailable: true } balancePool)
         {
@@ -265,7 +269,10 @@ public sealed class CardWindow : Window
         // 行3:用量 / 剩余时间(倒计时实时)
         string detail = !avail ? "暂无读数"
             : pool.PoolKind == "Balance" ? BalanceDetail(pool)
-            : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText()}";
+            // credits 是服务端原值,直接照搬(不折美元);写一次单位,免得"70 cr / 35 cr"啰嗦
+            : pool.Unit == "cr"
+                ? $"{pool.Used ?? 0:0.#} / {pool.Cap ?? 0:0.#} cr · {pool.RemainingText()}"
+                : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText()}";
         var detailFt = Text(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
         double detailY = barY + barH + Pt.P(5);
         dc.DrawText(detailFt, new Point(p.X, detailY));
