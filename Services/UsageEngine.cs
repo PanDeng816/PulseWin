@@ -142,9 +142,23 @@ public sealed class UsageEngine : IDisposable
         _forceNextSync = false;
         var now = DateTimeOffset.Now;
 
+        // 设置里没勾选的源**根本不读**(上游规格:未选择显示的服务不再读取)。
+        // 关掉一个源是"我不想再看到它",不是"照旧每 60 秒打一次 API、只是不画环"。
+        // 三个全关时 due 为空,整轮就是空转,不会出错。
+        var enabled = AllSources.Where(EnabledInSettings).ToList();
+
+        // 被关掉的源要**连上次的失败计数一起清掉**:留着它,"整轮节奏取最健康的
+        // 那个源"就会一直算上一个已经不看的源,把还在用的源一起拖进退避——
+        // 正是 v1.2.1 修的那类 bug。静默期同理,重新勾选时应当立刻试一次。
+        foreach (var source in AllSources.Except(enabled))
+        {
+            failures.Remove(source);
+            _retryAfter.Remove(source);
+        }
+
         // 服务端明确拒绝过的源:在静默期内不再每轮去撞(手动刷新例外)。
         // 续订之后最长等一个静默周期就会自己恢复,不需要用户记得回来手动打开。
-        var due = AllSources
+        var due = enabled
             .Where(source => force
                 || !_retryAfter.TryGetValue(source, out var until)
                 || now >= until)
@@ -175,6 +189,22 @@ public sealed class UsageEngine : IDisposable
     [
         MonitorSource.CommandCodeGoat, MonitorSource.OpenCodeGo, MonitorSource.DeepSeek
     ];
+
+    /// <summary>
+    /// 这个源在设置里是否被勾选显示。没勾选的源**连 API 都不打**:rail 上不画它,
+    /// 就没有理由为它花配额、攒失败计数。设置里改回勾选后由设置窗口触发一次
+    /// 立即同步,不必等下一轮(最长 60 秒)才恢复。
+    /// </summary>
+    private static bool EnabledInSettings(MonitorSource source)
+    {
+        var settings = AppSettings.Current;
+        return source switch
+        {
+            MonitorSource.CommandCodeGoat => settings.ShowGoat,
+            MonitorSource.OpenCodeGo => settings.ShowOpenCode,
+            _ => settings.ShowDeepSeek,
+        };
+    }
 
     private IUsageProvider ProviderFor(MonitorSource source) => source switch
     {

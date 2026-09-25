@@ -101,7 +101,7 @@ public partial class App : System.Windows.Application
             {
                 var s = SpendSummary.Build(ledger, span);
                 text.AppendLine($"===== {span}  ({s.From:yyyy-MM-dd} ~ {s.To.AddDays(-1):yyyy-MM-dd}) =====");
-                text.AppendLine($"  总量 {SpendFormat.TokensExact(s.TotalTokens)} tokens   估算 {SpendFormat.Money(s.TotalCost)}   请求 {s.Requests}   会话 {s.Sessions}   项目 {s.Projects}");
+                text.AppendLine($"  总量 {SpendFormat.TokensExact(s.TotalTokens)} tokens   估算 {SpendFormat.Amount(s.TotalCost, s.CostIsPartial)}   请求 {s.Requests}   会话 {s.Sessions}   项目 {s.Projects}");
                 text.AppendLine($"  四类: input={s.Tally.Input:N0} cacheWrite={s.Tally.CacheWrite:N0} cacheRead={s.Tally.CacheRead:N0} output={s.Tally.Output:N0}  未分类={s.UnclassifiedTokens:N0}");
                 text.AppendLine($"  金额四类: {s.Cost.Input:F4} / {s.Cost.CacheWrite:F4} / {s.Cost.CacheRead:F4} / {s.Cost.Output:F4}");
                 text.AppendLine($"  无公开价: token={s.UnpricedTokens:N0}  模型={s.UnpricedModels}  部分计价={s.CostIsPartial}");
@@ -112,14 +112,14 @@ public partial class App : System.Windows.Application
                 text.AppendLine("  --- 模型 ---");
                 foreach (var m in s.Models.Take(15))
                 {
-                    text.AppendLine($"    {m.Model,-44} {SpendFormat.TokensExact(m.Tokens),15}  {SpendFormat.Money(m.Amount),10}  [{m.VendorName ?? "无公开价"}]  x{m.Requests}");
+                    text.AppendLine($"    {m.Model,-44} {SpendFormat.TokensExact(m.Tokens),15}  {SpendFormat.Amount(m.Amount ?? 0, !m.Priced),10}  [{m.VendorName ?? "无公开价"}]  x{m.Requests}");
                 }
                 text.AppendLine("  --- 来源 ---");
                 foreach (var a in s.Agents)
-                    text.AppendLine($"    {a.Agent,-10} {SpendFormat.TokensExact(a.Tokens),15}  {SpendFormat.Money(a.Cost),10}  请求 {a.Requests}");
+                    text.AppendLine($"    {a.Agent,-10} {SpendFormat.TokensExact(a.Tokens),15}  {SpendFormat.Amount(a.Cost, a.HasUnpriced),10}  请求 {a.Requests}");
                 text.AppendLine("  --- 项目 ---");
                 foreach (var p in s.ProjectRows.Take(8))
-                    text.AppendLine($"    {p.Project,-30} {SpendFormat.TokensExact(p.Tokens),15}  {SpendFormat.Money(p.Cost),10}  会话 {p.Sessions}");
+                    text.AppendLine($"    {p.Project,-30} {SpendFormat.TokensExact(p.Tokens),15}  {SpendFormat.Amount(p.Cost, p.HasUnpriced),10}  会话 {p.Sessions}");
                 text.AppendLine();
             }
         }

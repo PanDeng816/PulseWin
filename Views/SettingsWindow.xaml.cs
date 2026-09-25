@@ -23,6 +23,15 @@ public partial class SettingsWindow : Window
     /// <summary>设置改动后通知主窗重绘(阈值/不透明度都属于渲染参数)。</summary>
     public event Action? SettingsChanged;
 
+    /// <summary>
+    /// 上一次的"显示哪几个源"组合。源开关变了才需要让引擎重新同步——
+    /// 只改"是否显示读数"不该白打一次 API。
+    /// </summary>
+    private (bool Goat, bool Go, bool DeepSeek) _lastSourceFlags;
+
+    /// <summary>正在把最后一个勾选框按回去(见 Visibility_Changed),用来挡掉回弹引发的事件。</summary>
+    private bool _revertingSource;
+
     public SettingsWindow(UsageEngine engine)
     {
         InitializeComponent();
@@ -68,6 +77,7 @@ public partial class SettingsWindow : Window
         ShowGoBox.IsChecked = s.ShowOpenCode;
         ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
         ShowPercentBox.IsChecked = s.ShowPercent;
+        _lastSourceFlags = (s.ShowGoat, s.ShowOpenCode, s.ShowDeepSeek);
         GoatTintPick.Value = s.GoatTint;
         GoTintPick.Value = s.OpenCodeTint;
         DeepSeekTintPick.Value = s.DeepSeekTint;
@@ -241,13 +251,45 @@ public partial class SettingsWindow : Window
 
     private void Visibility_Changed(object sender, RoutedEventArgs e)
     {
-        if (_loading) return;
+        if (_loading || _revertingSource) return;
         var s = AppSettings.Current;
         s.ShowGoat = ShowGoatBox.IsChecked == true;
         s.ShowOpenCode = ShowGoBox.IsChecked == true;
         s.ShowDeepSeek = ShowDeepSeekBox.IsChecked == true;
         s.ShowPercent = ShowPercentBox.IsChecked == true;
+
+        // **至少要保留一个数据源**(上游规格:设置必须保证始终留有一个可用入口)。
+        // 三个全关之后主窗虽然还有占位兜底、不至于崩,但 rail 上已经没有任何内容,
+        // 这个状态没有意义。把刚刚取消的那一个按回去,并说明原因——比默默允许存下
+        // 一个空配置要好。
+        if (sender is CheckBox { IsChecked: false } box
+            && !s.ShowGoat && !s.ShowOpenCode && !s.ShowDeepSeek)
+        {
+            _revertingSource = true;
+            box.IsChecked = true;          // 回弹会触发一次新事件,用标志挡掉
+            _revertingSource = false;
+            s.ShowGoat = ShowGoatBox.IsChecked == true;
+            s.ShowOpenCode = ShowGoBox.IsChecked == true;
+            s.ShowDeepSeek = ShowDeepSeekBox.IsChecked == true;
+            SourceHint.Text = "至少要保留一个数据源——三个全关之后浮窗上就没有内容了。";
+            SourceHint.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SourceHint.Visibility = Visibility.Collapsed;
+        }
+
         UpdatePercentHint();
+
+        // 源开关变了要顺带让引擎重新同步:刚勾上的源不该等到下一轮(最长 60 秒)
+        // 才有数据,刚取消的源也不必再等一个周期才停。
+        var flags = (s.ShowGoat, s.ShowOpenCode, s.ShowDeepSeek);
+        if (flags != _lastSourceFlags)
+        {
+            _lastSourceFlags = flags;
+            _engine.RequestRefreshNow();
+        }
+
         // 主窗会按新的勾选重新加载数据并重算单元高度,rail 长度随即跟着变
         SettingsChanged?.Invoke();
         SaveSoon();

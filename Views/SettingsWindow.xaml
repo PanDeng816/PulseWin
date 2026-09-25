@@ -180,6 +180,8 @@
                               Margin="0,0,0,6" Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
                     <CheckBox x:Name="ShowDeepSeekBox" Content="DeepSeek" Foreground="#F5F5F7"
                               Margin="0,0,0,14" Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
+                    <TextBlock x:Name="SourceHint" FontSize="11" Foreground="#FFB86B"
+                               Margin="0,0,0,10" TextWrapping="Wrap" Visibility="Collapsed"/>
 
                     <CheckBox x:Name="ShowPercentBox" Content="在圆环下显示读数(百分比 / 余额)" Foreground="#F5F5F7"
                               Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>

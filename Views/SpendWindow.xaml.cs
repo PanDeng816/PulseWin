@@ -101,12 +101,13 @@ public partial class SpendWindow : Window
     private void Render(SpendSummary summary)
     {
         TotalTokens.Text = SpendFormat.TokensExact(summary.TotalTokens);
-        TotalCost.Text = SpendFormat.Money(summary.TotalCost);
+        TotalCost.Text = SpendFormat.Amount(summary.TotalCost, summary.CostIsPartial);
 
         var notes = new List<string>();
         notes.Add($"按厂商公开 API 价估算{(summary.CostIsPartial ? "(只覆盖有价的部分)" : "")},不是账单。");
         if (summary.UnpricedTokens > 0)
-            notes.Add($"{summary.UnpricedModels} 个模型没有公开价,它们的 {SpendFormat.Tokens(summary.UnpricedTokens)} tokens 只计数、不计金额。");
+            notes.Add($"{summary.UnpricedModels} 个模型没有公开价,它们的 {SpendFormat.Tokens(summary.UnpricedTokens)} tokens 只计数、不计金额;"
+                + "下面带 * 的金额是有价部分的小计,显示 — 的算不出金额。");
         if (summary.UnclassifiedTokens > 0)
             notes.Add($"其中 {SpendFormat.Tokens(summary.UnclassifiedTokens)} tokens 来源只给了总量、没分类,计入总数但不计价。");
         CostNote.Text = string.Join(" ", notes);
@@ -130,7 +131,8 @@ public partial class SpendWindow : Window
         {
             Name = a.Agent,
             Tokens = SpendFormat.Tokens(a.Tokens),
-            Amount = SpendFormat.Money(a.Cost),
+            Amount = SpendFormat.Amount(a.Cost, a.HasUnpriced),
+            AmountTip = SpendFormat.AmountTip(a.Cost, a.HasUnpriced),
             Detail = $"{a.Requests:N0} 次调用",
             BarWidth = Fraction(a.Tokens, summary.Agents.Max(x => x.Tokens)) * BarBase,
             BarBrush = BarAgents
@@ -139,7 +141,8 @@ public partial class SpendWindow : Window
         {
             Name = p.Project,
             Tokens = SpendFormat.Tokens(p.Tokens),
-            Amount = SpendFormat.Money(p.Cost),
+            Amount = SpendFormat.Amount(p.Cost, p.HasUnpriced),
+            AmountTip = SpendFormat.AmountTip(p.Cost, p.HasUnpriced),
             Detail = p.Sessions > 0 || !p.HasArchivedDetail
                 ? $"{p.Sessions} 个会话"
                 : "明细已归档进本地仓库",
@@ -150,11 +153,11 @@ public partial class SpendWindow : Window
         {
             Name = string.IsNullOrWhiteSpace(x.Title) ? x.SessionId : x.Title!,
             Tokens = SpendFormat.Tokens(x.Tokens),
-            Amount = SpendFormat.Money(x.Cost),
+            Amount = SpendFormat.Amount(x.Cost, x.HasUnpriced),
             Detail = $"{x.Agent} · {x.Project ?? "无项目"} · {x.Last:MM-dd HH:mm}",
             BarWidth = Fraction(x.Tokens, summary.SessionRows.FirstOrDefault()?.Tokens ?? 0) * BarBase,
             BarBrush = BarSessions,
-            AmountTip = SpendFormat.MoneyExact(x.Cost),
+            AmountTip = SpendFormat.AmountTip(x.Cost, x.HasUnpriced),
             SessionId = x.SessionId
         }).ToList());
 

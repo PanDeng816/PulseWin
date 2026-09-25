@@ -248,9 +248,14 @@ public sealed class SpendSummary
 
     public sealed record DayRow(DateOnly Day, long Tokens, double Cost, bool HasUnpriced);
     public sealed record ModelRow(string Model, string? VendorName, long Tokens, double? Amount, TokenTally Tally, long Unclassified, long Requests, bool Priced, double? CacheHit);
-    public sealed record ProjectRow(string Project, long Tokens, double Cost, int Sessions, bool HasArchivedDetail);
-    public sealed record SessionRow(string SessionId, string? Title, string Agent, string? Project, long Tokens, double Cost, DateTime Last);
-    public sealed record AgentRow(string Agent, long Tokens, double Cost, long Requests);
+    /// <summary>
+    /// 项目一行。<c>HasUnpriced</c> = 这里面含没有公开价的模型,所以 <c>Cost</c> 要么
+    /// 只是有价那部分的小计,要么根本不是金额(全无价)。界面据此显示 "—" 或给小计
+    /// 加星号——**绝不能让"查不到价"看起来像 "$0.00"**,那是在说"没花钱"。
+    /// </summary>
+    public sealed record ProjectRow(string Project, long Tokens, double Cost, int Sessions, bool HasArchivedDetail, bool HasUnpriced);
+    public sealed record SessionRow(string SessionId, string? Title, string Agent, string? Project, long Tokens, double Cost, DateTime Last, bool HasUnpriced);
+    public sealed record AgentRow(string Agent, long Tokens, double Cost, long Requests, bool HasUnpriced);
 
     private SpendSummary(
         SpendSpan span, DateTime from, DateTime to, DateOnly firstDay,
@@ -308,11 +313,9 @@ public sealed class SpendSummary
 
         var dayBuckets = new Dictionary<DateOnly, (long Tokens, double Cost, bool HasUnpriced)>();
         var modelBuckets = new Dictionary<string, ModelAccumulator>(StringComparer.Ordinal);
-        // 会话集合用引用类型 HashSet:元组在字典里是值副本,但共享同一个集合对象,
-// 明细循环里直接 Add 即可去重——项目行"会话数"必须是去重后的会话框数,不是行数
-var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<string> Sessions, bool HasArchived)>(StringComparer.Ordinal);
+        var projectBuckets = new Dictionary<string, ProjectAccumulator>(StringComparer.Ordinal);
         var sessionBuckets = new Dictionary<string, SessionAccumulator>(StringComparer.Ordinal);
-        var agentBuckets = new Dictionary<string, (long Tokens, double Cost, long Requests)>(StringComparer.Ordinal);
+        var agentBuckets = new Dictionary<string, AgentAccumulator>(StringComparer.Ordinal);
         var hourly = new long[24];
 
         foreach (var entry in selected)
@@ -346,17 +349,13 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
                 modelBuckets[modelKey] = modelAcc;
 
                 string projectKey = entry.Project ?? "（无项目）";
-                var projectAcc = projectBuckets.TryGetValue(projectKey, out var p)
-                    ? p
-                    : (0L, 0d, new HashSet<string>(StringComparer.Ordinal), false);
-                projectAcc.Item1 += tokens;
-                projectAcc.Item2 += entry.Cost.Total;
-                // 天级聚合行的存在 = 这个项目的部分明细已归档(会话数只数得到还没归档的)
-                projectAcc.Item4 |= entry.Kind == SpendAggKind.Day;
-                projectBuckets[projectKey] = projectAcc;
+                if (!projectBuckets.TryGetValue(projectKey, out var projectAcc))
+                    projectBuckets[projectKey] = projectAcc = new ProjectAccumulator();
+                projectAcc.Add(entry);
 
-                var agentAcc = agentBuckets.TryGetValue(entry.Agent, out var a) ? a : (0L, 0d, 0L);
-                agentBuckets[entry.Agent] = (agentAcc.Item1 + tokens, agentAcc.Item2 + entry.Cost.Total, agentAcc.Item3 + entry.Requests);
+                if (!agentBuckets.TryGetValue(entry.Agent, out var agentAcc))
+                    agentBuckets[entry.Agent] = agentAcc = new AgentAccumulator();
+                agentAcc.Add(entry);
             }
 
             hourly[entry.Timestamp.Hour] += tokens;
@@ -370,11 +369,11 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
             if (entry.Timestamp < from || entry.Timestamp >= to) continue;
             if (entry.Kind != SpendAggKind.Live) continue;
 
-            if (entry.Project is not null)
+            if (entry.Project is { } projectKey
+                && projectBuckets.TryGetValue(projectKey, out var acc)
+                && entry.SessionId is not null)
             {
-                var projectKey = entry.Project;
-                if (projectBuckets.TryGetValue(projectKey, out var acc) && entry.SessionId is not null)
-                    acc.Item3.Add(entry.SessionId);
+                acc.AddSession(entry.SessionId);
             }
             if (entry.SessionId is null) continue;
 
@@ -402,7 +401,9 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
             .ToList();
 
         var projectRows = projectBuckets
-            .Select(kv => new ProjectRow(kv.Key, kv.Value.Item1, kv.Value.Item2, kv.Value.Item3.Count, kv.Value.Item4))
+            .Select(kv => new ProjectRow(
+                kv.Key, kv.Value.Tokens, kv.Value.Cost, kv.Value.Sessions,
+                kv.Value.HasArchived, kv.Value.HasUnpriced))
             .OrderByDescending(p => p.Tokens)
             .ToList();
 
@@ -412,7 +413,8 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
             .ToList();
 
         var agentRows = agentBuckets
-            .Select(kv => new AgentRow(kv.Key, kv.Value.Item1, kv.Value.Item2, kv.Value.Item3))
+            .Select(kv => new AgentRow(
+                kv.Key, kv.Value.Tokens, kv.Value.Cost, kv.Value.Requests, kv.Value.HasUnpriced))
             .OrderByDescending(a => a.Tokens)
             .ToList();
 
@@ -470,6 +472,7 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
         private long _tokens;
         private double _cost;
         private DateTime _last;
+        private bool _hasUnpriced;
 
         public SessionAccumulator(SpendEntry first)
         {
@@ -487,9 +490,57 @@ var projectBuckets = new Dictionary<string, (long Tokens, double Cost, HashSet<s
             if (entry.Timestamp > _last) _last = entry.Timestamp;
             if (!string.IsNullOrWhiteSpace(entry.Title)) _title = entry.Title;
             if (_project is null) _project = entry.Project;
+            if (Unpriced(entry)) _hasUnpriced = true;
         }
 
-        public SessionRow ToRow() => new(_id, _title, _agent, _project, _tokens, _cost, _last);
+        public SessionRow ToRow() => new(_id, _title, _agent, _project, _tokens, _cost, _last, _hasUnpriced);
+    }
+
+    /// <summary>这条记录是不是"有 token 但没有价"(聚合行则看它建仓时是否算出了金额)。</summary>
+    private static bool Unpriced(SpendEntry entry) =>
+        entry.Price is null && entry.PrecomputedCost is null;
+
+    /// <summary>
+    /// 项目的聚合桶。会话集合用引用类型字段而不是元组:IReadOnlyDictionary 里的元组
+    /// 是值副本,往副本的集合里 Add 也能生效但语义含糊,而且加字段时要一路改元组元数。
+    /// </summary>
+    private sealed class ProjectAccumulator
+    {
+        private readonly HashSet<string> _sessions = new(StringComparer.Ordinal);
+
+        public long Tokens { get; private set; }
+        public double Cost { get; private set; }
+        public int Sessions => _sessions.Count;
+        /// <summary>天级聚合行的存在 = 这个项目的部分明细已经归档进本地仓库(会话数只数得到还没归档的)。</summary>
+        public bool HasArchived { get; private set; }
+        public bool HasUnpriced { get; private set; }
+
+        public void Add(SpendEntry entry)
+        {
+            Tokens += entry.TotalTokens;
+            Cost += entry.Cost.Total;
+            if (entry.Kind == SpendAggKind.Day) HasArchived = true;
+            if (Unpriced(entry)) HasUnpriced = true;
+        }
+
+        /// <summary>会话数必须按会话框去重,不是按明细行数。</summary>
+        public void AddSession(string sessionId) => _sessions.Add(sessionId);
+    }
+
+    private sealed class AgentAccumulator
+    {
+        public long Tokens { get; private set; }
+        public double Cost { get; private set; }
+        public long Requests { get; private set; }
+        public bool HasUnpriced { get; private set; }
+
+        public void Add(SpendEntry entry)
+        {
+            Tokens += entry.TotalTokens;
+            Cost += entry.Cost.Total;
+            Requests += entry.Requests;
+            if (Unpriced(entry)) HasUnpriced = true;
+        }
     }
 }
 
@@ -520,4 +571,21 @@ public static class SpendFormat
 
     public static string MoneyExact(double? value) =>
         value is null ? "—" : "$" + value.Value.ToString("0.0000");
+
+    /// <summary>
+    /// 一行(项目 / 会话 / 来源 / 模型)的金额文案。<paramref name="hasUnpriced"/> 为真 =
+    /// 这一行里含没有公开牌价的模型:金额为 0 时显示 "—"——**绝不能显示 $0.00**,那是在说
+    /// "没花钱",而事实是"算不出来";只覆盖了一部分时加星号,标明那是有价部分的小计。
+    /// </summary>
+    public static string Amount(double cost, bool hasUnpriced) =>
+        !hasUnpriced ? Money(cost)
+        : cost > 0 ? Money(cost) + "*"
+        : "—";
+
+    /// <summary>金额的悬停提示:说清这个数到底覆盖了什么。</summary>
+    public static string AmountTip(double cost, bool hasUnpriced) => hasUnpriced
+        ? cost > 0
+            ? $"含没有公开牌价的模型,这里是有价部分的小计 {MoneyExact(cost)}"
+            : "这行里的模型都没有公开牌价:只统计 token,算不出金额"
+        : MoneyExact(cost);
 }
