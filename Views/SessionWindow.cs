@@ -25,8 +25,8 @@ public sealed class SessionWindow : Window
         MinWidth = 420;
         MinHeight = 320;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x22));
-        Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF7));
+        Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
+        Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F));
 
         var ordered = entries.OrderBy(e => e.Timestamp).ToList();
         string title = ordered.LastOrDefault(e => !string.IsNullOrWhiteSpace(e.Title))?.Title
@@ -87,7 +87,7 @@ public sealed class SessionWindow : Window
                     Height = barHeight,
                     RadiusX = 2,
                     RadiusY = 2,
-                    Fill = Frozen(Color.FromRgb(0x9A, 0x8A, 0xFF)),
+                    Fill = Frozen(Color.FromRgb(0xBF, 0x5A, 0xF2)),
                     ToolTip = $"{hours[i].Hour:MM-dd HH:00}\n{SpendFormat.TokensExact(tokensAt)} tokens"
                 };
                 Canvas.SetLeft(bar, x);
@@ -95,7 +95,7 @@ public sealed class SessionWindow : Window
                 timeline.Children.Add(bar);
                 if (i > 0 && hours[i].Hour.Date != hours[i - 1].Hour.Date)
                 {
-                    var divider = new Rectangle { Width = 1, Height = 74, Fill = Frozen(Color.FromArgb(0x30, 0xF5, 0xF5, 0xF7)) };
+                    var divider = new Rectangle { Width = 1, Height = 74, Fill = Frozen(Color.FromRgb(0xE8, 0xE8, 0xEC)) };
                     Canvas.SetLeft(divider, x - slot * 0.15);
                     Canvas.SetTop(divider, 0);
                     timeline.Children.Add(divider);
@@ -140,7 +140,9 @@ public sealed class SessionWindow : Window
 
     private static Border Card(UIElement content) => new()
     {
-        Background = new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x2E)),
+        Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF)),
+        BorderBrush = new SolidColorBrush(Color.FromRgb(0xE3, 0xE3, 0xE6)),
+        BorderThickness = new Thickness(1),
         CornerRadius = new CornerRadius(8),
         Padding = new Thickness(14),
         Margin = new Thickness(0, 0, 0, 14),
@@ -156,7 +158,7 @@ public sealed class SessionWindow : Window
         TextWrapping = TextWrapping.Wrap
     };
 
-    private static Brush Dim() => Frozen(Color.FromArgb(0x8C, 0xF5, 0xF5, 0xF7));
+    private static Brush Dim() => Frozen(Color.FromRgb(0x86, 0x86, 0x8B));
 
     private static UIElement ModelRow(string model, long tokens, double cost, long requests, TokenTally tally, long maxTokens)
     {
@@ -179,14 +181,14 @@ public sealed class SessionWindow : Window
         };
         var bar = new Border
         {
-            Background = Frozen(Color.FromRgb(0x1A, 0x1A, 0x20)),
+            Background = Frozen(Color.FromRgb(0xE8, 0xE8, 0xEC)),
             CornerRadius = new CornerRadius(2),
             Height = 4,
             Width = 180,
             HorizontalAlignment = HorizontalAlignment.Left,
             Child = new Border
             {
-                Background = Frozen(Color.FromRgb(0x00, 0xE6, 0x8C)),
+                Background = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF)),
                 CornerRadius = new CornerRadius(2),
                 Height = 4,
                 Width = fraction * BarBase,

@@ -302,7 +302,26 @@ public partial class SettingsWindow : Window
             : "已隐藏读数:rail 上只有圆环,间距与整体高度都会收窄。";
     }
 
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    /// <summary>
+    /// 侧栏切页。XAML 解析期间 NavAppearance 的 IsChecked=True 也会触发一次,
+    /// 那时 PageTitle 还没创建——初始可见性已在 XAML 里写对,这里只在加载后生效。
+    /// </summary>
+    private void Nav_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        (string title, StackPanel page) = sender switch
+        {
+            _ when sender == NavRings => ("圆环与数字", PageRings),
+            _ when sender == NavSources => ("数据源", PageSources),
+            _ when sender == NavRefresh => ("刷新", PageRefresh),
+            _ => ("外观", PageAppearance),
+        };
+        PageTitle.Text = title;
+        PageAppearance.Visibility = page == PageAppearance ? Visibility.Visible : Visibility.Collapsed;
+        PageRings.Visibility = page == PageRings ? Visibility.Visible : Visibility.Collapsed;
+        PageSources.Visibility = page == PageSources ? Visibility.Visible : Visibility.Collapsed;
+        PageRefresh.Visibility = page == PageRefresh ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     protected override void OnClosed(EventArgs e)
     {

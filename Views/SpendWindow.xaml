@@ -3,23 +3,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Pulse 用量统计" Width="580" Height="760" MinWidth="460" MinHeight="320"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="#1C1C22" Foreground="#F5F5F7">
+        Background="#F5F5F7" Foreground="#1D1D1F"
+        FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <Window.Resources>
-        <!-- 与设置窗口同一套暗色按钮:默认 WPF 按钮在深底上发白,很刺眼 -->
+        <!-- 亮色主题,对齐上游 Token spend 页:白底、白卡、蓝控件、灰注释 -->
         <Style x:Key="DarkButton" TargetType="Button">
-            <Setter Property="Foreground" Value="#F5F5F7"/>
+            <Setter Property="Foreground" Value="#1D1D1F"/>
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="#2C2C36" BorderBrush="#3A3A44"
-                                BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Bd" Background="White" BorderBrush="#D8D8DC"
+                                BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3A3A46"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#E9E9EC"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -27,25 +31,26 @@
             </Setter>
         </Style>
 
-        <!-- 区间选择:选中的那颗用亮底,一眼看出当前看的是哪段 -->
+        <!-- 区间选择:上游分段控件样式(浅灰轨道、选中蓝块白字) -->
         <Style x:Key="SpanToggle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#B0F5F5F7"/>
+            <Setter Property="Foreground" Value="#1D1D1F"/>
             <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Bd" Background="#22222A" BorderBrush="#3A3A44"
-                                BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Bd" Background="#EBEBEF" BorderBrush="Transparent"
+                                BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#33333E"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E4"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#4A4A58"/>
-                                <Setter Property="Foreground" Value="#F5F5F7"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#007AFF"/>
+                                <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -55,20 +60,22 @@
         </Style>
 
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="#26262E"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E3E3E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Padding" Value="14"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
         </Style>
 
         <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,4,0,8"/>
+            <Setter Property="Margin" Value="1,4,0,8"/>
         </Style>
 
         <Style x:Key="Dim" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8CF5F5F7"/>
+            <Setter Property="Foreground" Value="#86868B"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
@@ -84,11 +91,11 @@
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="{Binding Name}" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                        <Border Background="#1A1A20" CornerRadius="2" Height="4" Width="180" HorizontalAlignment="Left">
+                        <Border Background="#E8E8EC" CornerRadius="2" Height="4" Width="180" HorizontalAlignment="Left">
                             <Border Background="{Binding BarBrush}" CornerRadius="2" Height="4"
                                     HorizontalAlignment="Left" Width="{Binding BarWidth}"/>
                         </Border>
-                        <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="#8CF5F5F7" Margin="8,-3,0,0"/>
+                        <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="#86868B" Margin="8,-3,0,0"/>
                     </StackPanel>
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding Tokens}" FontSize="12.5" VerticalAlignment="Top"
@@ -102,7 +109,7 @@
 
     <DockPanel>
         <!-- 顶部:区间 / 刷新 / 价目表来源 -->
-        <Border DockPanel.Dock="Top" Background="#20202A" Padding="20,12" BorderBrush="#2E2E38" BorderThickness="0,0,0,1">
+        <Border DockPanel.Dock="Top" Background="White" Padding="20,12" BorderBrush="#E3E3E6" BorderThickness="0,0,0,1">
             <StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="SpanToday" Style="{StaticResource SpanToggle}" Content="今天" GroupName="Span" Tag="Today"/>
@@ -122,9 +129,9 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="TotalTokens" FontSize="30" FontWeight="SemiBold" VerticalAlignment="Bottom"/>
-                            <TextBlock Text="tokens" FontSize="12" Foreground="#8CF5F5F7" Margin="7,0,0,7"/>
-                            <TextBlock x:Name="TotalCost" FontSize="30" FontWeight="SemiBold" Margin="26,0,0,0" VerticalAlignment="Bottom"/>
+                            <TextBlock x:Name="TotalTokens" FontSize="32" FontWeight="Bold" VerticalAlignment="Bottom"/>
+                            <TextBlock Text="tokens" FontSize="12" Foreground="#86868B" Margin="7,0,0,8"/>
+                            <TextBlock x:Name="TotalCost" FontSize="32" FontWeight="Bold" Margin="26,0,0,0" VerticalAlignment="Bottom"/>
                         </StackPanel>
                         <TextBlock x:Name="CostNote" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
                         <TextBlock x:Name="TallyLine" Style="{StaticResource Dim}" Margin="0,9,0,0" TextWrapping="Wrap"/>

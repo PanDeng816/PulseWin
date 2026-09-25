@@ -21,13 +21,13 @@ public partial class SpendWindow : Window
     /// <summary>比例条的基准宽度(像素)。</summary>
     private const double BarBase = 180;
 
-    private static readonly Brush BarModels = Frozen(Color.FromRgb(0x00, 0xE6, 0x8C));
-    private static readonly Brush BarAgents = Frozen(Color.FromRgb(0x4D, 0x6B, 0xFE));
-    private static readonly Brush BarProjects = Frozen(Color.FromRgb(0xFF, 0xB0, 0x20));
-    private static readonly Brush BarSessions = Frozen(Color.FromRgb(0x9A, 0x8A, 0xFF));
-    private static readonly Brush BarEmpty = Frozen(Color.FromRgb(0x55, 0x55, 0x60));
-    private static readonly Brush ChartBar = Frozen(Color.FromRgb(0x00, 0xE6, 0x8C));
-    private static readonly Brush ChartZero = Frozen(Color.FromRgb(0x44, 0x44, 0x4E));
+    private static readonly Brush BarModels = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF));
+    private static readonly Brush BarAgents = Frozen(Color.FromRgb(0x5E, 0x5C, 0xE6));
+    private static readonly Brush BarProjects = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
+    private static readonly Brush BarSessions = Frozen(Color.FromRgb(0xBF, 0x5A, 0xF2));
+    private static readonly Brush BarEmpty = Frozen(Color.FromRgb(0xC7, 0xC7, 0xCC));
+    private static readonly Brush ChartBar = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF));
+    private static readonly Brush ChartZero = Frozen(Color.FromRgb(0xE5, 0xE5, 0xEA));
 
     private static Brush Frozen(Color c)
     {
@@ -261,7 +261,7 @@ public partial class SpendWindow : Window
             {
                 Text = days[index].Day.ToString("MM-dd"),
                 FontSize = 10.5,
-                Foreground = Frozen(Color.FromArgb(0x8C, 0xF5, 0xF5, 0xF7))
+                Foreground = Frozen(Color.FromRgb(0x86, 0x86, 0x8B))
             };
             label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             double x = index * slot + (slot - label.DesiredSize.Width) / 2;
@@ -350,7 +350,7 @@ public partial class SpendWindow : Window
                 else
                 {
                     rect.ToolTip = $"{day:yyyy-MM-dd}\n没有记录";
-                    rect.Stroke = Frozen(Color.FromArgb(0x22, 0xF5, 0xF5, 0xF7));
+                    rect.Stroke = Frozen(Color.FromRgb(0xD8, 0xD8, 0xDC));
                     rect.StrokeThickness = 0.5;
                 }
                 Canvas.SetLeft(rect, col * step);
@@ -370,7 +370,7 @@ public partial class SpendWindow : Window
             {
                 Text = label,
                 FontSize = 10.5,
-                Foreground = Frozen(Color.FromArgb(0x8C, 0xF5, 0xF5, 0xF7))
+                Foreground = Frozen(Color.FromRgb(0x86, 0x86, 0x8B))
             };
             Canvas.SetLeft(labelBlock, column * step);
             Canvas.SetTop(labelBlock, 7 * step - 2);
@@ -384,13 +384,13 @@ public partial class SpendWindow : Window
     private static Brush HeatBrush(long tokens, long max)
     {
         Color color = max <= 0 || tokens <= 0
-            ? Color.FromRgb(0x22, 0x22, 0x2A)
+            ? Color.FromRgb(0xED, 0xED, 0xF0)
             : (tokens * 4d / max) switch
             {
-                < 1 => Color.FromArgb(0x38, 0x00, 0xE6, 0x8C),
-                < 2 => Color.FromArgb(0x73, 0x00, 0xE6, 0x8C),
-                < 3 => Color.FromArgb(0xB3, 0x00, 0xE6, 0x8C),
-                _ => Color.FromRgb(0x00, 0xE6, 0x8C)
+                < 1 => Color.FromRgb(0xD2, 0xF0, 0xE1),
+                < 2 => Color.FromRgb(0xA4, 0xE2, 0xC3),
+                < 3 => Color.FromRgb(0x5F, 0xCD, 0x9E),
+                _ => Color.FromRgb(0x00, 0xA8, 0x5C)
             };
         return Frozen(color);
     }
