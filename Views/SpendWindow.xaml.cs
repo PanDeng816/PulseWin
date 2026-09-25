@@ -71,6 +71,11 @@ public partial class SpendWindow : Window
     {
         if (_loading) return;
         _loading = true;
+
+        // 牌价表过期就在后台拉一份新的(上游规矩:失败继续用旧的、五分钟后再试)。
+        // **不阻塞这次渲染**——界面照旧用现有表出数,拉到新的再重算一遍。
+        ModelPricesUpdater.RefreshIfStale(() => Dispatcher.BeginInvoke(ReloadLedger));
+
         bool hasData = _ledger is not null;
         PriceSourceText.Text = hasData ? "重新读取本地记录…" : "正在读取本地记录…";
 
@@ -173,22 +178,22 @@ public partial class SpendWindow : Window
         {
             Name = m.Model,
             Tokens = SpendFormat.Tokens(m.Tokens),
-            Amount = SpendFormat.Money(m.Amount),
-            AmountTip = m.Priced ? SpendFormat.MoneyExact(m.Amount) : "该模型没有公开牌价,只统计 token",
+            Amount = SpendFormat.Amount(m.Amount ?? 0, m.UnpricedTokens > 0),
+            AmountTip = SpendFormat.AmountTip(m.Amount ?? 0, m.UnpricedTokens > 0),
             Detail = $"输入 {SpendFormat.Tokens(m.Tally.Input)} · 缓存读 {SpendFormat.Tokens(m.Tally.CacheRead)} · 输出 {SpendFormat.Tokens(m.Tally.Output)}"
                 + (m.CacheHit is { } hit ? $" · 命中 {hit:P1}" : "")
                 + (m.Unclassified > 0 ? $" · 未分类 {SpendFormat.Tokens(m.Unclassified)}" : "")
-                + (m.Priced ? "" : " · 无公开价"),
+                + (m.UnpricedTokens > 0 ? $" · 其中 {SpendFormat.Tokens(m.UnpricedTokens)} 无公开价" : ""),
             BarWidth = Fraction(m.Tokens, max) * BarBase,
             BarBrush = m.Priced ? BarModels : BarEmpty
         }).ToList();
         RenderList(ModelList, rows);
 
-        var unpriced = summary.Models.Where(m => !m.Priced).Select(m => m.Model).ToList();
+        var unpriced = summary.Models.Where(m => m.UnpricedTokens > 0).Select(m => m.Model).ToList();
         ModelHint.Text = summary.Models.Count == 0
             ? "这个区间里没有记录。"
             : (unpriced.Count > 0
-                ? $"无公开牌价、只计 token 的模型:{string.Join("、", unpriced)}"
+                ? $"有算不出价的 token 的模型(金额只是有价部分):{string.Join("、", unpriced)}"
                 : "");
     }
 

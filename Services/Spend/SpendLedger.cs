@@ -37,11 +37,28 @@ public sealed record SpendEntry(
     double? PrecomputedCost = null,
     SpendAggKind Kind = SpendAggKind.Live,
     /// <summary>聚合行代表多少次调用;明细行恒为 1。</summary>
-    long RequestCount = 1)
+    long RequestCount = 1,
+    /// <summary>
+    /// 这条记录里**算不出价**的 token 数(0 = 全部有价)。
+    ///
+    /// 明细行是"这个模型没有公开牌价"的全体;聚合行是那个桶里无价部分的累加——
+    /// 同一个模型在不同时间可能一个有一个没有(价目表更新过),所以这件事必须**单独存**,
+    /// 不能靠"金额是不是 0"反推:真实 0 价的免费模型也是 0 元,两者不是一回事。
+    /// </summary>
+    long UnpricedTokens = 0)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
 
-    /// <summary>金额字段怎么显示,取决于这个模型有没有价(聚合行直接给已算好的数)。</summary>
+    /// <summary>这条记录里有没有算不出价的 token(界面要据此显示 "—" 或给小计加星号)。</summary>
+    public bool HasUnpriced => UnpricedTokens > 0;
+
+    /// <summary>有没有算得出价的 token(= 金额那一栏不是空的)。</summary>
+    public bool HasPriced => UnpricedTokens < TotalTokens;
+
+    /// <summary>
+    /// **有价那部分**的金额:聚合行直接给建仓时算好的数,明细行按牌价算。
+    /// null = 这条记录一点价都算不出来。它不随价目表更新重算(历史账单语义)。
+    /// </summary>
     public double? Amount => PrecomputedCost is { } c ? c : Price is null ? null : Cost.Total;
 
     /// <summary>只有四类被计价;未分类部分**永不参与金额**(它没有类别可算)。</summary>
@@ -161,7 +178,10 @@ public sealed class SpendLedger
                     record.Title,
                     record.Tally,
                     record.UnclassifiedTokens,
-                    price));
+                    price,
+                    // 查不到价 = 这条记录的 token 全算不出金额(一个模型只有"有价/无价"两种,
+                    // 不存在半条记录有价)
+                    UnpricedTokens: price is null ? record.Tally.Total + record.UnclassifiedTokens : 0));
             }
         }
 
@@ -200,6 +220,9 @@ public enum SpendSpan
 /// </summary>
 public sealed class SpendSummary
 {
+    /// <summary>源库没给工作目录的记录归到这一行。它不是路径,不参与显示名的重名消歧。</summary>
+    public const string NoProject = "（无项目）";
+
     public SpendSpan Span { get; }
     public DateTime From { get; }
     public DateTime To { get; }
@@ -247,7 +270,7 @@ public sealed class SpendSummary
         : Enumerable.Range(0, 24).OrderByDescending(h => HourlyTokens[h]).First();
 
     public sealed record DayRow(DateOnly Day, long Tokens, double Cost, bool HasUnpriced);
-    public sealed record ModelRow(string Model, string? VendorName, long Tokens, double? Amount, TokenTally Tally, long Unclassified, long Requests, bool Priced, double? CacheHit);
+    public sealed record ModelRow(string Model, string? VendorName, long Tokens, double? Amount, TokenTally Tally, long Unclassified, long UnpricedTokens, long Requests, bool Priced, double? CacheHit);
     /// <summary>
     /// 项目一行。<c>HasUnpriced</c> = 这里面含没有公开价的模型,所以 <c>Cost</c> 要么
     /// 只是有价那部分的小计,要么根本不是金额(全无价)。界面据此显示 "—" 或给小计
@@ -331,15 +354,15 @@ public sealed class SpendSummary
                 unclassified += entry.UnclassifiedTokens;
                 tally += entry.Tally;
                 cost += entry.Cost;
-                if (entry.Price is null && entry.PrecomputedCost is null)
+                if (entry.UnpricedTokens > 0)
                 {
-                    unpricedTokens += tokens;
+                    unpricedTokens += entry.UnpricedTokens;
                     unpricedModels.Add(ModelPrices.DisplayName(entry.Model));
                 }
 
                 var dayAcc = dayBuckets.TryGetValue(entry.Day, out var d) ? d : (0L, 0d, false);
                 dayBuckets[entry.Day] = (dayAcc.Item1 + tokens, dayAcc.Item2 + entry.Cost.Total,
-                    dayAcc.Item3 || (entry.Price is null && entry.PrecomputedCost is null));
+                    dayAcc.Item3 || entry.HasUnpriced);
 
                 // 按显示名归并:`deepseek/deepseek-v4-flash` 与 `deepseek-v4-flash` 是同一个模型。
                 string modelKey = ModelPrices.DisplayName(entry.Model);
@@ -348,7 +371,7 @@ public sealed class SpendSummary
                 modelAcc.Add(entry);
                 modelBuckets[modelKey] = modelAcc;
 
-                string projectKey = entry.Project ?? "（无项目）";
+                string projectKey = entry.Project ?? NoProject;
                 if (!projectBuckets.TryGetValue(projectKey, out var projectAcc))
                     projectBuckets[projectKey] = projectAcc = new ProjectAccumulator();
                 projectAcc.Add(entry);
@@ -400,15 +423,21 @@ public sealed class SpendSummary
             .OrderByDescending(m => m.Tokens)
             .ToList();
 
+        // 项目身份 → 显示名:末段名不冲突就用末段名,撞了才补父级组件
+        // (上游规格:项目身份与显示名是两件事)。
+        var displayNames = UsageStoreSupport.DisplayNames(
+            projectBuckets.Keys.Where(k => k != NoProject));
+
         var projectRows = projectBuckets
             .Select(kv => new ProjectRow(
-                kv.Key, kv.Value.Tokens, kv.Value.Cost, kv.Value.Sessions,
+                kv.Key == NoProject ? NoProject : displayNames.GetValueOrDefault(kv.Key, kv.Key),
+                kv.Value.Tokens, kv.Value.Cost, kv.Value.Sessions,
                 kv.Value.HasArchived, kv.Value.HasUnpriced))
             .OrderByDescending(p => p.Tokens)
             .ToList();
 
         var sessionRows = sessionBuckets
-            .Select(kv => kv.Value.ToRow())
+            .Select(kv => kv.Value.ToRow(displayNames))
             .OrderByDescending(s => s.Last)
             .ToList();
 
@@ -421,7 +450,7 @@ public sealed class SpendSummary
         return new SpendSummary(
             span, from, to, firstDay, totalTokens, cost.Total, tally, cost, unclassified,
             unpricedTokens, unpricedModels.Count, selected.Sum(e => e.Requests),
-            sessionBuckets.Count, projectBuckets.Count(p => p.Key != "（无项目）"),
+            sessionBuckets.Count, projectBuckets.Count(p => p.Key != NoProject),
             days, models, projectRows, sessionRows, agentRows, hourly);
     }
 
@@ -429,6 +458,7 @@ public sealed class SpendSummary
     {
         private TokenTally _tally;
         private long _unclassified;
+        private long _unpriced;
         private long _requests;
         private double? _amount;
         private string? _vendor;
@@ -438,12 +468,18 @@ public sealed class SpendSummary
         {
             _tally += entry.Tally;
             _unclassified += entry.UnclassifiedTokens;
+            _unpriced += entry.UnpricedTokens;
             _requests += entry.Requests;
-            if (entry.Price is not null)
+
+            // **有价那部分存在就算已定价**。仓库聚合行的 Price 是 null,金额却早在建仓时
+            // 就按当时的牌价算好了(PrecomputedCost)——只认 Price 的话,所有来自本地仓库
+            // 的模型都会显示成"无公开价"、金额一栏全是 "—"(实测就是这样:整个统计里
+            // 几乎每条都走了仓库,模型列表因此全军覆没)。
+            if (entry.HasPriced)
             {
                 _anyPriced = true;
                 _amount = (_amount ?? 0) + entry.Cost.Total;
-                _vendor ??= entry.Price.Vendor;
+                _vendor ??= entry.Price?.Vendor;
             }
         }
 
@@ -457,6 +493,7 @@ public sealed class SpendSummary
                 _anyPriced ? _amount ?? 0 : null,
                 _tally,
                 _unclassified,
+                _unpriced,
                 _requests,
                 _anyPriced,
                 inputTotal > 0 ? (double)_tally.CacheRead / inputTotal : null);
@@ -490,15 +527,18 @@ public sealed class SpendSummary
             if (entry.Timestamp > _last) _last = entry.Timestamp;
             if (!string.IsNullOrWhiteSpace(entry.Title)) _title = entry.Title;
             if (_project is null) _project = entry.Project;
-            if (Unpriced(entry)) _hasUnpriced = true;
+            if (entry.HasUnpriced) _hasUnpriced = true;
         }
 
-        public SessionRow ToRow() => new(_id, _title, _agent, _project, _tokens, _cost, _last, _hasUnpriced);
+        public SessionRow ToRow(IReadOnlyDictionary<string, string> displayNames)
+        {
+            // 会话行上的"项目"是给人看的,用消歧后的显示名
+            string? project = _project is { } id && displayNames.TryGetValue(id, out var shown)
+                ? shown
+                : _project;
+            return new(_id, _title, _agent, project, _tokens, _cost, _last, _hasUnpriced);
+        }
     }
-
-    /// <summary>这条记录是不是"有 token 但没有价"(聚合行则看它建仓时是否算出了金额)。</summary>
-    private static bool Unpriced(SpendEntry entry) =>
-        entry.Price is null && entry.PrecomputedCost is null;
 
     /// <summary>
     /// 项目的聚合桶。会话集合用引用类型字段而不是元组:IReadOnlyDictionary 里的元组
@@ -520,7 +560,7 @@ public sealed class SpendSummary
             Tokens += entry.TotalTokens;
             Cost += entry.Cost.Total;
             if (entry.Kind == SpendAggKind.Day) HasArchived = true;
-            if (Unpriced(entry)) HasUnpriced = true;
+            if (entry.HasUnpriced) HasUnpriced = true;
         }
 
         /// <summary>会话数必须按会话框去重,不是按明细行数。</summary>
@@ -539,7 +579,7 @@ public sealed class SpendSummary
             Tokens += entry.TotalTokens;
             Cost += entry.Cost.Total;
             Requests += entry.Requests;
-            if (Unpriced(entry)) HasUnpriced = true;
+            if (entry.HasUnpriced) HasUnpriced = true;
         }
     }
 }

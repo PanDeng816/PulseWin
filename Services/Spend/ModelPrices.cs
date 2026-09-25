@@ -29,8 +29,11 @@ public sealed class ModelPrices
     /// <summary>
     /// 第一方厂商的优先顺序。**只列模型原厂**:云厂商挂别人模型的转售条目一律不进第一方表
     /// (否则 alibaba-cn 会按字母序抢在 deepseek 前头,把 DeepSeek 的模型按阿里的价算)。
+    ///
+    /// 它同时是 <see cref="ModelPricesUpdater"/> 裁剪下载表的白名单——**只有**代码里认识的
+    /// 厂商会被收进表,models.dev 上另外两百多个转售商/云厂一个都不进。
     /// </summary>
-    private static readonly string[] FirstPartyOrder =
+    internal static readonly string[] FirstPartyOrder =
     [
         "deepseek", "anthropic", "openai", "google", "xai", "mistral",
         "zai", "zhipuai", "moonshotai", "minimax", "xiaomi",
@@ -41,8 +44,11 @@ public sealed class ModelPrices
     /// 套餐厂商的优先顺序。**按与用户实际订阅的相关度排,不是字母序**:
     /// 两个转售商都卖同一个模型时,先命中的那个决定金额,所以顺序必须是刻意的
     /// (kilo 与 opencode-go 都卖 deepseek-v4.1-flash,价差一倍:0.3/1.2 与 0.15/0.6)。
+    ///
+    /// 它同时是下载表的白名单(见 <see cref="ModelPricesUpdater"/>);名单里某个厂商在当前
+    /// models.dev 上不存在是正常的(比如 stepfun-step-plan),裁剪结果里没有它而已。
     /// </summary>
-    private static readonly string[] PlanVendorOrder =
+    internal static readonly string[] PlanVendorOrder =
     [
         "opencode-go", "opencode", "zai-coding-plan", "zhipuai-coding-plan",
         "kimi-for-coding", "cline-pass", "kilo", "volcengine-coding-plan",

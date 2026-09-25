@@ -23,7 +23,7 @@ public static class UsageRepository
 {
     private sealed record DayRow(string Day, string Agent, string Model, string? Provider,
         string? Project, long Input, long CacheWrite, long CacheRead, long Output,
-        long Unclassified, long Requests, double Cost);
+        long Unclassified, long Unpriced, long Requests, double Cost);
 
     private sealed record HourRow(string Hour, string Agent, long Tokens, long Unclassified, long Requests, double Cost);
 
@@ -31,6 +31,34 @@ public static class UsageRepository
     private const int HourRetentionDays = 35;    // 小时级:24 小时分布图只看近期
     private const int SeenRetentionDays = 95;    // 去重键:必须 ≥ 灌入窗口,否则旧记录会被重复累加
     private const int IngestWindowDays = 90;     // 首次建仓往回灌多少天(更早的不要:拖慢且用户看不到那么久远)
+
+    /// <summary>
+    /// 仓库的文件格式版本。**改了聚合列的含义就要加一**——旧行没法就地修补,只能整份重建
+    /// (明细还在源库里,重灌一遍口径就对了)。
+    /// v2:<c>project</c> 改存项目身份(完整路径),新增 <c>unpriced</c> 列(桶里算不出价的 token 数)。
+    /// </summary>
+    private const int SchemaVersion = 2;
+
+    private const string CreateTables = """
+        CREATE TABLE IF NOT EXISTS agg_day(
+            day TEXT, agent TEXT, model TEXT, provider TEXT, project TEXT,
+            inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
+            unc INTEGER, unpriced INTEGER, requests INTEGER, cost REAL,
+            PRIMARY KEY(day, agent, model, provider, project));
+        CREATE TABLE IF NOT EXISTS agg_hour(
+            hour TEXT, agent TEXT,
+            inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
+            unc INTEGER, requests INTEGER, cost REAL,
+            PRIMARY KEY(hour, agent));
+        CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY, ts TEXT);
+        CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
+        """;
+
+    private const string DropTables = """
+        DROP TABLE IF EXISTS agg_day;
+        DROP TABLE IF EXISTS agg_hour;
+        DROP TABLE IF EXISTS seen;
+        """;
 
     public static string Location => Path.Combine(
         SnapshotSource.DataPaths.RootDirectory, "usage-history.sqlite");
@@ -119,21 +147,25 @@ public static class UsageRepository
 
     private static void EnsureSchema(SqliteConnection connection)
     {
+        // 先保证四张表存在(旧库会保留它原来的结构,下面按版本判断要不要重建)
+        Execute(connection, CreateTables);
+
+        string want = SchemaVersion.ToString(CultureInfo.InvariantCulture);
+        if (ReadMeta(connection, "schema_version") == want) return;
+
+        // 版本对不上就整份重建。**为什么是删而不是迁移**:v2 之前 project 存的是目录末段名,
+        // 完整路径已经丢了,从旧行推不回来;新增的 unpriced 列同理(旧行把"无价"和
+        // "真实 0 元"都写成了 0,分不出来)。而源库里的明细本来就还在,重灌一遍口径全对。
+        Execute(connection, DropTables);
+        Execute(connection, CreateTables);
+        WriteMeta(connection, "schema_version", want);
+        Diagnostics.Note($"用量仓库 schema 升到 v{SchemaVersion}:已重建,源库明细会重新灌入");
+    }
+
+    private static void Execute(SqliteConnection connection, string sql)
+    {
         using var command = connection.CreateCommand();
-        command.CommandText = """
-            CREATE TABLE IF NOT EXISTS agg_day(
-                day TEXT, agent TEXT, model TEXT, provider TEXT, project TEXT,
-                inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
-                unc INTEGER, requests INTEGER, cost REAL,
-                PRIMARY KEY(day, agent, model, provider, project));
-            CREATE TABLE IF NOT EXISTS agg_hour(
-                hour TEXT, agent TEXT,
-                inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
-                unc INTEGER, requests INTEGER, cost REAL,
-                PRIMARY KEY(hour, agent));
-            CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY, ts TEXT);
-            CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
-            """;
+        command.CommandText = sql;
         command.ExecuteNonQuery();
     }
 
@@ -141,18 +173,22 @@ public static class UsageRepository
     {
         using var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO agg_day(day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, requests, cost)
-            VALUES($day, $agent, $model, $provider, $project, $inp, $cw, $cr, $out, $unc, $req, $cost)
+            INSERT INTO agg_day(day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost)
+            VALUES($day, $agent, $model, $provider, $project, $inp, $cw, $cr, $out, $unc, $unpriced, $req, $cost)
             ON CONFLICT(day, agent, model, provider, project) DO UPDATE SET
                 inp = inp + $inp, cache_w = cache_w + $cw, cache_r = cache_r + $cr,
-                out = out + $out, unc = unc + $unc, requests = requests + $req, cost = cost + $cost
+                out = out + $out, unc = unc + $unc, unpriced = unpriced + $unpriced,
+                requests = requests + $req, cost = cost + $cost
             """;
         command.Parameters.AddWithValue("$day", e.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         command.Parameters.AddWithValue("$agent", e.Agent);
         command.Parameters.AddWithValue("$model", e.Model);
         command.Parameters.AddWithValue("$provider", (object?)e.ProviderId ?? DBNull.Value);
+        // 项目存的是**身份**(完整目录):同名目录是两个项目,末段名只是显示时才用
         command.Parameters.AddWithValue("$project", (object?)e.Project ?? DBNull.Value);
         BindTally(command, e);
+        // 无价 token 数必须单独存:金额那一列把"无价"和"真实 0 元"都写成了 0,分不出来
+        command.Parameters.AddWithValue("$unpriced", e.UnpricedTokens);
         command.ExecuteNonQuery();
     }
 
@@ -243,7 +279,7 @@ public static class UsageRepository
     {
         var rows = new List<SpendEntry>();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, requests, cost FROM agg_day";
+        command.CommandText = "SELECT day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost FROM agg_day";
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
@@ -252,7 +288,8 @@ public static class UsageRepository
                 reader.IsDBNull(3) ? null : reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
                 reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7),
-                reader.GetInt64(8), reader.GetInt64(9), reader.GetInt64(10), reader.GetDouble(11));
+                reader.GetInt64(8), reader.GetInt64(9), reader.GetInt64(10),
+                reader.GetInt64(11), reader.GetDouble(12));
             if (!DateTime.TryParseExact(row.Day, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var day)) continue;
             rows.Add(new SpendEntry(
@@ -260,7 +297,8 @@ public static class UsageRepository
                 SessionId: null, Title: null,
                 new TokenTally(row.Input, row.CacheWrite, row.CacheRead, row.Output),
                 row.Unclassified, Price: null,
-                PrecomputedCost: row.Cost, Kind: SpendAggKind.Day, RequestCount: row.Requests));
+                PrecomputedCost: row.Cost, Kind: SpendAggKind.Day, RequestCount: row.Requests,
+                UnpricedTokens: row.Unpriced));
         }
         return rows;
     }

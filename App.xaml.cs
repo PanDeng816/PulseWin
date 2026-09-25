@@ -44,6 +44,14 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:强制更新一次模型牌价表,结果打到 Data\price-update.txt 后退出(不开界面)。
+        if (e.Args.Any(a => string.Equals(a, "--update-prices", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunPriceUpdate();
+            Shutdown();
+            return;
+        }
+
         // 只允许一个实例:两个 rail 会让 API 请求翻倍并互相争抢快照文件。
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)
@@ -112,14 +120,14 @@ public partial class App : System.Windows.Application
                 text.AppendLine("  --- 模型 ---");
                 foreach (var m in s.Models.Take(15))
                 {
-                    text.AppendLine($"    {m.Model,-44} {SpendFormat.TokensExact(m.Tokens),15}  {SpendFormat.Amount(m.Amount ?? 0, !m.Priced),10}  [{m.VendorName ?? "无公开价"}]  x{m.Requests}");
+                    text.AppendLine($"    {m.Model,-44} {SpendFormat.TokensExact(m.Tokens),15}  {SpendFormat.Amount(m.Amount ?? 0, m.UnpricedTokens > 0),10}  [{(m.Priced ? m.VendorName ?? "已归档" : "无公开价")}]  x{m.Requests}");
                 }
                 text.AppendLine("  --- 来源 ---");
                 foreach (var a in s.Agents)
                     text.AppendLine($"    {a.Agent,-10} {SpendFormat.TokensExact(a.Tokens),15}  {SpendFormat.Amount(a.Cost, a.HasUnpriced),10}  请求 {a.Requests}");
                 text.AppendLine("  --- 项目 ---");
                 foreach (var p in s.ProjectRows.Take(8))
-                    text.AppendLine($"    {p.Project,-30} {SpendFormat.TokensExact(p.Tokens),15}  {SpendFormat.Amount(p.Cost, p.HasUnpriced),10}  会话 {p.Sessions}");
+                    text.AppendLine($"    {p.Project,-40} {SpendFormat.TokensExact(p.Tokens),15}  {SpendFormat.Amount(p.Cost, p.HasUnpriced),10}  会话 {p.Sessions}");
                 text.AppendLine();
             }
         }
@@ -137,6 +145,45 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             Diagnostics.Note("写出用量统计失败", ex);
+        }
+    }
+
+    /// <summary>
+    /// 强制更新一次模型牌价表并等它做完,结果写进 Data\price-update.txt(诊断入口,
+    /// 与 --spend 同类)。走的是统计窗口完全相同的更新路径,只是这里同步等结果。
+    /// </summary>
+    private static void RunPriceUpdate()
+    {
+        var text = new System.Text.StringBuilder();
+        try
+        {
+            var before = ModelPrices.Current;
+            text.AppendLine($"更新前: {before.Source} / {before.ModelCount} 条 / 抓取 {before.FetchedAt:yyyy-MM-dd}");
+
+            using var done = new ManualResetEventSlim(false);
+            ModelPricesUpdater.ForceRefresh(() => done.Set());
+            if (!done.Wait(TimeSpan.FromMinutes(3)))
+                text.AppendLine("警告: 等待超时(下载可能仍在后台进行)");
+
+            var after = ModelPrices.Current;
+            text.AppendLine($"更新后: {after.Source} / {after.ModelCount} 条 / 抓取 {after.FetchedAt:yyyy-MM-dd}");
+            text.AppendLine($"结果: {ModelPricesUpdater.LastResult ?? "(未发起)"}");
+            text.AppendLine($"分组厂商: {string.Join(", ", after.VendorNames)}");
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine("失败: " + ex);
+        }
+
+        try
+        {
+            string path = Path.Combine(SnapshotSource.DataDirectory, "price-update.txt");
+            File.WriteAllText(path, text.ToString());
+            Diagnostics.Note($"价目更新结果已输出到 {path}");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("写价目更新结果失败", ex);
         }
     }
 

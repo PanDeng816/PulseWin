@@ -25,14 +25,86 @@ public static class UsageStoreSupport
         return connection;
     }
 
-    /// <summary>取一个路径的最后一段作为项目名(与上游一致:文件夹名只是兜底,真名从来源读)。</summary>
-    public static string? ProjectName(string? directoryOrPath)
+    /// <summary>
+    /// 项目的**身份**:完整工作目录,规范化掉重复与尾部的分隔符。
+    ///
+    /// **身份和显示名是两件事**(上游规格):<c>D:\work\a\api</c> 与 <c>D:\work\b\api</c>
+    /// 是两个项目,只是显示时都叫 <c>api</c>;以前这里只存末段名,两个不同路径的同名目录
+    /// 会被并成一行,用量也算在一起。
+    ///
+    /// **不做的事**:不解析符号链接、不改大小写、不去问文件系统(目录删了它还是它)。
+    /// 那三样都会让同一个目录在不同时刻算出不同的身份。
+    /// </summary>
+    public static string? ProjectIdentity(string? directoryOrPath)
     {
         if (string.IsNullOrWhiteSpace(directoryOrPath)) return null;
-        string trimmed = directoryOrPath.TrimEnd('/', '\\');
-        int index = trimmed.LastIndexOfAny(['/', '\\']);
-        string name = index >= 0 ? trimmed[(index + 1)..] : trimmed;
-        return string.IsNullOrWhiteSpace(name) ? null : name;
+        var text = new System.Text.StringBuilder(directoryOrPath.Length);
+        bool lastWasSeparator = false;
+        foreach (char c in directoryOrPath.Trim())
+        {
+            char ch = c == '/' ? '\\' : c;     // 两种分隔符都见过,归一到反斜杠
+            if (ch == '\\')
+            {
+                if (lastWasSeparator) continue;   // 重复分隔符压成一个
+                lastWasSeparator = true;
+            }
+            else
+            {
+                lastWasSeparator = false;
+            }
+            text.Append(ch);
+        }
+        string normalized = text.ToString().TrimEnd('\\');
+        if (normalized.Length == 0) return null;
+        // "D:\" 这种盘根会被上面的 TrimEnd 吃掉反斜杠,补回来
+        return normalized.Length == 2 && normalized[1] == ':' ? normalized + "\\" : normalized;
+    }
+
+    /// <summary>
+    /// 一组项目身份各自的**显示名**。默认就是目录末段;末段名撞了才往上补一段
+    /// (如 <c>06Learning\03_工作资料</c>),直到分得开为止;实在分不开(同一目录的
+    /// 两种写法)就保持重名——那本来就是同一个地方。
+    /// </summary>
+    public static Dictionary<string, string> DisplayNames(IEnumerable<string> identities)
+    {
+        var list = identities.Distinct(StringComparer.Ordinal).ToList();
+        var parts = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        var depth = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (string id in list)
+        {
+            parts[id] = id.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+            depth[id] = 1;
+        }
+
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        // 逐层加长的循环次数有上限:路径再深也不会循环十几次(防呆,不是算法需要)
+        for (int round = 0; round < 12; round++)
+        {
+            result.Clear();
+            foreach (string id in list)
+            {
+                string[] p = parts[id];
+                int take = Math.Clamp(depth[id], 1, p.Length);
+                result[id] = string.Join('\\', p.Skip(p.Length - take));
+            }
+
+            // 撞名的组:每个成员都再往上取一段(取不动的原地不动)
+            var clashed = result.GroupBy(kv => kv.Value, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .SelectMany(g => g.Select(kv => kv.Key))
+                .ToHashSet(StringComparer.Ordinal);
+            if (clashed.Count == 0) break;
+
+            bool grew = false;
+            foreach (string id in clashed)
+            {
+                if (depth[id] >= parts[id].Length) continue;
+                depth[id]++;
+                grew = true;
+            }
+            if (!grew) break;   // 已经无段可加:接受重名(同一个目录的两种写法才是这样)
+        }
+        return result;
     }
 
     /// <summary>库里的列名集合(schema 版本可能不同,只查确实存在的列)。</summary>
@@ -238,8 +310,9 @@ internal sealed class ZCodeSessionIndex
     }
 
     /// <summary>
-    /// 归根:返回 (根会话 id, 项目名, 标题)。parent 链缺行、成环都停在链上最后一个
+    /// 归根:返回 (根会话 id, 项目身份, 标题)。parent 链缺行、成环都停在链上最后一个
     /// 可用节点;根会话缺目录/标题时用子会话自己的兜底;库里没有这个会话时原样返回。
+    /// 项目给的是**身份**(完整目录),显示名由 <see cref="SpendSummary"/> 按重名情况算。
     /// </summary>
     public (string RootId, string? Project, string? Title) Resolve(string sessionId)
     {
@@ -248,10 +321,10 @@ internal sealed class ZCodeSessionIndex
         rows.TryGetValue(sessionId, out var self);
 
         string? project = root is not null
-            ? UsageStoreSupport.ProjectName(root.Directory) ?? UsageStoreSupport.ProjectName(root.Path)
+            ? UsageStoreSupport.ProjectIdentity(root.Directory) ?? UsageStoreSupport.ProjectIdentity(root.Path)
             : null;
         if (project is null && self is not null)
-            project = UsageStoreSupport.ProjectName(self.Directory) ?? UsageStoreSupport.ProjectName(self.Path);
+            project = UsageStoreSupport.ProjectIdentity(self.Directory) ?? UsageStoreSupport.ProjectIdentity(self.Path);
 
         string? title = NonEmpty(root?.Title) ?? NonEmpty(self?.Title);
         return (rootId, project, title);
@@ -335,7 +408,7 @@ public sealed class OpenCodeUsageStore : IUsageStore
                 Name,
                 provider,
                 reader.IsDBNull(1) ? null : reader.GetValue(1).ToString(),
-                hasSession ? UsageStoreSupport.ProjectName(reader.IsDBNull(4) ? null : reader.GetValue(4)?.ToString()) : null,
+                hasSession ? UsageStoreSupport.ProjectIdentity(reader.IsDBNull(4) ? null : reader.GetValue(4)?.ToString()) : null,
                 hasSession && !reader.IsDBNull(5) ? reader.GetValue(5).ToString() : null));
         }
         return records;
