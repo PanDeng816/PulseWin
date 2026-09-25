@@ -68,10 +68,10 @@ public sealed class UsageEngine : IDisposable
         _goatCache = new SnapshotCache(_paths);
         _goCache = new SnapshotCache(_paths, _paths.OpenCodeSnapshotFile);
         _deepSeekCache = new SnapshotCache(_paths, _paths.DeepSeekSnapshotFile);
-        _goatApi = new CommandCodeApiClient(new HttpClient());
-        _goApi = new OpenCodeGoApiClient(new HttpClient());
+        _goatApi = new CommandCodeApiClient(ProxyHttp.Create(TimeSpan.FromSeconds(30)));
+        _goApi = new OpenCodeGoApiClient(ProxyHttp.Create(TimeSpan.FromSeconds(30)));
         _deepSeekApi = new DeepSeekApiClient(
-            new HttpClient(), new DeepSeekBaseline(_paths), new DeepSeekLedger(_paths));
+            ProxyHttp.Create(TimeSpan.FromSeconds(30)), new DeepSeekBaseline(_paths), new DeepSeekLedger(_paths));
         _goatResolver = new CredentialResolver(new DpapiSecretStore(_paths));
         _goResolver = new OpenCodeCredentialResolver(new DpapiSecretStore(_paths, _paths.OpenCodeCredentialFile));
         // DeepSeek 没有 CLI 登录态可借用(Key 只存在于它的控制台)——

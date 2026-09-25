@@ -37,12 +37,9 @@ public static class ModelPricesUpdater
 
     private static HttpClient CreateClient()
     {
-        var handler = new HttpClientHandler
-        {
-            // 全量约 4.9MB,服务端支持 gzip(压到约 0.5MB);不压缩下载本机实测要 25 秒
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-        };
-        var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(90) };
+        // 全量约 4.9MB,服务端支持 gzip(压到约 0.5MB);不压缩下载本机实测要 25 秒
+        var client = ProxyHttp.Create(TimeSpan.FromSeconds(90), h =>
+            h.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate);
         client.DefaultRequestHeaders.UserAgent.ParseAdd("PulseWin/" + UpdateChecker.CurrentVersion);
         client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         return client;

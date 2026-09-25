@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -48,6 +49,45 @@ public sealed class AppSettings
 
     /// <summary>环下是否显示读数(百分比/金额)。关掉后环间距与 rail 高度同步收窄。</summary>
     public bool ShowPercent { get; set; } = true;
+
+    /// <summary>
+    /// 圆环尺寸三档:0=Small(环 36pt/线 3.2)、1=Standard(40/3.6,默认)、2=Large(44/4,v1.5 原样)。
+    /// rail 宽、环心距等几何全部随档联动(见 MainWindow.RingSizeTable)。
+    /// </summary>
+    public int RingSize { get; set; } = 1;
+
+    /// <summary>环与环的间距三档:0=Tight(2pt)、1=Standard(4pt)、2=Loose(10pt)。</summary>
+    public int RingSpacing { get; set; } = 1;
+
+    /// <summary>
+    /// 液态玻璃:用系统的 acrylic 背景模糊代替半透明纯黑(SetWindowCompositionAttribute)。
+    /// 开启后面板自身不填底色,底色由模糊层的 tint 提供;失败或不支持时自动回退纯透明黑。
+    /// </summary>
+    public bool GlassBackdrop { get; set; } = true;
+
+    /// <summary>
+    /// 自动隐藏时收缩成贴在屏幕边缘的 6pt 细条(上游 hide until pointed at),
+    /// 而不是滑出屏外。细条上带最紧张源的警报色;指针靠近热区即展开。
+    /// </summary>
+    public bool HideToSliver { get; set; } = true;
+
+    /// <summary>前台窗口是全屏应用时自动把 rail 藏起来(看视频/演示不被打扰)。</summary>
+    public bool HideInFullScreen { get; set; } = false;
+
+    /// <summary>
+    /// rail 上数据源的显示顺序,逗号分隔的来源键(如 "goat,opencode,deepseek")。
+    /// 没列出的源排最后;设置窗给六个预设组合。
+    /// </summary>
+    public string SourceOrder { get; set; } = "goat,opencode,deepseek";
+
+    /// <summary>
+    /// 网络代理:0=跟随系统(默认)、1=直连、2=手动 HTTP 代理(地址见 ProxyAddress)。
+    /// 修改后重启程序生效(HttpClient 是启动时创建的长生命周期对象)。
+    /// </summary>
+    public int ProxyMode { get; set; } = 0;
+
+    /// <summary>手动代理地址,如 http://127.0.0.1:7890。SOCKS5 客户端请填它的 HTTP 端口。</summary>
+    public string? ProxyAddress { get; set; }
 
     /// <summary>
     /// 每个来源自定义环色(#RRGGBB)。空 = 按用量着色(绿→红)。
@@ -113,6 +153,14 @@ public sealed class AppSettings
         ShowOpenCode = clean.ShowOpenCode;
         ShowDeepSeek = clean.ShowDeepSeek;
         ShowPercent = clean.ShowPercent;
+        RingSize = clean.RingSize;
+        RingSpacing = clean.RingSpacing;
+        GlassBackdrop = clean.GlassBackdrop;
+        HideToSliver = clean.HideToSliver;
+        HideInFullScreen = clean.HideInFullScreen;
+        SourceOrder = clean.SourceOrder;
+        ProxyMode = clean.ProxyMode;
+        ProxyAddress = clean.ProxyAddress;
         GoatTint = clean.GoatTint;
         OpenCodeTint = clean.OpenCodeTint;
         DeepSeekTint = clean.DeepSeekTint;
@@ -145,10 +193,28 @@ public sealed class AppSettings
         ShowOpenCode = ShowOpenCode,
         ShowDeepSeek = ShowDeepSeek,
         ShowPercent = ShowPercent,
+        RingSize = Math.Clamp(RingSize, 0, 2),
+        RingSpacing = Math.Clamp(RingSpacing, 0, 2),
+        GlassBackdrop = GlassBackdrop,
+        HideToSliver = HideToSliver,
+        HideInFullScreen = HideInFullScreen,
+        SourceOrder = NormalizeOrder(SourceOrder),
+        ProxyMode = Math.Clamp(ProxyMode, 0, 2),
+        ProxyAddress = string.IsNullOrWhiteSpace(ProxyAddress) ? null : ProxyAddress.Trim(),
         GoatTint = NormalizeTint(GoatTint),
         OpenCodeTint = NormalizeTint(OpenCodeTint),
         DeepSeekTint = NormalizeTint(DeepSeekTint),
     };
+
+    /// <summary>来源顺序只认三个已知键,别的字符一律丢掉;全空则回默认。归一成 "a,b,c"。</summary>
+    internal static string NormalizeOrder(string? text)
+    {
+        var known = new[] { "goat", "opencode", "deepseek" };
+        var keys = (text ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).Where(known.Contains).Distinct().ToList();
+        // 补上没出现的键,保持已知顺序,保证三个源都有位置
+        keys.AddRange(known.Where(k => !keys.Contains(k)));
+        return string.Join(",", keys);
+    }
 
     /// <summary>环色只接受 #RRGGBB / #AARRGGBB;别的写法当作"没设",不让它把界面画坏。
     /// (TintPicker 的手输框也走这一条规则,所以校验只此一份。)</summary>
@@ -179,6 +245,14 @@ public sealed class AppSettings
         ShowOpenCode = ShowOpenCode,
         ShowDeepSeek = ShowDeepSeek,
         ShowPercent = ShowPercent,
+        RingSize = RingSize,
+        RingSpacing = RingSpacing,
+        GlassBackdrop = GlassBackdrop,
+        HideToSliver = HideToSliver,
+        HideInFullScreen = HideInFullScreen,
+        SourceOrder = SourceOrder,
+        ProxyMode = ProxyMode,
+        ProxyAddress = ProxyAddress,
         GoatTint = GoatTint,
         OpenCodeTint = OpenCodeTint,
         DeepSeekTint = DeepSeekTint,

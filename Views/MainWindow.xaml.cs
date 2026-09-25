@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace PulseWin;
@@ -43,6 +44,34 @@ public partial class MainWindow : Window
     private bool _refreshPending;   // 已请求 API,等数据回来结束动画
 
     private Geometry? _hitBerth;
+
+    // —— 贴边小条(sliver)与全屏隐藏 ——
+    // sliver = 自动隐藏时窗口滑到"只露出边缘一条 6pt 细条"的位置(窗口尺寸不变,
+    // 命中/绘制都限定在细条上),展开就是正常的滑入动画。上游 hide until pointed at 同款。
+    private bool _sliverMode;
+    private bool _fullScreenHide;
+
+    // —— 液态玻璃 ——
+    // true = 系统已开 acrylic 背景模糊,面板自己不再填黑底(底色由模糊层的 tint 提供)。
+    // 开关/失败回退/透明度变化都走 ApplyGlassBackdrop。
+    private bool _glassActive;
+
+    /// <summary>按当前设置开关液态玻璃;系统不认(老 Win10 等)时自动回退半透明黑。</summary>
+    private void ApplyGlassBackdrop()
+    {
+        IntPtr hwnd = new WindowInteropHelper(this).Handle;
+        if (AppSettings.Current.GlassBackdrop && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity))
+        {
+            _glassActive = true;
+        }
+        else
+        {
+            Native.ClearAcrylic(hwnd);
+            _glassActive = false;
+        }
+        _dirty = true;
+        InvalidateVisual();
+    }
 
     // —— 渲染节流 ——
     private bool _dirty = true;                  // 本帧内容是否有变化
@@ -87,19 +116,24 @@ public partial class MainWindow : Window
     /// <summary>点击刷新后动画的安全上限(正常情况下 SnapshotsChanged 会提前结束它)。</summary>
     private const double RefreshAnimationTimeoutS = 45;
 
+    /// <summary>贴边小条的尺寸(pt,上游 DockLayout.collapsedWidth/collapsedHeight)。</summary>
+    private const double SliverWidthPt = 6;
+    private const double SliverLengthPt = 96;
+
     /// <summary>刷新亮段的最短显示时长:短于它,用户会以为没刷新(上游规格 650ms)。</summary>
     private const double MinRefreshAnimationS = 0.65;
 
     // —— rail / 复合环几何(pt 单位,渲染 ×Pt.U) ——
     // 环尺寸**固定**,不随订阅数缩放:多一个源就整体变长,不缩小环。
     // 单元高度由"环心 + 环半径 + 读数行高"加出来,所以环与环之间不留多余空白。
-    private const double RailWpt = 56;
+    // 环的尺寸与间距来自设置三档(尺寸三档的默认档比 v1.5 的小一圈、细一号)。
+    private static double RailWpt => RingSizeTable(AppSettings.Current.RingSize).RailW;
 
     /// <summary>环外缘半径 = 中线直径/2 + 线宽/2(环的最外沿,不是中心线)。</summary>
-    private const double RingOuterRadius = OuterRingDpt / 2 + OuterWpt / 2;
+    private static double RingOuterRadius => OuterRingDpt / 2 + OuterWpt / 2;
 
     /// <summary>环心距单元顶,即环外缘上方留 4pt。</summary>
-    private const double RingCenterInUnit = 28;
+    private static double RingCenterInUnit => RingOuterRadius + 4;
 
     /// <summary>
     /// rail 两端的留白。两个约束决定了这两个数:
@@ -109,14 +143,38 @@ public partial class MainWindow : Window
     ///    和最后一个环(或它下方读数)到 rail 底的距离相等**,上下对称。
     /// </summary>
     private const double PadTopPt = 24;
-    private const double PadBottomPt = PadTopPt + (RingCenterInUnit - RingOuterRadius);
+    private static double PadBottomPt => PadTopPt + (RingCenterInUnit - RingOuterRadius);
 
-    /// <summary>相邻单元之间的间距。</summary>
-    private const double UnitGappt = 4;
+    /// <summary>相邻单元之间的间距(三档)。</summary>
+    private static double UnitGappt => AppSettings.Current.RingSpacing switch
+    {
+        0 => 2,
+        2 => 10,
+        _ => 4,
+    };
+
     /// <summary>环外缘到读数的间距。</summary>
     private const double RingToTextGap = 6;
     /// <summary>读数行高(13pt)。中文字体行距比拉丁大,算小了文字会被下一个环压住。</summary>
     private const double TextLineHeight = 17;
+
+    /// <summary>
+    /// 环几何三档:{rail 宽, 外环中线直径, 外环线宽, 内环中线直径, 内环线宽}。
+    /// Small=36/3.2、Standard=40/3.6(默认,比 v1.5 的 44/4 小一圈细一号)、Large=44/4(=v1.5 原样)。
+    /// 约束:内环比外环小一圈;rail 宽 = 外环外缘直径 + 两侧各 4pt。
+    /// </summary>
+    private static (double RailW, double OuterD, double OuterW, double InnerD, double InnerW) RingSizeTable(
+        int size) => size switch
+    {
+        0 => (48, 36, 3.2, 26, 2.2),
+        2 => (56, 44, 4.0, 34, 2.5),
+        _ => (52, 40, 3.6, 30, 2.4),
+    };
+
+    private static double OuterRingDpt => RingSizeTable(AppSettings.Current.RingSize).OuterD;
+    private static double OuterWpt => RingSizeTable(AppSettings.Current.RingSize).OuterW;
+    private static double InnerRingDpt => RingSizeTable(AppSettings.Current.RingSize).InnerD;
+    private static double InnerWpt => RingSizeTable(AppSettings.Current.RingSize).InnerW;
 
     /// <summary>环下是否显示读数(设置项)。关掉后 rail 是一条纯环列。</summary>
     private bool ShowPercent => AppSettings.Current.ShowPercent;
@@ -218,6 +276,7 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         Native.HookHitTest(this, HitArea);
+        ApplyGlassBackdrop();
         ReloadData();
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         DockTo(DockEdge.Right, wa);
@@ -225,6 +284,15 @@ public partial class MainWindow : Window
 
     private bool HitArea(Point rel) =>
         _hitBerth is { } g && g.FillContains(rel);
+
+    /// <summary>sliver 在窗口内的矩形(停靠缘一侧、沿 rail 居中)。</summary>
+    private Rect SliverRect()
+    {
+        double w = Pt.P(SliverWidthPt), len = Pt.P(SliverLengthPt);
+        return IsVertical
+            ? new Rect(_dockEdge == DockEdge.Left ? 0 : Width - w, (Height - len) / 2, w, len)
+            : new Rect((Width - len) / 2, Height - w, len, w);
+    }
 
     // ————————————————— 数据 —————————————————
 
@@ -251,6 +319,11 @@ public partial class MainWindow : Window
             _refreshStart = new double[subs.Count];
         }
         _lastStamp = SnapshotSource.Stamp();
+        // 消耗预测的采样:每池记一笔(时间, 已用比例),BurnRate 用它估速率
+        double nowS = _clock.Elapsed.TotalSeconds;
+        foreach (var sub in _subs)
+            foreach (var pool in sub.Pools.Where(p2 => p2.IsAvailable && p2.HasPercent))
+                BurnRate.Observe($"{sub.Key}:{pool.PoolKind}", Math.Clamp(pool.Fraction, 0, 1), nowS);
         RebuildLayout();
 
         // 正在悬停的卡片要跟着换成新数据:ShowSubCard 在同一条环上会提前返回,
@@ -301,6 +374,7 @@ public partial class MainWindow : Window
     public void ApplySettings()
     {
         _textCache.Clear();
+        ApplyGlassBackdrop();
         ReloadData();
     }
 
@@ -357,6 +431,27 @@ public partial class MainWindow : Window
         {
             Native.BringToTopmost(this);
             _dirty = true;
+        }
+
+        // 全屏隐藏:前台窗口盖满所在显示器(±8px 容差)时把 rail 收起来;退出全屏后
+        // 交还给正常的热区逻辑(不自动弹回,不打扰)。
+        if ((int)now % 2 == 0 && _activityPollSecond != (int)now)
+        {
+            // 借活动轮询的秒级节拍之外,单独 2 秒一次即可
+        }
+        if (_tickCount % 120 == 0 && AppSettings.Current.HideInFullScreen && !_dragging && !_menuOpen)
+        {
+            bool fs = Native.ForegroundIsFullScreen();
+            if (fs != _fullScreenHide)
+            {
+                _fullScreenHide = fs;
+                if (fs)
+                {
+                    HideCard();
+                    SetPeekVisible(false, Native.WorkingAreaUnderPointer(DpiScale));
+                }
+                _dirty = true;
+            }
         }
 
         // 只在内容真的变了才重绘:静止且藏屏外时一帧都不画
@@ -484,19 +579,24 @@ public partial class MainWindow : Window
     {
         _peekVisible = show;
         _hideSince = -1;
+        bool sliver = !show && AppSettings.Current.HideToSliver;
+        _sliverMode = sliver;
+        double sliverW = Pt.P(SliverWidthPt);
         switch (_dockEdge)
         {
             case DockEdge.Right:
-                _targetLeft = show ? wa.Right - Width : wa.Right + 2;
+                // sliver:窗口滑到只露出右缘一条细条(窗口其余部分在屏外,内容画在露出的那一条上)
+                _targetLeft = show ? wa.Right - Width : wa.Right - sliverW;
                 _targetTop = FitTop(wa, Height);
                 break;
             case DockEdge.Left:
-                _targetLeft = show ? wa.X : wa.X - Width - 2;
+                _targetLeft = show ? wa.X : wa.X - Width + sliverW;
                 _targetTop = FitTop(wa, Height);
                 break;
             default:
-                _targetLeft = Left;
-                _targetTop = show ? wa.Y : wa.Y - Height - 2;
+                // 顶轨:sliver 是水平细条,只露出顶部(窗口内顶部)
+                _targetLeft = sliver ? wa.X + Math.Max(0, (wa.Width - Width) / 2) : Left;
+                _targetTop = show ? wa.Y : wa.Y - Height + sliverW;
                 break;
         }
         if (!show) { HideCard(); _hoverRing = null; }
@@ -668,24 +768,50 @@ public partial class MainWindow : Window
 
     // ————————————————— 复合环渲染 —————————————————
 
-    private const double OuterRingDpt = 44;   // 月弧中线直径(外圈)
-    private const double OuterWpt = 4;
-    private const double InnerRingDpt = 34;   // 5小时弧(内圈,细,贴近外圈)
-    private const double InnerWpt = 2.5;
-
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
         double now = _clock.Elapsed.TotalSeconds;
 
+        if (_sliverMode)
+        {
+            DrawSliver(dc);
+            return;
+        }
+
         var full = new Rect(0, 0, Width, Height);
         var berth = BerthGeometry(full);
         _hitBerth = berth;
+        // 玻璃激活时底色由系统模糊层的 tint 提供,面板只画轮廓;否则按旧方式填半透明黑。
         // 用缓存取画笔:设置里改了不透明度后自动跟着变
-        dc.DrawGeometry(CachedBrush(PanelPalette.Surface), HairlinePen, berth);
+        dc.DrawGeometry(_glassActive ? null : CachedBrush(PanelPalette.Surface), HairlinePen, berth);
 
         for (int s = 0; s < _subs.Count; s++)
             DrawComposite(dc, _subs[s], RingCenter(s), s, now);
+    }
+
+    /// <summary>
+    /// 贴边小条:圆角细条,贴停靠缘、沿 rail 居中。有源越过警报阈值时整条染上警报色
+    /// (上游的 alert tint)——细条是 rail 收起来后仅存的信号,该说话时不能沉默。
+    /// </summary>
+    private void DrawSliver(DrawingContext dc)
+    {
+        var r = SliverRect();
+        double rad = Math.Min(r.Width, r.Height) / 2;
+        Color fill = Color.FromRgb(0x0A, 0x0A, 0x0E);
+        byte alpha = (byte)(AppSettings.Current.SurfaceOpacity * 255);
+        fill = Color.FromArgb(alpha, fill.R, fill.G, fill.B);
+
+        double worst = _subs.Where(s2 => s2.Pools.Count > 0)
+            .Select(s2 => s2.Pools.Where(p2 => p2.IsAvailable).Select(p2 => p2.Fraction).DefaultIfEmpty(0).Max())
+            .DefaultIfEmpty(0).Max();
+        if (worst >= UsageTint.AlarmThreshold)
+        {
+            Color alert = UsageTint.For(worst, false);
+            fill = Color.FromArgb(0xE6, alert.R, alert.G, alert.B);
+        }
+        dc.DrawRoundedRectangle(CachedBrush(fill), HairlinePen, r, rad, rad);
+        _hitBerth = RailGeometry.SquircleRoundRect(r.X, r.Y, r.Width, r.Height, rad);
     }
 
     /// <summary>berth 轮廓约 200 个采样点,是每帧最贵的构建;尺寸/停靠不变时复用。</summary>

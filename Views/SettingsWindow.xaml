@@ -91,6 +91,35 @@
             <Setter Property="Margin" Value="-16,10"/>
         </Style>
 
+        <!-- 三档分段选择(尺寸/间距):浅灰轨道、选中蓝块白字,上游 Size/Spacing 同款 -->
+        <Style x:Key="Segment" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bd" Background="#EBEBEF" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E0E0E4"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#007AFF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- 滑杆行右侧的值标签 -->
         <Style x:Key="SliderValue" TargetType="TextBlock">
             <Setter Property="Width" Value="44"/>
@@ -114,13 +143,18 @@
                     <TextBlock Text="面板" Style="{StaticResource NavGroup}" Margin="12,2,0,5"/>
                     <RadioButton x:Name="NavAppearance" Style="{StaticResource NavItem}" Tag="&#xE790;"
                                  GroupName="nav" IsChecked="True" Content="外观" Checked="Nav_Checked"/>
+                    <RadioButton x:Name="NavBehavior" Style="{StaticResource NavItem}" Tag="&#xE7A7;"
+                                 GroupName="nav" Content="行为" Checked="Nav_Checked"/>
                     <RadioButton x:Name="NavRings" Style="{StaticResource NavItem}" Tag="&#xE9D9;"
                                  GroupName="nav" Content="圆环与数字" Checked="Nav_Checked"/>
                     <TextBlock Text="数据" Style="{StaticResource NavGroup}"/>
                     <RadioButton x:Name="NavSources" Style="{StaticResource NavItem}" Tag="&#xE772;"
                                  GroupName="nav" Content="数据源" Checked="Nav_Checked"/>
                     <RadioButton x:Name="NavRefresh" Style="{StaticResource NavItem}" Tag="&#xE777;"
-                                 GroupName="nav" Content="刷新" Checked="Nav_Checked"/>
+                                 GroupName="nav" Content="刷新与网络" Checked="Nav_Checked"/>
+                    <TextBlock Text="应用" Style="{StaticResource NavGroup}"/>
+                    <RadioButton x:Name="NavAbout" Style="{StaticResource NavItem}" Tag="&#xE946;"
+                                 GroupName="nav" Content="关于" Checked="Nav_Checked"/>
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -144,6 +178,52 @@
                         <TextBlock Text="悬浮窗" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="圆环大小" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="默认档比旧版小一圈、细一号" Style="{StaticResource RowSub}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <RadioButton x:Name="SizeSmall" Style="{StaticResource Segment}" Content="小" GroupName="ringsize" Checked="RingSize_Changed"/>
+                                        <RadioButton x:Name="SizeStandard" Style="{StaticResource Segment}" Content="标准" GroupName="ringsize" IsChecked="True" Checked="RingSize_Changed"/>
+                                        <RadioButton x:Name="SizeLarge" Style="{StaticResource Segment}" Content="大" GroupName="ringsize" Checked="RingSize_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="圆环间距" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="环与环之间留多少空隙" Style="{StaticResource RowSub}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <RadioButton x:Name="SpacingTight" Style="{StaticResource Segment}" Content="紧" GroupName="ringspacing" Checked="RingSpacing_Changed"/>
+                                        <RadioButton x:Name="SpacingStandard" Style="{StaticResource Segment}" Content="标准" GroupName="ringspacing" IsChecked="True" Checked="RingSpacing_Changed"/>
+                                        <RadioButton x:Name="SpacingLoose" Style="{StaticResource Segment}" Content="松" GroupName="ringspacing" Checked="RingSpacing_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="液态玻璃" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="系统级背景模糊(Win10 1803+);不支持时自动回退半透明黑。想要更透就把下面的不透明度调低" Style="{StaticResource RowSub}" MaxWidth="300" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="GlassBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
+                                              HorizontalAlignment="Right" VerticalAlignment="Center"
+                                              Checked="Glass_Changed" Unchecked="Glass_Changed"/>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
                                 <Grid Margin="0,11">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -174,6 +254,59 @@
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
                                 </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ============ 行为 ============ -->
+                    <StackPanel x:Name="PageBehavior" Visibility="Collapsed">
+                        <TextBlock Text="自动隐藏" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="隐藏时收成贴边小条" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="不用时折叠成贴在屏幕边缘的细条,有源越过警报阈值时细条会变色;指针靠近即展开。关掉则滑出屏幕外" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="SliverBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
+                                              HorizontalAlignment="Right" VerticalAlignment="Center"
+                                              Checked="Sliver_Changed" Unchecked="Sliver_Changed"/>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="全屏时隐藏" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="前台是全屏应用(视频/游戏/演示)时自动收起,退出全屏后指针到屏边唤回" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="FullScreenBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
+                                              HorizontalAlignment="Right" VerticalAlignment="Center"
+                                              Checked="FullScreen_Changed" Unchecked="FullScreen_Changed"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="圆环顺序" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel Margin="0,11">
+                                <TextBlock Text="rail 上数据源的排列" Style="{StaticResource RowTitle}"/>
+                                <ComboBox x:Name="OrderCombo" Width="240" Height="30" Margin="0,8,0,10"
+                                          Style="{StaticResource LightCombo}" HorizontalAlignment="Left"
+                                          SelectionChanged="OrderCombo_SelectionChanged">
+                                    <ComboBoxItem Content="GOAT · OpenCode Go · DeepSeek"/>
+                                    <ComboBoxItem Content="GOAT · DeepSeek · OpenCode Go"/>
+                                    <ComboBoxItem Content="OpenCode Go · GOAT · DeepSeek"/>
+                                    <ComboBoxItem Content="OpenCode Go · DeepSeek · GOAT"/>
+                                    <ComboBoxItem Content="DeepSeek · GOAT · OpenCode Go"/>
+                                    <ComboBoxItem Content="DeepSeek · OpenCode Go · GOAT"/>
+                                </ComboBox>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -384,6 +517,42 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Text="网络" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="网络代理" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="数据源 API、价目表更新与检查更新都走这里。改完重启程序生效" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="ProxyCombo" Width="150" Height="30" Grid.Column="1"
+                                              Style="{StaticResource LightCombo}" VerticalAlignment="Center"
+                                              SelectionChanged="ProxyCombo_SelectionChanged">
+                                        <ComboBoxItem Content="跟随系统"/>
+                                        <ComboBoxItem Content="直连"/>
+                                        <ComboBoxItem Content="手动代理"/>
+                                    </ComboBox>
+                                </Grid>
+                                <Grid x:Name="ProxyRow" Margin="0,0,0,11" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="代理地址" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="HTTP 代理;Clash/V2Ray 等填它们的 HTTP 端口" Style="{StaticResource RowSub}"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="ProxyBox" Grid.Column="1" Width="200" Height="30"
+                                             VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
+                                             LostFocus="ProxyBox_LostFocus"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="数据" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
@@ -405,6 +574,23 @@
                                     <TextBlock Text="数据目录(便携)" Style="{StaticResource RowTitle}"/>
                                     <TextBlock x:Name="DataDirText" Style="{StaticResource RowSub}" Margin="0,3,0,10"/>
                                 </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ============ 关于 ============ -->
+                    <StackPanel x:Name="PageAbout" Visibility="Collapsed">
+                        <TextBlock Text="应用" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel Margin="0,11">
+                                <TextBlock Text="PulseWin" Style="{StaticResource RowTitle}" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="AboutVersion" Style="{StaticResource RowSub}" Margin="0,3,0,0"/>
+                                <TextBlock Style="{StaticResource RowSub}" Margin="0,6,0,0"
+                                           Text="Windows 版用量悬浮轨,展示层移植自 macOS 应用 Pulse(qunqin24/Pulse),数据层来自 Command Code GOAT Usage Monitor。统计金额按 models.dev 公开价估算,不是账单。"/>
+                                <Button x:Name="CheckUpdateButton" Content="检查更新" Width="96" Height="30"
+                                        Style="{StaticResource LightButton}" HorizontalAlignment="Left" Margin="0,10,0,10"
+                                        Click="CheckUpdate_Click"/>
+                                <TextBlock x:Name="UpdateHint" Style="{StaticResource RowHint}"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

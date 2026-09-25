@@ -37,7 +37,7 @@ public static class UpdateChecker
 
     private static HttpClient CreateClient()
     {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        var client = ProxyHttp.Create(TimeSpan.FromSeconds(20));
         // GitHub API 不接受空 User-Agent
         client.DefaultRequestHeaders.UserAgent.ParseAdd("PulseWin/" + CurrentVersion);
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace PulseWin;
@@ -42,6 +43,7 @@ public sealed class CardWindow : Window
     private SubData? _sub;
     private Rect _body;
     private bool _showStale;
+    private bool _glassActive;
     private readonly DispatcherTimer _ticker;
 
     public CardWindow()
@@ -79,7 +81,15 @@ public sealed class CardWindow : Window
 
     public void ShowCard()
     {
-        if (!IsVisible) Show();
+        if (!IsVisible)
+        {
+            Show();
+            // 卡窗与 rail 同一种表面:玻璃时也不填黑底(窗口已显示,首次渲染前设置好)
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            _glassActive = AppSettings.Current.GlassBackdrop
+                && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity);
+            if (!_glassActive) Native.ClearAcrylic(hwnd);
+        }
         if (!_ticker.IsEnabled) _ticker.Start();
         Native.BringToTopmost(this); // 卡窗也要压在其他置顶窗口之上
     }
@@ -98,7 +108,9 @@ public sealed class CardWindow : Window
         double dpi = Native.Scale(this);
 
         double r = Card.CornerRadius;
-        dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, _body, r, r);
+        if (!_glassActive)
+            dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, _body, r, r);
+        // 玻璃激活时卡片不填底,让系统模糊层的 tint 当底色
 
         double x = _body.X, y = _body.Y;
         double w = _body.Width;
@@ -154,7 +166,7 @@ public sealed class CardWindow : Window
         // 三池行(整体下移,头部与池行之间留出更从容的空间)
         double rowY = py + iconBox + Pt.P(26);
         foreach (var pool in sub.Pools)
-            rowY = DrawPoolRow(dc, pool, new Point(px, rowY), contentW, dpi);
+            rowY = DrawPoolRow(dc, sub, pool, new Point(px, rowY), contentW, dpi);
 
         // 余额型数据源再画一张"今日消耗"(数据来自本程序自己的按小时采样)
         double contentBottom = rowY;
@@ -240,7 +252,7 @@ public sealed class CardWindow : Window
         return noteY + noteFt.Height + Pt.P(4);
     }
 
-    private double DrawPoolRow(DrawingContext dc, PoolData pool, Point p, double wdt, double dpi)
+    private double DrawPoolRow(DrawingContext dc, SubData sub, PoolData pool, Point p, double wdt, double dpi)
     {
         bool avail = pool.IsAvailable;
         double frac = avail ? Math.Clamp(pool.Fraction, 0, 1) : 0;
@@ -273,6 +285,15 @@ public sealed class CardWindow : Window
             : pool.Unit == "cr"
                 ? $"{pool.Used ?? 0:0.#} / {pool.Cap ?? 0:0.#} cr · {pool.RemainingText()}"
                 : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText()}";
+        // 消耗预测:证据足够时给一句"照当前速度",够不到重置就预警(上游 forecast 同款口径)
+        double? hoursLeft = pool.ResetAt is { } ra ? (ra - DateTimeOffset.UtcNow).TotalHours : null;
+        if (avail && pool.HasPercent && !pool.IsSpent
+            && BurnRate.Estimate($"{sub.Key}:{pool.PoolKind}", hoursLeft) is { } burn)
+        {
+            detail += burn.Exhausts
+                ? $" · 照当前速度约 {BurnRate.Describe(burn.Hours)}后用完"
+                : " · 预计够用到重置";
+        }
         var detailFt = Text(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
         double detailY = barY + barH + Pt.P(5);
         dc.DrawText(detailFt, new Point(p.X, detailY));

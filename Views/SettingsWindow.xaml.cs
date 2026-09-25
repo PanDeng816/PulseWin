@@ -74,10 +74,30 @@ public partial class SettingsWindow : Window
         };
         BudgetBox.Text = s.DeepSeekBudget?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
         UsdRateBox.Text = s.UsdToCny.ToString("0.##", CultureInfo.InvariantCulture);
+        ProxyCombo.SelectedIndex = Math.Clamp(s.ProxyMode, 0, 2);
+        ProxyBox.Text = s.ProxyAddress ?? "";
         ShowGoatBox.IsChecked = s.ShowGoat;
         ShowGoBox.IsChecked = s.ShowOpenCode;
         ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
         ShowPercentBox.IsChecked = s.ShowPercent;
+        SizeSmall.IsChecked = s.RingSize == 0;
+        SizeStandard.IsChecked = s.RingSize == 1;
+        SizeLarge.IsChecked = s.RingSize == 2;
+        SpacingTight.IsChecked = s.RingSpacing == 0;
+        SpacingStandard.IsChecked = s.RingSpacing == 1;
+        SpacingLoose.IsChecked = s.RingSpacing == 2;
+        GlassBox.IsChecked = s.GlassBackdrop;
+        SliverBox.IsChecked = s.HideToSliver;
+        FullScreenBox.IsChecked = s.HideInFullScreen;
+        OrderCombo.SelectedIndex = s.SourceOrder switch
+        {
+            "goat,deepseek,opencode" => 1,
+            "opencode,goat,deepseek" => 2,
+            "opencode,deepseek,goat" => 3,
+            "deepseek,goat,opencode" => 4,
+            "deepseek,opencode,goat" => 5,
+            _ => 0,
+        };
         _lastSourceFlags = (s.ShowGoat, s.ShowOpenCode, s.ShowDeepSeek);
         GoatTintPick.Value = s.GoatTint;
         GoTintPick.Value = s.OpenCodeTint;
@@ -187,6 +207,26 @@ public partial class SettingsWindow : Window
     /// 汇率(美元→人民币),只影响用量统计金额的显示。0 = 显示美元原值。
     /// 非法输入回弹为当前值,不让坏数字进设置。
     /// </summary>
+    private void ProxyCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.ProxyMode = Math.Max(ProxyCombo.SelectedIndex, 0);
+        ProxyRow.Visibility = AppSettings.Current.ProxyMode == 2 ? Visibility.Visible : Visibility.Collapsed;
+        SaveSoon();   // 代理要重启才生效,不触发 SettingsChanged
+    }
+
+    private void ProxyBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        string text = ProxyBox.Text?.Trim() ?? "";
+        // 简单校验:能解析成带主机的 URI 才收,否则回弹
+        string value = Uri.TryCreate(text, UriKind.Absolute, out var uri)
+            && !string.IsNullOrEmpty(uri.Host) ? uri.ToString() : AppSettings.Current.ProxyAddress ?? "";
+        AppSettings.Current.ProxyAddress = string.IsNullOrWhiteSpace(value) ? null : value;
+        ProxyBox.Text = AppSettings.Current.ProxyAddress ?? "";
+        SaveSoon();
+    }
+
     private void UsdRateBox_LostFocus(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
@@ -332,15 +372,98 @@ public partial class SettingsWindow : Window
         (string title, StackPanel page) = sender switch
         {
             _ when sender == NavRings => ("圆环与数字", PageRings),
+            _ when sender == NavBehavior => ("行为", PageBehavior),
             _ when sender == NavSources => ("数据源", PageSources),
-            _ when sender == NavRefresh => ("刷新", PageRefresh),
+            _ when sender == NavRefresh => ("刷新与网络", PageRefresh),
+            _ when sender == NavAbout => ("关于", PageAbout),
             _ => ("外观", PageAppearance),
         };
         PageTitle.Text = title;
         PageAppearance.Visibility = page == PageAppearance ? Visibility.Visible : Visibility.Collapsed;
         PageRings.Visibility = page == PageRings ? Visibility.Visible : Visibility.Collapsed;
+        PageBehavior.Visibility = page == PageBehavior ? Visibility.Visible : Visibility.Collapsed;
         PageSources.Visibility = page == PageSources ? Visibility.Visible : Visibility.Collapsed;
         PageRefresh.Visibility = page == PageRefresh ? Visibility.Visible : Visibility.Collapsed;
+        PageAbout.Visibility = page == PageAbout ? Visibility.Visible : Visibility.Collapsed;
+        if (page == PageAbout) RefreshUpdateHint();
+    }
+
+    // ————————————————— 行为/外观的批 1 设置 —————————————————
+
+    private void RingSize_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.RingSize = SizeSmall.IsChecked == true ? 0 : SizeLarge.IsChecked == true ? 2 : 1;
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    private void RingSpacing_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.RingSpacing = SpacingTight.IsChecked == true ? 0 : SpacingLoose.IsChecked == true ? 2 : 1;
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    private void Glass_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.GlassBackdrop = GlassBox.IsChecked == true;
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    private void Sliver_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.HideToSliver = SliverBox.IsChecked == true;
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    private void FullScreen_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.HideInFullScreen = FullScreenBox.IsChecked == true;
+        SaveSoon();
+    }
+
+    private static readonly string[] OrderKeys =
+    {
+        "goat,opencode,deepseek", "goat,deepseek,opencode",
+        "opencode,goat,deepseek", "opencode,deepseek,goat",
+        "deepseek,goat,opencode", "deepseek,opencode,goat",
+    };
+
+    private void OrderCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        if (OrderCombo.SelectedIndex is { } i && (uint)i < OrderKeys.Length)
+        {
+            AppSettings.Current.SourceOrder = OrderKeys[i];
+            SettingsChanged?.Invoke();   // 主窗按新顺序重载
+            SaveSoon();
+        }
+    }
+
+    // ————————————————— 关于页 —————————————————
+
+    private void RefreshUpdateHint()
+    {
+        AboutVersion.Text = $"版本 {UpdateChecker.CurrentVersion.ToString(3)}";
+        UpdateHint.Text = UpdateChecker.Available is { } rel
+            ? $"有新版本:{rel.Title}。去 GitHub Releases 页面下载。"
+            : UpdateChecker.LastError is { } err ? $"上次检查失败:{err}"
+            : UpdateChecker.LastCheckedAt is { } at ? $"已是最新版本。上次检查:{at:HH:mm}。"
+            : "还没有检查过。";
+    }
+
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateHint.Text = "正在检查…";
+        await UpdateChecker.CheckAsync();
+        RefreshUpdateHint();
     }
 
     protected override void OnClosed(EventArgs e)

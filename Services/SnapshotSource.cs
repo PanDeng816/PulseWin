@@ -185,6 +185,13 @@ public static class SnapshotSource
                 subs.Add(deepSeek);
             }
         }
+        // 按用户设置的顺序排(如 "goat,deepseek,opencode");没列出的键按默认顺序垫底
+        var order = settings.SourceOrder.Split(',').Select(k => k.Trim()).ToList();
+        subs.Sort((a, b) =>
+        {
+            int ia = order.IndexOf(a.Key), ib = order.IndexOf(b.Key);
+            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+        });
         return subs;
 
         static void Add(List<SubData> target, string file, SourceProfile profile)
