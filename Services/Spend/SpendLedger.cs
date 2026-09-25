@@ -584,9 +584,15 @@ public sealed class SpendSummary
     }
 }
 
-/// <summary>数字的显示格式(与上游一致:大数按中文单位缩写,金额不足一分显示"&lt; $0.01")。</summary>
+/// <summary>数字的显示格式(与上游一致:大数按中文单位缩写,金额不足一分显示"&lt; ¥0.01")。</summary>
 public static class SpendFormat
 {
+    /// <summary>
+    /// 金额的显示汇率。价目表(models.dev)是美元,这里按用户设置折算成人民币;
+    /// 设 0 则显示美元原值。只影响显示,不影响任何计算。
+    /// </summary>
+    private static double Rate => AppSettings.Current.UsdToCny;
+
     /// <summary>token 数的短写法:1.2万 / 3.4亿。</summary>
     public static string Tokens(long value)
     {
@@ -598,23 +604,37 @@ public static class SpendFormat
     public static string TokensExact(long value) => value.ToString("N0");
 
     /// <summary>
-    /// 金额。**正的、但不足一分的显示 "&lt; $0.01"**,真正的 0 才显示 $0.00——
-    /// 把 0.004 四舍五入成 $0.00 是在说"没花钱",那是错的。
+    /// 金额。**正的、但不足一分的显示 "&lt; ¥0.01"**,真正的 0 才显示 ¥0.00——
+    /// 把 0.004 四舍五入成 ¥0.00 是在说"没花钱",那是错的。
     /// </summary>
     public static string Money(double? value)
     {
         if (value is null) return "—";
-        if (value.Value <= 0) return "$0.00";
-        if (value.Value < 0.01) return "< $0.01";
-        return "$" + value.Value.ToString(value.Value < 1 ? "0.000" : "0.00");
+        double rate = Rate;
+        if (rate <= 0)
+        {
+            if (value.Value <= 0) return "$0.00";
+            if (value.Value < 0.01) return "< $0.01";
+            return "$" + value.Value.ToString(value.Value < 1 ? "0.000" : "0.00");
+        }
+        double cny = value.Value * rate;
+        if (cny <= 0) return "¥0.00";
+        if (cny < 0.01) return "< ¥0.01";
+        return "¥" + cny.ToString("0.00");
     }
 
-    public static string MoneyExact(double? value) =>
-        value is null ? "—" : "$" + value.Value.ToString("0.0000");
+    public static string MoneyExact(double? value)
+    {
+        if (value is null) return "—";
+        double rate = Rate;
+        return rate <= 0
+            ? "$" + value.Value.ToString("0.0000")
+            : "¥" + (value.Value * rate).ToString("0.0000");
+    }
 
     /// <summary>
     /// 一行(项目 / 会话 / 来源 / 模型)的金额文案。<paramref name="hasUnpriced"/> 为真 =
-    /// 这一行里含没有公开牌价的模型:金额为 0 时显示 "—"——**绝不能显示 $0.00**,那是在说
+    /// 这一行里含没有公开牌价的模型:金额为 0 时显示 "—"——**绝不能显示 ¥0.00**,那是在说
     /// "没花钱",而事实是"算不出来";只覆盖了一部分时加星号,标明那是有价部分的小计。
     /// </summary>
     public static string Amount(double cost, bool hasUnpriced) =>

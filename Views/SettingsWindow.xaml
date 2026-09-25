@@ -386,9 +386,25 @@
 
                         <TextBlock Text="数据" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
-                            <StackPanel Margin="0,11">
-                                <TextBlock Text="数据目录(便携)" Style="{StaticResource RowTitle}"/>
-                                <TextBlock x:Name="DataDirText" Style="{StaticResource RowSub}" Margin="0,3,0,10"/>
+                            <StackPanel>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="美元兑人民币汇率" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="用量统计的估算金额按此换算显示;价目表本身是美元。填 0 显示美元原值。" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="UsdRateBox" Grid.Column="1" Width="90" Height="30"
+                                             VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
+                                             LostFocus="UsdRateBox_LostFocus"/>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <StackPanel Margin="0,11">
+                                    <TextBlock Text="数据目录(便携)" Style="{StaticResource RowTitle}"/>
+                                    <TextBlock x:Name="DataDirText" Style="{StaticResource RowSub}" Margin="0,3,0,10"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

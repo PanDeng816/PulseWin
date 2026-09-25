@@ -23,6 +23,12 @@ public sealed class AppSettings
     /// <summary>同步成功后的等待间隔(秒)。</summary>
     public int SyncIntervalSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// 美元兑人民币汇率,用量统计的估算金额按它显示。价目表(models.dev)本身是美元,
+    /// 这里只影响显示。0 = 显示美元原值,不做换算。
+    /// </summary>
+    public double UsdToCny { get; set; } = 7.2;
+
     /// <summary>rail 背景不透明度(0~1)。</summary>
     public double SurfaceOpacity { get; set; } = 0.80;
 
@@ -98,6 +104,7 @@ public sealed class AppSettings
         var clean = Sanitized();
         AlertThreshold = clean.AlertThreshold;
         SyncIntervalSeconds = clean.SyncIntervalSeconds;
+        UsdToCny = clean.UsdToCny;
         SurfaceOpacity = clean.SurfaceOpacity;
         DeepSeekBasis = clean.DeepSeekBasis;
         DeepSeekBudget = clean.DeepSeekBudget;
@@ -124,6 +131,7 @@ public sealed class AppSettings
     {
         AlertThreshold = Math.Clamp(AlertThreshold, 0.5, 0.99),
         SyncIntervalSeconds = Math.Clamp(SyncIntervalSeconds, 15, 600),
+        UsdToCny = Math.Clamp(UsdToCny, 0, 100),
         SurfaceOpacity = Math.Clamp(SurfaceOpacity, 0.3, 1.0),
         DeepSeekBasis = Enum.IsDefined(DeepSeekBasis) ? DeepSeekBasis : BalanceBasis.SinceTopUp,
         // 有限的、正数才算数,否则当作"没设"
@@ -162,6 +170,7 @@ public sealed class AppSettings
     {
         AlertThreshold = AlertThreshold,
         SyncIntervalSeconds = SyncIntervalSeconds,
+        UsdToCny = UsdToCny,
         SurfaceOpacity = SurfaceOpacity,
         DeepSeekBasis = DeepSeekBasis,
         DeepSeekBudget = DeepSeekBudget,

@@ -73,6 +73,7 @@ public partial class SettingsWindow : Window
             _ => 0,
         };
         BudgetBox.Text = s.DeepSeekBudget?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
+        UsdRateBox.Text = s.UsdToCny.ToString("0.##", CultureInfo.InvariantCulture);
         ShowGoatBox.IsChecked = s.ShowGoat;
         ShowGoBox.IsChecked = s.ShowOpenCode;
         ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
@@ -180,6 +181,25 @@ public partial class SettingsWindow : Window
         SettingsChanged?.Invoke();
         SaveSoon();
         _engine.RequestRefreshNow();
+    }
+
+    /// <summary>
+    /// 汇率(美元→人民币),只影响用量统计金额的显示。0 = 显示美元原值。
+    /// 非法输入回弹为当前值,不让坏数字进设置。
+    /// </summary>
+    private void UsdRateBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        string text = UsdRateBox.Text?.Trim() ?? "";
+        double value = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            && double.IsFinite(parsed) && parsed >= 0
+            ? Math.Clamp(parsed, 0, 100)
+            : AppSettings.Current.UsdToCny;
+
+        AppSettings.Current.UsdToCny = value;
+        UsdRateBox.Text = value.ToString("0.##", CultureInfo.InvariantCulture);
+        SettingsChanged?.Invoke();
+        SaveSoon();
     }
 
     private void RefreshStatus()

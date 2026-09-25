@@ -109,7 +109,9 @@ public partial class SpendWindow : Window
         TotalCost.Text = SpendFormat.Amount(summary.TotalCost, summary.CostIsPartial);
 
         var notes = new List<string>();
-        notes.Add($"按厂商公开 API 价估算{(summary.CostIsPartial ? "(只覆盖有价的部分)" : "")},不是账单。");
+        double rate = AppSettings.Current.UsdToCny;
+        notes.Add($"按厂商公开 API 价估算{(summary.CostIsPartial ? "(只覆盖有价的部分)" : "")},不是账单。"
+            + (rate > 0 ? $"金额按 $1 ≈ ¥{rate:0.00} 换算显示。" : "金额为美元原值。"));
         if (summary.UnpricedTokens > 0)
             notes.Add($"{summary.UnpricedModels} 个模型没有公开价,它们的 {SpendFormat.Tokens(summary.UnpricedTokens)} tokens 只计数、不计金额;"
                 + "下面带 * 的金额是有价部分的小计,显示 — 的算不出金额。");
