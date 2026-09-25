@@ -56,17 +56,45 @@ public partial class MainWindow : Window
     // 开关/失败回退/透明度变化都走 ApplyGlassBackdrop。
     private bool _glassActive;
 
-    /// <summary>按当前设置开关液态玻璃;系统不认(老 Win10 等)时自动回退半透明黑。</summary>
+    /// <summary>
+    /// 本窗口是否**真的开过** acrylic。这是"要不要清"的唯一依据:在分层窗口上调
+    /// SetWindowCompositionAttribute 会把 per-pixel alpha 打坏(圆角外变不透明黑、
+    /// 面板不再与桌面混合),所以没开过就绝不碰它。
+    /// </summary>
+    private bool _glassApplied;
+
+    /// <summary>
+    /// 启动时定格的玻璃开关。**运行期不再跟随设置变化**:一旦调过
+    /// SetWindowCompositionAttribute,alpha 就已受损且无法恢复,中途开关只会留下
+    /// 一块黑矩形。所以这个开关按"重启生效"处理(与代理设置同理),窗口只认启动值。
+    /// </summary>
+    private bool _glassLaunch;
+
+    /// <summary>
+    /// 按当前设置开关液态玻璃;系统不认(老 Win10 等)时自动回退半透明黑。
+    ///
+    /// **不要在没开玻璃时调 ClearAcrylic**:v1.7.2 之前这里无条件调,结果每次启动
+    /// (默认就是关玻璃)都会把 alpha 打坏 —— rail 与卡片成了一整块不透明黑矩形,
+    /// 圆角看不见、桌面也透不出来,即用户报的"圆弧和透明度都没了"。
+    /// 只有真的开过玻璃,才需要清。
+    /// </summary>
     private void ApplyGlassBackdrop()
     {
         IntPtr hwnd = new WindowInteropHelper(this).Handle;
-        if (AppSettings.Current.GlassBackdrop && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity))
+        if (_glassLaunch && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity))
         {
             _glassActive = true;
+            _glassApplied = true;
         }
         else
         {
-            Native.ClearAcrylic(hwnd);
+            if (_glassApplied)
+            {
+                // 曾经开过、现在要关:必须显式清掉模糊。代价是这之后 alpha 已受损,
+                // 圆角要等下次启动才恢复(所以玻璃默认关,且不建议运行中开关)。
+                Native.ClearAcrylic(hwnd);
+                _glassApplied = false;
+            }
             _glassActive = false;
         }
         _dirty = true;
@@ -79,6 +107,7 @@ public partial class MainWindow : Window
     private Size _berthCacheSize;
     private DockEdge _berthCacheEdge;
     private bool _berthCacheDocked;
+    private double _berthCacheScale;
     private readonly Dictionary<(string, double, FontWeight, Color), FormattedText> _textCache = new();
 
     /// <summary>请求马上走一次真实 API 刷新(由 App 接到 UsageEngine)。</summary>
@@ -175,6 +204,14 @@ public partial class MainWindow : Window
     private static double OuterWpt => RingSizeTable(AppSettings.Current.RingSize).OuterW;
     private static double InnerRingDpt => RingSizeTable(AppSettings.Current.RingSize).InnerD;
     private static double InnerWpt => RingSizeTable(AppSettings.Current.RingSize).InnerW;
+
+    /// <summary>
+    /// berth 外形(圆角/喇叭口/贴边细条宽)相对 v1.5 基准轨宽(56pt)的缩放。
+    /// Dock.CornerRadius(26pt)这些常量是按 56pt 轨宽定的:轨宽收到 48pt 后,
+    /// 圆角半径(34.7diu)会超过轨半宽(32diu),左上圆弧被窗口裁掉 —— 这正是
+    /// "圆弧没了"的由来。按比例缩,三档的圆角与轨宽关系才一致。
+    /// </summary>
+    private static double BerthScale => RailWpt / 56.0;
 
     /// <summary>环下是否显示读数(设置项)。关掉后 rail 是一条纯环列。</summary>
     private bool ShowPercent => AppSettings.Current.ShowPercent;
@@ -276,6 +313,7 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         Native.HookHitTest(this, HitArea);
+        _glassLaunch = AppSettings.Current.GlassBackdrop;   // 玻璃开关启动时定格
         ApplyGlassBackdrop();
         ReloadData();
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
@@ -374,7 +412,8 @@ public partial class MainWindow : Window
     public void ApplySettings()
     {
         _textCache.Clear();
-        ApplyGlassBackdrop();
+        // 玻璃开关是启动定格的(_glassLaunch),这里不再重判:运行中调 WCA 会
+        // 不可逆地打坏 alpha,而重绘本就用不上它。
         ReloadData();
     }
 
@@ -818,15 +857,17 @@ public partial class MainWindow : Window
     private Geometry BerthGeometry(Rect full)
     {
         if (_berthCache is not null && _berthCacheSize == full.Size &&
-            _berthCacheEdge == _dockEdge && _berthCacheDocked == _docked)
+            _berthCacheEdge == _dockEdge && _berthCacheDocked == _docked &&
+            _berthCacheScale == BerthScale)
         {
             return _berthCache;
         }
-        _berthCache = RailGeometry.Berth(full, _docked ? _dockEdge : DockEdge.Floating, _docked, 1);
+        _berthCache = RailGeometry.Berth(full, _docked ? _dockEdge : DockEdge.Floating, _docked, 1, BerthScale);
         _berthCache.Freeze();
         _berthCacheSize = full.Size;
         _berthCacheEdge = _dockEdge;
         _berthCacheDocked = _docked;
+        _berthCacheScale = BerthScale;
         return _berthCache;
     }
 

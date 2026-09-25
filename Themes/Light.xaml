@@ -88,7 +88,10 @@
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
         <Setter Property="SelectionBrush" Value="#B3D7FF"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <!-- 垂直 padding 只能用 2:模板里 ScrollViewer 的高度 = 控件高 − 边框 − 上下 padding,
+             12.5pt 中文字行高约 33px,30px 高的控件扣掉 2+2*4 只剩 20px,居中后上下各裁 ~6px,
+             **句点正落在被裁掉的降部区**——"7.2" 会显示成 "7 2"。降到 2 后内容区 24px,句点完整。 -->
+        <Setter Property="Padding" Value="8,2"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Template">
