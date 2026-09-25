@@ -339,6 +339,15 @@ public partial class MainWindow : Window
         if (AnimatePeek()) _dirty = true;
         if (refreshing) _dirty = true;   // 亮段扫动是逐帧动画
 
+        // ZCode 是不是在跑:每秒读一次它的日志增量。只读新增的字节,没动静时开销就是
+        // 一次文件长度检查;在跑的时候环心图标要呼吸,那是逐帧动画,所以每帧都得重画。
+        if ((int)now != _activityPollSecond)
+        {
+            _activityPollSecond = (int)now;
+            if (_activity.Poll()) _dirty = true;
+        }
+        if (_activity.IsWorking) _dirty = true;
+
         // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住),并强制重画一帧。
         // 分层窗口(AllowsTransparency)滑出到屏外期间, WPF 会把失效请求丢掉且之后不再补:
         // 只靠"数据变了才重绘"的话, 环上会永久停在旧数字(卡片是新的、环是旧的)。
@@ -355,6 +364,10 @@ public partial class MainWindow : Window
     }
 
     private int _tickCount;
+
+    // —— ZCode 活动(环心呼吸) ——
+    private readonly ZCodeActivity _activity = new();
+    private int _activityPollSecond = -1;
 
     // ————————————————— 指针 —————————————————
 
@@ -769,6 +782,11 @@ public partial class MainWindow : Window
         // 所以给它多 3pt 让细节看得清。
         double box = Pt.P(sub.Key == "deepseek" ? 17 : 14);
 
+        // ZCode 正在跑一轮时,环心图标轻轻呼吸(92%~100%,约 1.2 秒一轮)。
+        // **只有 GOAT 环会呼吸**:ZCode 走的是 Command Code 网关,它烧的正是这一圈额度。
+        if (_activity.IsWorking && sub.Key == "goat")
+            box *= BreathScale(_clock.Elapsed.TotalSeconds);
+
         switch (sub.Key)
         {
             case "goat":
@@ -793,6 +811,17 @@ public partial class MainWindow : Window
                 dc.DrawGeometry(WhiteBrush, null, geometry);
                 break;
         }
+    }
+
+    /// <summary>呼吸的周期(秒)与幅度:一个周期结束回到原样,所以看起来是"呼气—吸气"而不是闪烁。</summary>
+    private const double BreathPeriodS = 1.2;
+    private const double BreathDepth = 0.08;
+
+    /// <summary>环心图标的呼吸缩放:在 (1 - BreathDepth) ~ 1 之间按余弦来回。</summary>
+    private static double BreathScale(double seconds)
+    {
+        double phase = (seconds % BreathPeriodS) / BreathPeriodS;
+        return 1.0 - BreathDepth * (1 - Math.Cos(phase * 2 * Math.PI)) / 2;
     }
 
     /// <summary>

@@ -52,6 +52,21 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:读 ZCode 的活动日志,把判定打到 Data\activity.txt 后退出(不开界面)。
+        // 可以跟一个日志目录参数,用来对合成日志做验证:--activity D:\some\dir
+        int activityIndex = Array.FindIndex(e.Args,
+            a => string.Equals(a, "--activity", StringComparison.OrdinalIgnoreCase));
+        if (activityIndex >= 0)
+        {
+            string? directory = activityIndex + 1 < e.Args.Length
+                && !e.Args[activityIndex + 1].StartsWith("--", StringComparison.Ordinal)
+                ? e.Args[activityIndex + 1]
+                : null;
+            RunActivityDump(directory);
+            Shutdown();
+            return;
+        }
+
         // 只允许一个实例:两个 rail 会让 API 请求翻倍并互相争抢快照文件。
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)
@@ -184,6 +199,55 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             Diagnostics.Note("写价目更新结果失败", ex);
+        }
+    }
+
+    /// <summary>
+    /// 读 ZCode 的活动日志并输出判定(诊断入口,与 --spend 同类)。它回答的是"现在会不会
+    /// 显示在跑",以及连续几次 poll 的状态变化——排查"为什么环心没呼吸"就靠它。
+    /// 传目录就用那个目录(拿合成日志验证边界),不给则用 ZCode 的真实日志目录。
+    /// </summary>
+    private static void RunActivityDump(string? logDirectory)
+    {
+        var text = new System.Text.StringBuilder();
+        try
+        {
+            var activity = new ZCodeActivity(logDirectory);
+            string today = activity.TodayLogPath;
+            text.AppendLine($"日志目录: {activity.LogDirectory}");
+            text.AppendLine($"今日日志: {today}");
+            text.AppendLine(File.Exists(today)
+                ? $"  存在,{new FileInfo(today).Length:N0} 字节"
+                : "  不存在(ZCode 今天没跑过 → 按空闲处理)");
+            text.AppendLine();
+
+            for (int i = 0; i < 6; i++)
+            {
+                bool changed = activity.Poll();
+                text.AppendLine($"  t+{i}s  IsWorking={activity.IsWorking}  未闭合回合={activity.OpenTurns}"
+                    + $"  本次变化={changed}  错误={activity.LastError ?? "无"}");
+                if (i < 5) Thread.Sleep(1000);
+            }
+
+            text.AppendLine();
+            text.AppendLine(activity.IsWorking
+                ? "结论: ZCode 正在跑 → GOAT 环心图标会呼吸"
+                : "结论: ZCode 空闲 → 环心图标静止");
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine("失败: " + ex);
+        }
+
+        try
+        {
+            string path = Path.Combine(SnapshotSource.DataDirectory, "activity.txt");
+            File.WriteAllText(path, text.ToString());
+            Diagnostics.Note($"ZCode 活动判定已输出到 {path}");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("写活动判定失败", ex);
         }
     }
 
