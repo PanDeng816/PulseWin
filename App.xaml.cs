@@ -89,6 +89,25 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:把详情卡用合成数据离屏渲染成 PNG 后退出(不开界面、不联网)。
+        // 卡片排版(文字会不会被右缘切、底部会不会溢出)必须在像素上核对——
+        // 靠真人 hover 复现既慢又不可靠。产物在 Data\card-shot\ 下。
+        if (e.Args.Any(a => string.Equals(a, "--card-shot", StringComparison.OrdinalIgnoreCase)))
+        {
+            CardShot.Run();
+            Shutdown();
+            return;
+        }
+
+        // 诊断用:把工具窗(设置/统计)离屏渲染成 PNG 后退出。用真实窗口控件(会读本机
+        // 库出真数据),但不 Show、不抢焦点、不受"已有实例"守卫影响,产物在 Data\ui-shot\ 下。
+        // **不在这里 Shutdown**:出图是异步的(要等窗口把数据加载完),由 UiShot 自己收尾。
+        if (e.Args.Any(a => string.Equals(a, "--ui-shot", StringComparison.OrdinalIgnoreCase)))
+        {
+            UiShot.Run();
+            return;
+        }
+
         // 只允许一个实例:两个 rail 会让 API 请求翻倍并互相争抢快照文件。
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)

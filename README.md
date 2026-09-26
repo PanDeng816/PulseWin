@@ -207,9 +207,13 @@ OpenCode 是 `opencode-go`),直接拿来当分组键会显示成没人看得懂�
 ### 可选:浏览器会话明细(默认关)
 
 这一页有一个**浏览器会话明细**开关,开了之后会读本机浏览器(Edge/Chrome)的登录 cookie,
-去抓 Command Code 只有登录态才开放的逐模型缓存明细(逐模型缓存读/写 token)。
+去抓 Command Code 只有登录态才开放的逐模型缓存明细,与本机库的记录做交叉核对。
 
-**默认关**,两个实际理由:
+**它不会让统计数字更准**:本机库(`~/.zcode` 的 `model_usage`、OpenCode 的会话消息)
+本来就覆盖了同样的用量,逐模型、逐小时都在。这条通道只是多一层旁证——
+所以默认关,而"关着"不影响任何数字。
+
+**默认关**的两个实际理由:
 
 1. **读 cookie 可能被杀毒软件误判**。同类工具 CodexBar-Win 就因为"解密浏览器 cookie
    读配额"被 AV 全家误判成 infostealer,最后撤掉了全部二进制。这是真实前车之鉴。
@@ -245,6 +249,8 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 | `--models` | 把逐模型聚合、套餐/渠道聚合与浏览器会话通道的状态打出来 | `Data\models-dump.txt` |
 | `--update-prices` | 强制更新一次模型牌价表并等它做完 | `Data\price-update.txt` |
 | `--activity [目录]` | 读 ZCode 活动日志并输出判定,可指定日志目录 | `Data\activity.txt` |
+| `--card-shot` | 用合成数据把 hover 明细卡离屏渲染成 PNG(排版必须在像素上核对) | `Data\card-shot\*.png` |
+| `--ui-shot` | 把环色选择器与用量统计窗离屏渲染成 PNG(不 Show、不抢焦点) | `Data\ui-shot\*.png` |
 
 ## 设置与数据
 

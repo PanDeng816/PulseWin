@@ -27,7 +27,9 @@ public static class UsageRepository
         long Reasoning, long DurationMs, long DurationN, long TtftMs, long TtftN,
         long Tools, long Retries, long Failures);
 
-    private sealed record HourRow(string Hour, string Agent, long Tokens, long Unclassified, long Requests, double Cost);
+    private sealed record HourRow(string Hour, string Agent, string? Provider,
+        long Input, long CacheWrite, long CacheRead, long Output,
+        long Unclassified, long Requests, double Cost);
 
     private const int DayRetentionDays = 3650;   // 天级:十年,等于"永久"
     private const int HourRetentionDays = 35;    // 小时级:24 小时分布图只看近期
@@ -42,8 +44,12 @@ public static class UsageRepository
     ///    **为什么必须存**:这些字段只在源库明细里,而明细一旦归档进仓库就没了——
     ///    不加列的话,界面上"推理占比/平均耗时"这类详细数据只有最近几天的有值,
     ///    历史全空(本机实测:不存的话推理/耗时全是 0)。
+    /// v4:<c>agg_hour</c> 新增 <c>provider</c> 列。**为什么必须加**:小时行原先只按
+    ///    (hour, agent) 聚合,没有渠道维度,所以套餐页的"今日逐小时"只能拿天级行兜底——
+    ///    而天级行的时间戳是"当天 12:00"的占位值(见 LoadDayRows),于是全部用量堆到
+    ///    12 点,图与"最忙小时"都是错的(本机实测:12 点 61 亿、别的小时几千万)。
     /// </summary>
-    private const int SchemaVersion = 3;
+    private const int SchemaVersion = 4;
 
     private const string CreateTables = """
         CREATE TABLE IF NOT EXISTS agg_day(
@@ -54,10 +60,10 @@ public static class UsageRepository
             ttft_ms INTEGER, ttft_n INTEGER, tools INTEGER, retries INTEGER, failures INTEGER,
             PRIMARY KEY(day, agent, model, provider, project));
         CREATE TABLE IF NOT EXISTS agg_hour(
-            hour TEXT, agent TEXT,
+            hour TEXT, agent TEXT, provider TEXT,
             inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
             unc INTEGER, requests INTEGER, cost REAL,
-            PRIMARY KEY(hour, agent));
+            PRIMARY KEY(hour, agent, provider));
         CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY, ts TEXT);
         CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
         """;
@@ -219,14 +225,17 @@ public static class UsageRepository
     {
         using var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO agg_hour(hour, agent, inp, cache_w, cache_r, out, unc, requests, cost)
-            VALUES($hour, $agent, $inp, $cw, $cr, $out, $unc, $req, $cost)
-            ON CONFLICT(hour, agent) DO UPDATE SET
+            INSERT INTO agg_hour(hour, agent, provider, inp, cache_w, cache_r, out, unc, requests, cost)
+            VALUES($hour, $agent, $provider, $inp, $cw, $cr, $out, $unc, $req, $cost)
+            ON CONFLICT(hour, agent, provider) DO UPDATE SET
                 inp = inp + $inp, cache_w = cache_w + $cw, cache_r = cache_r + $cr,
                 out = out + $out, unc = unc + $unc, requests = requests + $req, cost = cost + $cost
             """;
         command.Parameters.AddWithValue("$hour", e.Timestamp.ToString("yyyyMMddHH", CultureInfo.InvariantCulture));
         command.Parameters.AddWithValue("$agent", e.Agent);
+        // 渠道维度:套餐页的"今日逐小时"要按套餐分。空 id 存空串(而不是 NULL)——
+        // ProviderId 为 null 的明细本来就少,归到空串桶即可,主键也好定位。
+        command.Parameters.AddWithValue("$provider", e.ProviderId ?? "");
         BindTally(command, e);
         command.ExecuteNonQuery();
     }
@@ -343,20 +352,24 @@ public static class UsageRepository
     {
         var rows = new List<SpendEntry>();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT hour, agent, inp, cache_w, cache_r, out, unc, requests, cost FROM agg_hour";
+        command.CommandText = "SELECT hour, agent, provider, inp, cache_w, cache_r, out, unc, requests, cost FROM agg_hour";
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
             var row = new HourRow(
                 reader.GetString(0), reader.GetString(1),
-                reader.GetInt64(2) + reader.GetInt64(3) + reader.GetInt64(4) + reader.GetInt64(5),
-                reader.GetInt64(6), reader.GetInt64(7), reader.GetDouble(8));
+                reader.IsDBNull(2) ? null : reader.GetString(2),
+                reader.GetInt64(3), reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6),
+                reader.GetInt64(7), reader.GetInt64(8), reader.GetDouble(9));
             if (!DateTime.TryParseExact(row.Hour, "yyyyMMddHH", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var hour)) continue;
+            // 四类还原成 Tally(**不要**像从前那样把 inp/cw/cr/out 压成一个总数塞进
+            // Unclassified):套餐页的逐小时图要按输入/输出分色,压扁就画不出。
             rows.Add(new SpendEntry(
-                hour, row.Agent, Model: "(聚合)", ProviderId: null, Project: null,
-                SessionId: null, Title: null, TokenTally.Zero,
-                UnclassifiedTokens: row.Tokens + row.Unclassified, Price: null,
+                hour, row.Agent, Model: "(聚合)", ProviderId: row.Provider, Project: null,
+                SessionId: null, Title: null,
+                new TokenTally(row.Input, row.CacheWrite, row.CacheRead, row.Output),
+                row.Unclassified, Price: null,
                 PrecomputedCost: row.Cost, Kind: SpendAggKind.Hour, RequestCount: row.Requests));
         }
         return rows;

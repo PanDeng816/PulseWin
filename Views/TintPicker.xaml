@@ -28,7 +28,10 @@
     </UserControl.Resources>
 
     <Grid>
-        <ToggleButton x:Name="SwatchButton" Click="Swatch_Click" Width="96" Height="26" Cursor="Hand"
+        <!-- 宽度要装得下最长的文案“自动 · 按用量”(11pt 实测 63.4diu),
+             加上色块 30 + 间距 6 + 左右留白 10 = 110;取 112 留一点余量。
+             之前 96 时右边被切掉,显示成“自动 · 按”。 -->
+        <ToggleButton x:Name="SwatchButton" Click="Swatch_Click" Width="112" Height="26" Cursor="Hand"
                       Focusable="False">
             <ToggleButton.Template>
                 <ControlTemplate TargetType="ToggleButton">

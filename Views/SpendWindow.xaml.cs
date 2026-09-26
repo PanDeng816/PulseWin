@@ -136,8 +136,11 @@ public partial class SpendWindow : Window
             notes.Add($"其中 {SpendFormat.Tokens(summary.UnclassifiedTokens)} tokens 来源只给了总量、没分类,计入总数但不计价。");
         CostNote.Text = string.Join(" ", notes);
 
+        // 缓存写恒为 0 容易被当成 bug(这是个显眼的数字)。本机 ZCode / OpenCode 的记录里
+        // 就没有 cache-creation 这一项,不是算漏了——标注在数字旁边,别让用户去查。
+        bool noCacheWrite = summary.Tally.CacheWrite == 0 && summary.Tally.CacheRead > 0;
         TallyLine.Text = $"输入 {SpendFormat.Tokens(summary.Tally.Input)}   ·   "
-            + $"缓存写 {SpendFormat.Tokens(summary.Tally.CacheWrite)}   ·   "
+            + $"缓存写 {(noCacheWrite ? "0(本机源未提供)" : SpendFormat.Tokens(summary.Tally.CacheWrite))}   ·   "
             + $"缓存读 {SpendFormat.Tokens(summary.Tally.CacheRead)}   ·   "
             + $"输出 {SpendFormat.Tokens(summary.Tally.Output)}"
             + (summary.CacheHit is { } hit ? $"   ·   缓存命中 {hit:P1}" : "");
@@ -337,11 +340,22 @@ public partial class SpendWindow : Window
         }
 
         double cell = 12, gap = 3, step = cell + gap;
-        int weekColumns = Math.Max(1, (int)(HeatCanvas.ActualWidth > 0 ? HeatCanvas.ActualWidth / step : 33));
+        int fitColumns = Math.Max(1, (int)(HeatCanvas.ActualWidth > 0 ? HeatCanvas.ActualWidth / step : 33));
         var today = DateTime.Today;
         // 本周周一为最后一列;往回数 weekColumns 列
         var lastMonday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+        // 列数 = 数据实际跨度覆盖的周数,并以窗口宽度为上限。数据只有 5 周时不该硬画
+        // 33 列、把左边 28 列全留成空格(本机实测就是这样:2~7 月一片空、记录全挤在右端)。
+        var firstDataDay = byDay.Keys.Min();
+        var firstDataMonday = firstDataDay.ToDateTime(TimeOnly.MinValue)
+            .AddDays(-((int)firstDataDay.DayOfWeek + 6) % 7);
+        int spanColumns = (int)((lastMonday - firstDataMonday).TotalDays / 7) + 1;
+        int weekColumns = Math.Clamp(Math.Min(fitColumns, Math.Max(spanColumns, 1)), 1, 60);
         var firstMonday = lastMonday.AddDays(-7 * (weekColumns - 1));
+        // 数据周数少于窗口宽度时,把整块水平居中——否则要么全挤在左(改前)、要么全挤在右,
+        // 空的那一半看起来像"内容没画出来"。
+        double usedW = weekColumns * step - gap;
+        double offsetX = Math.Max(0, ((HeatCanvas.ActualWidth > 0 ? HeatCanvas.ActualWidth : usedW) - usedW) / 2);
         long max = byDay.Values.Max(v => v.Tokens);
         var monthLabels = new List<(int Column, string Label)>();
 
@@ -372,7 +386,7 @@ public partial class SpendWindow : Window
                     rect.Stroke = Frozen(Color.FromRgb(0xD8, 0xD8, 0xDC));
                     rect.StrokeThickness = 0.5;
                 }
-                Canvas.SetLeft(rect, col * step);
+                Canvas.SetLeft(rect, offsetX + col * step);
                 Canvas.SetTop(rect, row * step);
                 HeatCanvas.Children.Add(rect);
             }
@@ -391,7 +405,7 @@ public partial class SpendWindow : Window
                 FontSize = 10.5,
                 Foreground = Frozen(Color.FromRgb(0x86, 0x86, 0x8B))
             };
-            Canvas.SetLeft(labelBlock, column * step);
+            Canvas.SetLeft(labelBlock, offsetX + column * step);
             Canvas.SetTop(labelBlock, 7 * step - 2);
             HeatCanvas.Children.Add(labelBlock);
         }

@@ -581,9 +581,9 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="浏览器会话明细" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="浏览器会话明细(交叉核对,不影响数字)" Style="{StaticResource RowTitle}"/>
                                         <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="读本机浏览器(Edge/Chrome)的登录 cookie,抓 Command Code 只有登录态才开放的逐模型明细(逐模型缓存读/写 token)。默认关:读 cookie 可能被安全软件误判(同类工具曾被 AV 当作 infostealer);且浏览器运行时其 cookie 库是排他锁定的,通常要完全退出浏览器才读得到。"/>
+                                                   Text="读本机浏览器(Edge/Chrome)的登录 cookie,抓 Command Code 只有登录态才开放的逐模型缓存明细,与本机库的记录做交叉核对。注意:本机库本来就覆盖了同样的用量,所以打开它不会让统计数字更准——它只是多一层旁证。默认关:读 cookie 可能被安全软件误判(同类工具曾被 AV 当作 infostealer);且浏览器运行时其 cookie 库是排他锁定的,通常要完全退出浏览器才读得到。"/>
                                     </StackPanel>
                                     <CheckBox x:Name="BrowserSessionBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"

@@ -372,6 +372,10 @@ public sealed class SpendSummary
         {
             long tokens = entry.TotalTokens;
             bool isHourRow = entry.Kind == SpendAggKind.Hour;
+            // 天级聚合行的时间戳是"当天 12:00"的**占位值**(见 UsageRepository.LoadDayRows)。
+            // 它不该参与小时分布——否则全部历史用量会被堆到 12 点,"最忙小时"永远是 12
+            // (本机实测:12 点 61 亿、别的小时几千万)。小时分布只认真小时行与明细行。
+            bool isDayRow = entry.Kind == SpendAggKind.Day;
 
             // 小时聚合行**只**喂 24 小时分布:它的模型/项目维度没有存,喂给别的桶
             // 会错算;其余行(明细 + 天级聚合)喂除 24 小时分布以外的一切。
@@ -408,7 +412,7 @@ public sealed class SpendSummary
                 agentAcc.Add(entry);
             }
 
-            hourly[entry.Timestamp.Hour] += tokens;
+            if (!isDayRow) hourly[entry.Timestamp.Hour] += tokens;
         }
 
         // 会话桶只由源库明细喂(与仓库聚合无关):会话的 token/金额从明细算,

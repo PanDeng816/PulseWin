@@ -165,13 +165,25 @@ public static class ChannelUsageIndex
         foreach (var entry in ledger.Entries)
         {
             if (entry.Timestamp < from || entry.Timestamp >= to) continue;
-            if (entry.Kind == SpendAggKind.Hour) continue;   // 小时行没有渠道/模型维度
+            if (entry.Kind == SpendAggKind.Hour) continue;   // 小时行下面单独喂(没有模型/项目维度)
 
             var channel = registry.Resolve(entry.ProviderId, entry.Agent);
             string key = BucketKey(channel);
             if (!acc.TryGetValue(key, out var a))
                 acc[key] = a = new Accumulator(channel, configured: false);
             a.Add(entry);
+        }
+
+        // 逐小时分布**只由真小时行喂**(agg_hour,带 provider 维度)。天级聚合行的时间戳是
+        // "当天 12:00"的占位值,拿它画逐小时图会把全天用量堆到 12 点、且数值严重失真
+        // (本机实测:12 点 61 亿 vs 真实小时几千万)。明细行在 Add 里已按真实时刻算过,
+        // 而明细一旦进仓库就不再走明细路径(两边互斥),所以这里不会与它双算。
+        foreach (var entry in ledger.Entries)
+        {
+            if (entry.Kind != SpendAggKind.Hour) continue;
+            if (entry.Timestamp < from || entry.Timestamp >= to) continue;
+            var channel = registry.Resolve(entry.ProviderId, entry.Agent);
+            if (acc.TryGetValue(BucketKey(channel), out var a)) a.AddHour(entry);
         }
 
         // 全时历史：不按区间筛，专门给"本区间没有用量"的套餐显示"以前用过多少"。
@@ -287,8 +299,10 @@ public static class ChannelUsageIndex
             if (!_daily.TryGetValue(day, out var d)) _daily[day] = d = new DayAgg();
             d.Add(e, tokens);
 
-            // 今日逐小时（只留当天）
-            if (day == _todayDay)
+            // 逐小时:这里**只收明细行**。天级聚合行的时间戳是"当天 12:00"占位值,收进来
+            // 会把用量堆到 12 点;而明细行一旦进仓库就不再走这条路径(去重键互斥),
+            // 那时由 AddHour 用真小时行补上——两条路互补且不双算。
+            if (e.Kind == SpendAggKind.Live && day == _todayDay)
             {
                 if (!_today.TryGetValue(e.Timestamp.Hour, out var h)) _today[e.Timestamp.Hour] = h = new HourAgg();
                 h.Add(e);
@@ -300,6 +314,17 @@ public static class ChannelUsageIndex
 
             if (_first is null || e.Timestamp < _first) _first = e.Timestamp;
             if (_last is null || e.Timestamp > _last) _last = e.Timestamp;
+        }
+
+        /// <summary>
+        /// 只把"逐小时"维度喂进来(真小时行)。**不碰**总量/模型/日聚合——那些已经由
+        /// 天级聚合行与明细行算过了,小时行只是同一个量的另一个切法,重复累加会翻倍。
+        /// </summary>
+        public void AddHour(SpendEntry e)
+        {
+            if (e.Day != _todayDay) return;   // 今日图只看今天
+            if (!_today.TryGetValue(e.Timestamp.Hour, out var h)) _today[e.Timestamp.Hour] = h = new HourAgg();
+            h.Add(e);
         }
 
         public ChannelUsage ToUsage(SpendLedger ledger)
