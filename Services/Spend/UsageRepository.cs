@@ -23,7 +23,9 @@ public static class UsageRepository
 {
     private sealed record DayRow(string Day, string Agent, string Model, string? Provider,
         string? Project, long Input, long CacheWrite, long CacheRead, long Output,
-        long Unclassified, long Unpriced, long Requests, double Cost);
+        long Unclassified, long Unpriced, long Requests, double Cost,
+        long Reasoning, long DurationMs, long DurationN, long TtftMs, long TtftN,
+        long Tools, long Retries, long Failures);
 
     private sealed record HourRow(string Hour, string Agent, long Tokens, long Unclassified, long Requests, double Cost);
 
@@ -36,14 +38,20 @@ public static class UsageRepository
     /// 仓库的文件格式版本。**改了聚合列的含义就要加一**——旧行没法就地修补,只能整份重建
     /// (明细还在源库里,重灌一遍口径就对了)。
     /// v2:<c>project</c> 改存项目身份(完整路径),新增 <c>unpriced</c> 列(桶里算不出价的 token 数)。
+    /// v3:新增遥测列(推理 token / 耗时 / 首字延迟 / 工具调用 / 重试 / 失败)。
+    ///    **为什么必须存**:这些字段只在源库明细里,而明细一旦归档进仓库就没了——
+    ///    不加列的话,界面上"推理占比/平均耗时"这类详细数据只有最近几天的有值,
+    ///    历史全空(本机实测:不存的话推理/耗时全是 0)。
     /// </summary>
-    private const int SchemaVersion = 2;
+    private const int SchemaVersion = 3;
 
     private const string CreateTables = """
         CREATE TABLE IF NOT EXISTS agg_day(
             day TEXT, agent TEXT, model TEXT, provider TEXT, project TEXT,
             inp INTEGER, cache_w INTEGER, cache_r INTEGER, out INTEGER,
             unc INTEGER, unpriced INTEGER, requests INTEGER, cost REAL,
+            reasoning INTEGER, duration_ms INTEGER, duration_n INTEGER,
+            ttft_ms INTEGER, ttft_n INTEGER, tools INTEGER, retries INTEGER, failures INTEGER,
             PRIMARY KEY(day, agent, model, provider, project));
         CREATE TABLE IF NOT EXISTS agg_hour(
             hour TEXT, agent TEXT,
@@ -173,12 +181,18 @@ public static class UsageRepository
     {
         using var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO agg_day(day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost)
-            VALUES($day, $agent, $model, $provider, $project, $inp, $cw, $cr, $out, $unc, $unpriced, $req, $cost)
+            INSERT INTO agg_day(day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost,
+                                reasoning, duration_ms, duration_n, ttft_ms, ttft_n, tools, retries, failures)
+            VALUES($day, $agent, $model, $provider, $project, $inp, $cw, $cr, $out, $unc, $unpriced, $req, $cost,
+                   $reasoning, $dur, $durn, $ttft, $ttftn, $tools, $retries, $failures)
             ON CONFLICT(day, agent, model, provider, project) DO UPDATE SET
                 inp = inp + $inp, cache_w = cache_w + $cw, cache_r = cache_r + $cr,
                 out = out + $out, unc = unc + $unc, unpriced = unpriced + $unpriced,
-                requests = requests + $req, cost = cost + $cost
+                requests = requests + $req, cost = cost + $cost,
+                reasoning = reasoning + $reasoning,
+                duration_ms = duration_ms + $dur, duration_n = duration_n + $durn,
+                ttft_ms = ttft_ms + $ttft, ttft_n = ttft_n + $ttftn,
+                tools = tools + $tools, retries = retries + $retries, failures = failures + $failures
             """;
         command.Parameters.AddWithValue("$day", e.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         command.Parameters.AddWithValue("$agent", e.Agent);
@@ -189,6 +203,15 @@ public static class UsageRepository
         BindTally(command, e);
         // 无价 token 数必须单独存:金额那一列把"无价"和"真实 0 元"都写成了 0,分不出来
         command.Parameters.AddWithValue("$unpriced", e.UnpricedTokens);
+        // 遥测:耗时/首字延迟只在**有样本**时才累加样本数,平均值才不会被 0 稀释
+        command.Parameters.AddWithValue("$reasoning", e.ReasoningTokens);
+        command.Parameters.AddWithValue("$dur", e.DurationMs);
+        command.Parameters.AddWithValue("$durn", e.DurationMs > 0 ? 1 : 0);
+        command.Parameters.AddWithValue("$ttft", e.TimeToFirstTokenMs);
+        command.Parameters.AddWithValue("$ttftn", e.TimeToFirstTokenMs > 0 ? 1 : 0);
+        command.Parameters.AddWithValue("$tools", e.ToolCalls);
+        command.Parameters.AddWithValue("$retries", e.Retries);
+        command.Parameters.AddWithValue("$failures", e.Failures);
         command.ExecuteNonQuery();
     }
 
@@ -279,7 +302,8 @@ public static class UsageRepository
     {
         var rows = new List<SpendEntry>();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost FROM agg_day";
+        command.CommandText = "SELECT day, agent, model, provider, project, inp, cache_w, cache_r, out, unc, unpriced, requests, cost,"
+            + " reasoning, duration_ms, duration_n, ttft_ms, ttft_n, tools, retries, failures FROM agg_day";
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
@@ -289,7 +313,10 @@ public static class UsageRepository
                 reader.IsDBNull(4) ? null : reader.GetString(4),
                 reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7),
                 reader.GetInt64(8), reader.GetInt64(9), reader.GetInt64(10),
-                reader.GetInt64(11), reader.GetDouble(12));
+                reader.GetInt64(11), reader.GetDouble(12),
+                reader.GetInt64(13), reader.GetInt64(14), reader.GetInt64(15),
+                reader.GetInt64(16), reader.GetInt64(17),
+                reader.GetInt64(18), reader.GetInt64(19), reader.GetInt64(20));
             if (!DateTime.TryParseExact(row.Day, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var day)) continue;
             rows.Add(new SpendEntry(
@@ -298,7 +325,16 @@ public static class UsageRepository
                 new TokenTally(row.Input, row.CacheWrite, row.CacheRead, row.Output),
                 row.Unclassified, Price: null,
                 PrecomputedCost: row.Cost, Kind: SpendAggKind.Day, RequestCount: row.Requests,
-                UnpricedTokens: row.Unpriced));
+                UnpricedTokens: row.Unpriced,
+                // 聚合行保留"总量 + 样本数",让上层用与明细行相同的公式算平均:
+                // 上层把 DurationMs 累加、把 DurationSamples 累加再相除。
+                // 之前误写成"直接还原平均值"会让聚合行只贡献 1 个样本,平均被带偏。
+                ReasoningTokens: row.Reasoning,
+                DurationMs: row.DurationMs,
+                TimeToFirstTokenMs: row.TtftMs,
+                DurationSamples: row.DurationN,
+                TtftSamples: row.TtftN,
+                ToolCalls: row.Tools, Retries: row.Retries, Failures: row.Failures));
         }
         return rows;
     }

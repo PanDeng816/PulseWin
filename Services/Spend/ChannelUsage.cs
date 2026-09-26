@@ -55,6 +55,39 @@ public sealed class ChannelUsage
     public long Requests { get; init; }
     public int Sessions { get; init; }
 
+    /// <summary>输出里属于推理的 token 合计（Output 的子集，用于"推理占比"）。</summary>
+    public long ReasoningTokens { get; init; }
+
+    /// <summary>推理占输出的比例（没有输出时为 null）。</summary>
+    public double? ReasoningShare =>
+        Tally.Output > 0 ? (double)ReasoningTokens / Tally.Output : null;
+
+    /// <summary>总耗时（毫秒，仅统计来源记了耗时的那些请求）。</summary>
+    public long TotalDurationMs { get; init; }
+    /// <summary>记了耗时的请求数（用于算平均）。</summary>
+    public long DurationSamples { get; init; }
+    /// <summary>平均每次请求耗时（秒）。没有样本时 null。</summary>
+    public double? AvgSeconds =>
+        DurationSamples > 0 ? TotalDurationMs / 1000d / DurationSamples : null;
+
+    /// <summary>首字延迟合计与样本数。</summary>
+    public long TotalTtftMs { get; init; }
+    public long TtftSamples { get; init; }
+    /// <summary>平均首字延迟（秒）。</summary>
+    public double? AvgTtftSeconds =>
+        TtftSamples > 0 ? TotalTtftMs / 1000d / TtftSamples : null;
+
+    /// <summary>工具调用总次数。</summary>
+    public long ToolCalls { get; init; }
+    /// <summary>重试总次数。</summary>
+    public long Retries { get; init; }
+    /// <summary>失败/取消的请求数。</summary>
+    public long Failures { get; init; }
+
+    /// <summary>平均每次请求的 token（没有请求时 null）。</summary>
+    public double? AvgTokensPerRequest =>
+        Requests > 0 ? (double)TotalTokens / Requests : null;
+
     public DateTime? FirstUsed { get; init; }
     public DateTime? LastUsed { get; init; }
 
@@ -95,7 +128,15 @@ public sealed record HourBucket(int Hour, long Input, long Output, long CacheRea
 
 /// <summary>渠道页里的一行模型。</summary>
 public sealed record ChannelModelRow(
-    string Model, long Tokens, long Requests, double Cost, bool HasUnpriced, double? CacheHit);
+    string Model, long Tokens, long Requests, double Cost, bool HasUnpriced, double? CacheHit,
+    /// <summary>推理 token（Output 的子集）。</summary>
+    long ReasoningTokens = 0,
+    /// <summary>平均每次请求耗时（秒）。null = 没有耗时样本。</summary>
+    double? AvgSeconds = null,
+    /// <summary>工具调用次数。</summary>
+    long ToolCalls = 0,
+    /// <summary>按天的 token（只保留有量的天，用于明细表）。</summary>
+    IReadOnlyList<(DateOnly Day, long Tokens, long Requests, double Cost)>? Daily = null);
 
 /// <summary>
 /// 把账本聚合成"每个渠道（套餐）一份画像"。**按需构建**，与模型页同样只在打开那一页时跑。
@@ -188,6 +229,12 @@ public static class ChannelUsageIndex
         private DateTime? _last;
         private DateOnly _todayDay;
 
+        // 遥测（本机库里有、以前没用起来的那些字段）
+        private long _reasoning;
+        private long _durationMs, _durationSamples;
+        private long _ttftMs, _ttftSamples;
+        private long _tools, _retries, _failures;
+
         /// <summary>全时（不受区间限制）的历史:给本区间零用量的套餐显示"以前用过多少"。</summary>
         private long _lifeTokens;
         private long _lifeRequests;
@@ -226,6 +273,15 @@ public static class ChannelUsageIndex
             _requests += e.Requests;
             _cost += e.Cost.Total;
             _costBreak += e.Cost;
+
+            _reasoning += e.ReasoningTokens;
+            _tools += e.ToolCalls;
+            _retries += e.Retries;
+            _failures += e.Failures;
+            // 样本数直接累加 e.DurationSamples:明细行是 0/1,仓库聚合行是它入库时的 N。
+            // 用 `if (DurationMs > 0) samples++` 会把聚合行的 N 次算成 1 次,平均值被带偏。
+            if (e.DurationMs > 0) { _durationMs += e.DurationMs; _durationSamples += Math.Max(1, e.DurationSamples); }
+            if (e.TimeToFirstTokenMs > 0) { _ttftMs += e.TimeToFirstTokenMs; _ttftSamples += Math.Max(1, e.TtftSamples); }
 
             var day = e.Day;
             if (!_daily.TryGetValue(day, out var d)) _daily[day] = d = new DayAgg();
@@ -302,6 +358,14 @@ public static class ChannelUsageIndex
                 CostBreakdown = _costBreak,
                 Requests = _requests,
                 Sessions = SessionIds.Count,
+                ReasoningTokens = _reasoning,
+                TotalDurationMs = _durationMs,
+                DurationSamples = _durationSamples,
+                TotalTtftMs = _ttftMs,
+                TtftSamples = _ttftSamples,
+                ToolCalls = _tools,
+                Retries = _retries,
+                Failures = _failures,
                 FirstUsed = _first,
                 LastUsed = _last,
                 Daily = daily.Select(x => (x.Item1, x.Item2, x.Item3, x.Item4, x.Item5, x.Item6, x.Item7, x.Item8)).ToList(),
@@ -341,19 +405,36 @@ public static class ChannelUsageIndex
             public double Cost;
             public bool HasUnpriced;
             private long _in, _cw, _cr;
+            private long _reasoning, _tools, _durMs, _durN;
+            private readonly Dictionary<DateOnly, (long Tokens, long Requests, double Cost)> _daily = new();
 
             public void Add(SpendEntry e, long tokens)
             {
                 Tokens += tokens; Requests += e.Requests; Cost += e.Cost.Total;
                 if (e.HasUnpriced) HasUnpriced = true;
                 _in += e.Tally.Input; _cw += e.Tally.CacheWrite; _cr += e.Tally.CacheRead;
+                _reasoning += e.ReasoningTokens;
+                _tools += e.ToolCalls;
+                if (e.DurationMs > 0) { _durMs += e.DurationMs; _durN += Math.Max(1, e.DurationSamples); }
+
+                var day = e.Day;
+                var d = _daily.TryGetValue(day, out var cur) ? cur : (0L, 0L, 0d);
+                _daily[day] = (d.Item1 + tokens, d.Item2 + e.Requests, d.Item3 + e.Cost.Total);
             }
 
             public ChannelModelRow ToRow(string model)
             {
                 long inputTotal = _in + _cw + _cr;
+                var daily = _daily
+                    .OrderBy(kv => kv.Key)
+                    .Select(kv => (kv.Key, kv.Value.Tokens, kv.Value.Requests, kv.Value.Cost))
+                    .ToList();
                 return new ChannelModelRow(model, Tokens, Requests, Cost, HasUnpriced,
-                    inputTotal > 0 ? (double)_cr / inputTotal : null);
+                    inputTotal > 0 ? (double)_cr / inputTotal : null,
+                    ReasoningTokens: _reasoning,
+                    AvgSeconds: _durN > 0 ? _durMs / 1000d / _durN : null,
+                    ToolCalls: _tools,
+                    Daily: daily);
             }
         }
     }

@@ -18,7 +18,22 @@ public sealed record AgentUsageRecord(
     string? ProviderId,
     string? SessionId,
     string? Project,
-    string? Title)
+    string? Title,
+    /// <summary>
+    /// 输出里**属于推理**的部分(是 Tally.Output 的子集,不是额外量)。
+    /// 只用于展示"推理占比",绝不重复计入总量。
+    /// </summary>
+    long ReasoningTokens = 0,
+    /// <summary>这次请求的耗时(毫秒)。0 = 来源没记。</summary>
+    long DurationMs = 0,
+    /// <summary>首字延迟(毫秒)。0 = 来源没记。</summary>
+    long TimeToFirstTokenMs = 0,
+    /// <summary>这次请求触发了多少次工具调用。</summary>
+    long ToolCalls = 0,
+    /// <summary>重试次数。</summary>
+    long Retries = 0,
+    /// <summary>失败/取消的次数(1 = 这次就是失败/取消;0 = 成功完成)。</summary>
+    long Failures = 0)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
 

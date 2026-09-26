@@ -529,6 +529,15 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- 性能与行为(来自客户端记录的遥测:推理/耗时/首字/工具/重试) -->
+                            <Border Style="{StaticResource GroupCard}">
+                                <StackPanel Margin="0,12">
+                                    <TextBlock Text="性能与行为" Style="{StaticResource RowTitle}"/>
+                                    <TextBlock x:Name="ChannelPerfHint" Style="{StaticResource RowSub}" Margin="0,3,0,8"/>
+                                    <UniformGrid x:Name="ChannelPerfGrid" Columns="3" Margin="0,2,0,2"/>
+                                </StackPanel>
+                            </Border>
+
                             <!-- 每日趋势 -->
                             <Border Style="{StaticResource GroupCard}">
                                 <StackPanel Margin="0,12">
@@ -542,6 +551,15 @@
                                 <StackPanel>
                                     <TextBlock Text="这个套餐里各模型的用量" Style="{StaticResource RowTitle}" Margin="16,14,16,4"/>
                                     <StackPanel x:Name="ChannelModelPanel"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 逐日明细(模型 × 天 的矩阵) -->
+                            <Border Style="{StaticResource GroupCard}" Padding="0">
+                                <StackPanel>
+                                    <TextBlock Text="逐日明细" Style="{StaticResource RowTitle}" Margin="16,14,16,4"/>
+                                    <TextBlock x:Name="ChannelDailyTableHint" Style="{StaticResource RowSub}" Margin="16,0,16,6"/>
+                                    <StackPanel x:Name="ChannelDailyTablePanel"/>
                                 </StackPanel>
                             </Border>
 

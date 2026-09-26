@@ -45,7 +45,26 @@ public sealed record SpendEntry(
     /// 同一个模型在不同时间可能一个有一个没有(价目表更新过),所以这件事必须**单独存**,
     /// 不能靠"金额是不是 0"反推:真实 0 价的免费模型也是 0 元,两者不是一回事。
     /// </summary>
-    long UnpricedTokens = 0)
+    long UnpricedTokens = 0,
+    /// <summary>输出里属于推理的部分(是 Tally.Output 的子集,只用于展示占比)。</summary>
+    long ReasoningTokens = 0,
+    /// <summary>耗时(毫秒)。0 = 来源没记。</summary>
+    long DurationMs = 0,
+    /// <summary>首字延迟(毫秒)。0 = 来源没记。</summary>
+    long TimeToFirstTokenMs = 0,
+    /// <summary>
+    /// 计入 <see cref="DurationMs"/> 的样本数。明细行是 0/1,聚合行是入库时累加的
+    /// <c>duration_n</c>——**没有它就算不出正确的平均耗时**(聚合行 1 行代表 N 次请求)。
+    /// </summary>
+    long DurationSamples = 0,
+    /// <summary>计入 <see cref="TimeToFirstTokenMs"/> 的样本数(同上)。</summary>
+    long TtftSamples = 0,
+    /// <summary>工具调用次数。</summary>
+    long ToolCalls = 0,
+    /// <summary>重试次数。</summary>
+    long Retries = 0,
+    /// <summary>失败/取消次数(1 = 这条就是失败/取消)。</summary>
+    long Failures = 0)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
 
@@ -181,7 +200,15 @@ public sealed class SpendLedger
                     price,
                     // 查不到价 = 这条记录的 token 全算不出金额(一个模型只有"有价/无价"两种,
                     // 不存在半条记录有价)
-                    UnpricedTokens: price is null ? record.Tally.Total + record.UnclassifiedTokens : 0));
+                    UnpricedTokens: price is null ? record.Tally.Total + record.UnclassifiedTokens : 0,
+                    ReasoningTokens: record.ReasoningTokens,
+                    DurationMs: record.DurationMs,
+                    TimeToFirstTokenMs: record.TimeToFirstTokenMs,
+                    DurationSamples: record.DurationMs > 0 ? 1 : 0,
+                    TtftSamples: record.TimeToFirstTokenMs > 0 ? 1 : 0,
+                    ToolCalls: record.ToolCalls,
+                    Retries: record.Retries,
+                    Failures: record.Failures));
             }
         }
 

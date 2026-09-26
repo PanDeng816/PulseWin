@@ -55,7 +55,11 @@ public sealed class ChannelRegistry
         // OpenCode Go 的几种路由前缀（Responses / glm 变体也在内）
         ("opencode-go", "OpenCode Go", "opencode"),
         ("opencode", "OpenCode Go", "opencode"),
-        ("47e4c8b0dc2847b1632fbe3cbb1f539b13308d98", "OpenCode Go", "opencode"),
+        // OpenCode Go 曾经用过的 UUID 配置 id（2026-08 那阵配的是
+        // opencode.ai/zen/go/v1 + deepseek-v4-flash）。**已核实**：它在旧
+        // config.json 备份里的名字就是 "opencode go"，所以归到 OpenCode Go，
+        // 不能当成一个陌生的新渠道（那会让用户看到"渠道 9c477982"却不知道是什么）。
+        ("9c477982-bc8f-4fda-a3f6-21e988358f5f", "OpenCode Go", "opencode"),
     ];
 
     private static ChannelRegistry? _current;

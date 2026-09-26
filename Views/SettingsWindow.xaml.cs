@@ -643,9 +643,124 @@ public partial class SettingsWindow : Window
         AddCell(ChannelTokenGrid, "合计", SpendFormat.TokensExact(ch.TotalTokens), null, "Tokens");
 
         RenderHourlyChart(ch);
+        RenderPerf(ch);
         RenderDailyChart(ch);
         RenderChannelModels(ch);
+        RenderDailyTable(ch);
         RenderChannelMeta(ch);
+    }
+
+    /// <summary>
+    /// 性能与行为:来自客户端记录的遥测字段(推理 token/耗时/首字延迟/工具调用/重试/失败)。
+    /// 这些是"这次调用花了多久、有没有卡、推理占多少",比单纯的 token 数更能说明体验。
+    /// </summary>
+    private void RenderPerf(ChannelUsage ch)
+    {
+        ChannelPerfGrid.Children.Clear();
+        bool any = ch.ReasoningTokens > 0 || ch.DurationSamples > 0 || ch.ToolCalls > 0;
+        ChannelPerfHint.Text = any
+            ? "来自客户端记录的每次调用遥测(平均耗时的分母是「记了耗时的请求数」)"
+            : "客户端没有为这些请求记录遥测(推理/耗时/工具调用),这一块为空。";
+        if (!any) return;
+
+        AddCell(ChannelPerfGrid, "推理占输出",
+            ch.ReasoningShare is { } rs ? $"{rs:P1}" : "—",
+            ch.ReasoningTokens > 0 ? $"推理 {SpendFormat.Tokens(ch.ReasoningTokens)}" : null, "Sessions");
+        AddCell(ChannelPerfGrid, "平均耗时",
+            ch.AvgSeconds is { } sec ? $"{sec:0.0}s" : "—",
+            ch.DurationSamples > 0 ? $"{ch.DurationSamples:N0} 次有记录" : null, "Tokens");
+        AddCell(ChannelPerfGrid, "平均首字延迟",
+            ch.AvgTtftSeconds is { } t ? $"{t:0.00}s" : "—",
+            ch.TtftSamples > 0 ? $"{ch.TtftSamples:N0} 次有记录" : null, "Cache");
+        AddCell(ChannelPerfGrid, "工具调用", ch.ToolCalls.ToString("N0"),
+            ch.Requests > 0 ? $"均 {(double)ch.ToolCalls / ch.Requests:0.0} 次/请求" : null, "Requests");
+        AddCell(ChannelPerfGrid, "重试", ch.Retries.ToString("N0"),
+            ch.Requests > 0 ? $"占请求 {ch.Retries * 100.0 / ch.Requests:0.0}%" : null, "Money");
+        AddCell(ChannelPerfGrid, "平均每请求",
+            ch.AvgTokensPerRequest is { } avg ? SpendFormat.Tokens((long)avg) : "—",
+            "tokens / 次", "Tokens");
+    }
+
+    /// <summary>逐日明细表:每行一个模型,列出区间内逐天的 token / 次数 / 金额。</summary>
+    private void RenderDailyTable(ChannelUsage ch)
+    {
+        ChannelDailyTablePanel.Children.Clear();
+
+        // 取区间里有量的天(升序),只显示最近 10 天免得表格太宽
+        var days = ch.Daily.Where(d => d.Tokens > 0).Select(d => d.Day).ToList();
+        if (days.Count == 0)
+        {
+            ChannelDailyTableHint.Text = "这个区间没有用量。";
+            return;
+        }
+        // 只显示最近 6 天:内容区约 725diu,模型名列最小 150,一格"6995.7万·459"约 78,
+        // 6 列 + 边距刚好;7 列就会把最右一列推出窗口右缘。
+        var shown = days.TakeLast(6).ToList();
+        ChannelDailyTableHint.Text = shown.Count < days.Count
+            ? $"每行一个模型,列为最近 {shown.Count} 天(区间共 {days.Count} 天有用量)。"
+            : $"每行一个模型,列为 {shown.Count} 天。";
+
+        var grid = new Grid { Margin = new Thickness(16, 2, 16, 14) };
+        // 第一列(模型名)给一个下限宽度,否则会被后面的日期列挤到只剩 "d…"
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 150 });
+        foreach (var _ in shown)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        int row = 0;
+        // 表头:模型名 + 各天(MM-dd)
+        AddTableRow(grid, row++, "模型", shown.Select(d => d.ToString("MM-dd")).ToArray(), bold: true, isHeader: true);
+        foreach (var m in ch.Models.Take(10))
+        {
+            if (m.Daily is not { Count: > 0 }) continue;
+            var byDay = m.Daily.ToDictionary(x => x.Day, x => x);
+            // 单元格**只放 token**(次数与金额进 tooltip):内容区约 504diu,
+            // 带上"·次数"就会让每列变宽、最右一列被挤出窗口右缘。
+            var cells = shown.Select(d =>
+                byDay.TryGetValue(d, out var v) && v.Tokens > 0
+                    ? SpendFormat.Tokens(v.Tokens)
+                    : "·").ToArray();
+            var tips = shown.Select(d =>
+                byDay.TryGetValue(d, out var v) && v.Tokens > 0
+                    ? $"{d:yyyy-MM-dd}\n{SpendFormat.TokensExact(v.Tokens)} tokens\n{v.Requests} 次调用\n{SpendFormat.MoneyExact(v.Cost)}"
+                    : $"{d:yyyy-MM-dd}\n没有记录").ToArray();
+            AddTableRow(grid, row++, m.Model, cells, bold: false, isHeader: false, tips);
+        }
+
+        ChannelDailyTablePanel.Children.Add(grid);
+    }
+
+    private void AddTableRow(Grid grid, int row, string label, string[] cells, bool bold, bool isHeader,
+        string[]? tips = null)
+    {
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var name = new TextBlock
+        {
+            Text = label,
+            FontSize = isHeader ? 11 : 12,
+            FontWeight = bold ? FontWeights.SemiBold : FontWeights.Normal,
+            Margin = new Thickness(0, 5, 10, 5),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Foreground = (System.Windows.Media.Brush)FindResource(isHeader ? "TextSubBrush" : "TextBrush"),
+        };
+        Grid.SetRow(name, row);
+        grid.Children.Add(name);
+
+        for (int i = 0; i < cells.Length; i++)
+        {
+            var cell = new TextBlock
+            {
+                Text = cells[i],
+                FontSize = 11,
+                Margin = new Thickness(6, 5, 2, 5),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                TextAlignment = TextAlignment.Right,
+                ToolTip = tips is not null && i < tips.Length ? tips[i] : null,
+                Foreground = (System.Windows.Media.Brush)FindResource(isHeader ? "TextSubBrush" : "TextBrush"),
+            };
+            Grid.SetRow(cell, row);
+            Grid.SetColumn(cell, i + 1);
+            grid.Children.Add(cell);
+        }
     }
 
     /// <summary>KPI 小格:大数字 + 小标签 + 可选脚注。金额/缓存类用强调色。</summary>

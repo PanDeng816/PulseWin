@@ -184,7 +184,8 @@ public sealed class ZCodeUsageStore : IUsageStore
                  {
                      "id", "session_id", "model_id", "provider_id", "started_at", "completed_at",
                      "input_tokens", "output_tokens", "reasoning_tokens",
-                     "cache_read_input_tokens", "cache_creation_input_tokens", "computed_total_tokens"
+                     "cache_read_input_tokens", "cache_creation_input_tokens", "computed_total_tokens",
+                     "duration_ms", "time_to_first_token_ms", "tool_call_count", "retry_count", "status"
                  })
         {
             if (columns.Contains(name)) selected.Add(name);
@@ -206,6 +207,12 @@ public sealed class ZCodeUsageStore : IUsageStore
         int iCacheRead = selected.IndexOf("cache_read_input_tokens");
         int iCacheWrite = selected.IndexOf("cache_creation_input_tokens");
         int iComputed = selected.IndexOf("computed_total_tokens");
+        int iReasoning = selected.IndexOf("reasoning_tokens");
+        int iDuration = selected.IndexOf("duration_ms");
+        int iTtft = selected.IndexOf("time_to_first_token_ms");
+        int iTools = selected.IndexOf("tool_call_count");
+        int iRetry = selected.IndexOf("retry_count");
+        int iStatus = selected.IndexOf("status");
 
         while (reader.Read())
         {
@@ -229,6 +236,12 @@ public sealed class ZCodeUsageStore : IUsageStore
             var tally = new TokenTally(freshInput, cacheWrite, cacheRead, rawOutput);
             if (tally.Total <= 0 && unclassified <= 0) continue;
 
+            // 推理是 output 的子集(只用于展示占比);失败/取消计入 Failures。
+            long reasoning = Math.Max(0, ReadCount(reader, iReasoning));
+            string? status = ReadText(reader, iStatus);
+            long failures = status is not null && !status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+                ? 1 : 0;
+
             var (rootId, project, title) = sessions.Resolve(sessionId);
             records.Add(new AgentUsageRecord(
                 timestamp.Value,
@@ -239,7 +252,13 @@ public sealed class ZCodeUsageStore : IUsageStore
                 ReadText(reader, iProvider),
                 rootId,
                 project,
-                title));
+                title,
+                ReasoningTokens: reasoning,
+                DurationMs: ReadCount(reader, iDuration),
+                TimeToFirstTokenMs: ReadCount(reader, iTtft),
+                ToolCalls: ReadCount(reader, iTools),
+                Retries: ReadCount(reader, iRetry),
+                Failures: failures));
         }
         return records;
     }

@@ -286,8 +286,25 @@ public partial class App : System.Windows.Application
                 text.AppendLine($"    tokens={ch.TotalTokens:N0}  估算 {SpendFormat.Amount(ch.Cost, ch.HasUnpriced)}"
                     + $"  请求={ch.Requests}  会话={ch.Sessions}  缓存命中={cache}"
                     + $"  {ch.FirstUsed:MM-dd}~{ch.LastUsed:MM-dd}  providerIds=[{string.Join(",", ch.ProviderIds)}]");
+                // 详细遥测（本机库里有、以前没用起来的字段）
+                string reason = ch.ReasoningShare is { } rs ? $"{rs * 100:0.0}%" : "—";
+                string avgSec = ch.AvgSeconds is { } sec ? $"{sec:0.0}s" : "—";
+                string ttft = ch.AvgTtftSeconds is { } t ? $"{t:0.00}s" : "—";
+                text.AppendLine($"    推理={ch.ReasoningTokens:N0}(占输出 {reason})  平均耗时={avgSec}  平均首字={ttft}"
+                    + $"  工具调用={ch.ToolCalls:N0}  重试={ch.Retries}  失败={ch.Failures}"
+                    + $"  平均每请求={ch.AvgTokensPerRequest:N0} tokens");
                 text.AppendLine($"    模型({ch.Models.Count}): "
-                    + string.Join(" / ", ch.Models.Take(6).Select(m => $"{m.Model} {SpendFormat.Tokens(m.Tokens)}")));
+                    + string.Join(" / ", ch.Models.Take(6).Select(m =>
+                        $"{m.Model} {SpendFormat.Tokens(m.Tokens)}"
+                        + (m.ReasoningTokens > 0 ? $" 推理{SpendFormat.Tokens(m.ReasoningTokens)}" : "")
+                        + (m.AvgSeconds is { } a ? $" {a:0.0}s" : ""))));
+                // 模型的逐日明细（前两个模型，各取最近 5 天）——核对"每模型每天"矩阵
+                foreach (var m in ch.Models.Take(2))
+                {
+                    if (m.Daily is not { Count: > 0 } dd) continue;
+                    text.AppendLine($"    {m.Model} 逐日: " + string.Join(" ",
+                        dd.TakeLast(5).Select(d => $"{d.Day:MM-dd}={SpendFormat.Tokens(d.Tokens)}({d.Requests}次)")));
+                }
                 var today = ch.TodayHourly.Where(h => h.Tokens > 0).ToList();
                 text.AppendLine("    今日逐小时: " + (today.Count == 0 ? "(今天没有记录)"
                     : string.Join(" ", today.Select(h => $"{h.Hour}:{SpendFormat.Tokens(h.Tokens)}"))));
