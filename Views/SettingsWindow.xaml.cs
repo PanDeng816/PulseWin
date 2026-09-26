@@ -521,11 +521,15 @@ public partial class SettingsWindow : Window
         long total = _channels.Sum(c => c.TotalTokens);
         double cost = _channels.Sum(c => c.Cost);
         bool partial = _channels.Any(c => c.HasUnpriced);
+        int withData = _channels.Count(c => c.HasData);
+        int idle = _channels.Count - withData;
         ModelsStatus.Text = _channels.Count == 0
-            ? $"{range}:这个区间没有记录。"
-            : $"{range}:{_channels.Count} 个套餐 · {SpendFormat.TokensExact(total)} tokens · 估算 {SpendFormat.Amount(cost, partial)}";
+            ? $"{range}:没有可显示的套餐。"
+            : $"{range}:{_channels.Count} 个套餐({withData} 个有用量"
+                + (idle > 0 ? $",{idle} 个本区间没用" : "")
+                + $") · {SpendFormat.TokensExact(total)} tokens · 估算 {SpendFormat.Amount(cost, partial)}";
 
-        // 默认选中用量最大的套餐
+        // 默认选中用量最大的套餐（没用量时落到第一个）
         if (_channels.Count > 0) SelectChannel(_channels[0]);
     }
 
@@ -535,7 +539,7 @@ public partial class SettingsWindow : Window
         ChannelTabsPanel.Children.Clear();
         foreach (var ch in _channels)
         {
-            bool active = _selectedChannel is { } sel && sel.Key == ch.Key && sel.Agent == ch.Agent;
+            bool active = _selectedChannel is { } sel && sel.Key == ch.Key;
             var content = new StackPanel { Orientation = Orientation.Horizontal };
             content.Children.Add(new TextBlock
             {
@@ -545,9 +549,14 @@ public partial class SettingsWindow : Window
                 Foreground = active ? System.Windows.Media.Brushes.White
                     : (System.Windows.Media.Brush)FindResource("TextBrush"),
             });
+            // 本区间没有用量的套餐:按钮上直接写"无用量",而不是显示 0——
+            // 用户订阅过、以后还会订阅的套餐不该看起来像"数据丢了"。
+            string badge = ch.HasData
+                ? SpendFormat.Tokens(ch.TotalTokens)
+                : (ch.Enabled == false ? "未启用" : "本区间无用量");
             var tok = new TextBlock
             {
-                Text = "  " + SpendFormat.Tokens(ch.TotalTokens),
+                Text = "  " + badge,
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = active ? System.Windows.Media.Brushes.White
@@ -582,13 +591,33 @@ public partial class SettingsWindow : Window
         ChannelDetailPanel.Visibility = Visibility.Visible;
 
         ChannelTitle.Text = ch.Name;
+        // 副标题:来源客户端 + 订阅状态 + 本页统计的时间范围(或"本区间无用量")
+        string state = ch.Enabled switch
+        {
+            true => "订阅中",
+            false => "未启用",
+            _ => null,
+        };
+        string range = ch.HasData
+            ? (ch.FirstUsed is { } f && ch.LastUsed is { } l ? $"{f:MM-dd HH:mm} ~ {l:MM-dd HH:mm}" : "")
+            : ch.LifetimeLast is { } ll ? $"本区间无用量(最后一次 {ll:MM-dd})" : "本区间无用量";
         ChannelSubtitle.Text = $"{ch.Agent} 渠道"
-            + (ch.FirstUsed is { } f && ch.LastUsed is { } l ? $" · {f:MM-dd HH:mm} ~ {l:MM-dd HH:mm}" : "");
+            + (state is not null ? $" · {state}" : "")
+            + (range.Length > 0 ? $" · {range}" : "");
+
+        // 本区间无用量但历史用过:给一条说明,免得看着像"没统计到"
+        if (!ch.HasData)
+        {
+            ChannelTodayHint.Text = ch.LifetimeTokens > 0
+                ? $"这个区间没有用量。历史上用过 {SpendFormat.Tokens(ch.LifetimeTokens)} tokens / {ch.LifetimeRequests:N0} 次"
+                    + (ch.LifetimeFirst is { } lf ? $",从 {lf:yyyy-MM-dd} 起。" : "。")
+                : "这个区间没有用量,也没有历史记录(配置里有这个套餐)。";
+        }
 
         // —— KPI 六格:总费用 / 总请求 / 总 TOKEN / 缓存命中率 / 缓存读写 / 会话数 ——
         ChannelKpiGrid.Children.Clear();
-        AddCell(ChannelKpiGrid, "总费用", SpendFormat.Amount(ch.Cost, ch.HasUnpriced),
-            ch.Requests > 0 ? $"均 {SpendFormat.Amount(ch.Cost / ch.Requests, false)}/次" : null,
+        AddCell(ChannelKpiGrid, "总费用", ch.HasData ? SpendFormat.Amount(ch.Cost, ch.HasUnpriced) : "—",
+            ch.HasData && ch.Requests > 0 ? $"均 {SpendFormat.Amount(ch.Cost / ch.Requests, false)}/次" : null,
             "Money");
         AddCell(ChannelKpiGrid, "总请求", ch.Requests.ToString("N0"), "当前区间", "Requests");
         AddCell(ChannelKpiGrid, "总 TOKEN", SpendFormat.Tokens(ch.TotalTokens),
@@ -905,13 +934,22 @@ public partial class SettingsWindow : Window
     {
         string ids = ch.ProviderIds.Count > 0 ? string.Join("、", ch.ProviderIds) : "(未标注)";
         string sourceKey = ch.SourceKey is { } sk ? $" · 对应数据源 {sk}" : "";
-        ChannelMetaLine.Text = $"来源客户端 {ch.Agent}{sourceKey}\n"
+        string state = ch.Enabled switch
+        {
+            true => "订阅中",
+            false => "未启用(客户端配置里已关闭,历史用量仍照实统计)",
+            _ => "状态未知",
+        };
+        string life = ch.LifetimeTokens > 0
+            ? $"全时段累计 {SpendFormat.Tokens(ch.LifetimeTokens)} tokens / {ch.LifetimeRequests:N0} 次"
+                + (ch.LifetimeFirst is { } lf && ch.LifetimeLast is { } ll ? $",{lf:yyyy-MM-dd} ~ {ll:yyyy-MM-dd}" : "")
+            : "全时段没有记录(本机从未用过这个套餐)";
+        ChannelMetaLine.Text = $"来源客户端 {ch.Agent}{sourceKey} · {state}\n"
             + $"provider id:{ids}\n"
-            + $"统计口径与「用量统计」窗口一致:四类 token 之和对不上来源总量时差额记未分类(计入总数、不计价);"
-            + $"金额按 models.dev 公开牌价估算。";
+            + life + "\n"
+            + "统计口径与「用量统计」窗口一致:四类 token 之和对不上来源总量时差额记未分类(计入总数、不计价);"
+            + "金额按 models.dev 公开牌价估算。";
     }
-
-    // ————————————————— 行为/外观的批 1 设置 —————————————————
 
     // ————————————————— 行为/外观的批 1 设置 —————————————————
 

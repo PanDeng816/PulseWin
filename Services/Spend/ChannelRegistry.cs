@@ -22,7 +22,13 @@ public sealed record ChannelInfo(
     /// <summary>这个渠道对应的数据源键（goat / opencode / deepseek / null=未知）。</summary>
     string? SourceKey,
     /// <summary>本机见过这个渠道的哪些 provider id。</summary>
-    IReadOnlyList<string> ProviderIds);
+    IReadOnlyList<string> ProviderIds,
+    /// <summary>
+    /// 客户端配置里这个渠道是否启用（订阅中）。null = 配置里没记/无从判断。
+    /// **未启用不代表没有历史用量**——用户可能只是这个月没续订，过阵子会续。
+    /// 界面据此显示"未启用",但历史数据照旧展示。
+    /// </summary>
+    bool? Enabled = null);
 
 /// <summary>
 /// 渠道注册表：provider_id → 套餐。**先读 ZCode 自己的 provider 配置**
@@ -111,12 +117,17 @@ public sealed class ChannelRegistry
             string? name = Str(p, "providerName");
             if (string.IsNullOrWhiteSpace(id)) continue;
             string display = string.IsNullOrWhiteSpace(name) ? id : name!;
+            // enabled 缺省视为已启用（多数 provider 条目不写这个字段）
+            bool enabled = p.TryGetProperty("enabled", out var en) && en.ValueKind == JsonValueKind.False
+                ? false
+                : true;
             Register(new ChannelInfo(
                 Key: id,
                 Name: NormalizeName(display),
                 Agent: "ZCode",
                 SourceKey: SourceKeyFor(id, display),
-                ProviderIds: [id]));
+                ProviderIds: [id],
+                Enabled: enabled));
         }
     }
 
@@ -155,7 +166,14 @@ public sealed class ChannelRegistry
         {
             var ids = existing.ProviderIds.Concat(channel.ProviderIds).Distinct(StringComparer.Ordinal).ToList();
             int i = _channels.IndexOf(existing);
-            var merged = existing with { ProviderIds = ids };
+            // 合并时"启用"取或：只要有一个 id 是启用的，这个套餐就算启用中
+            bool? enabled = (existing.Enabled, channel.Enabled) switch
+            {
+                (true, _) or (_, true) => true,
+                (false, false) => false,
+                _ => existing.Enabled ?? channel.Enabled,
+            };
+            var merged = existing with { ProviderIds = ids, Enabled = enabled };
             _channels[i] = merged;
             foreach (var id in ids) _byProviderId[id] = merged;
             return;

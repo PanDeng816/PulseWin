@@ -25,6 +25,24 @@ public sealed class ChannelUsage
     /// <summary>这个套餐用到的客户端（可能不止一个，如 ZCode 与 OpenCode 都配过 OpenCode Go）。</summary>
     public IReadOnlyList<string> Agents { get; init; } = [];
 
+    /// <summary>
+    /// 这个套餐是本机客户端**配置里就有的**（订阅配置），与"这段时间有没有用量"无关。
+    /// 配置里有的套餐即使当前区间零用量也会出现在列表里。
+    /// </summary>
+    public bool Configured { get; init; }
+
+    /// <summary>配置里是否启用（订阅中）。null = 配置里没记/无从判断。</summary>
+    public bool? Enabled { get; init; }
+
+    /// <summary>
+    /// 全时（不受区间限制）的首次/末次使用与总量——给"本区间没有用量"的套餐用，
+    /// 让用户能看到它历史上用过多少、最后一次是什么时候。
+    /// </summary>
+    public DateTime? LifetimeFirst { get; init; }
+    public DateTime? LifetimeLast { get; init; }
+    public long LifetimeTokens { get; init; }
+    public long LifetimeRequests { get; init; }
+
     public TokenTally Tally { get; init; }
     public long UnclassifiedTokens { get; init; }
     public long UnpricedTokens { get; init; }
@@ -94,16 +112,34 @@ public static class ChannelUsageIndex
         // 必须合成一行，否则界面上同一个套餐会裂成好几行——用户要的是"每个套餐一个"。
         var acc = new Dictionary<string, Accumulator>(StringComparer.Ordinal);
 
+        // **先给本机配置里的每个套餐预建一个桶**（即使当前区间内零用量）。
+        // 这是用户点名要的：订阅过、以后还会订阅的套餐（如 OpenCode Go）不该因为
+        // "最近 7 天没用"就整个从列表里消失——那会让人以为工具没统计到它。
+        foreach (var known in registry.KnownChannels)
+        {
+            string key = BucketKey(known);
+            if (!acc.ContainsKey(key)) acc[key] = new Accumulator(known, configured: true);
+        }
+
         foreach (var entry in ledger.Entries)
         {
             if (entry.Timestamp < from || entry.Timestamp >= to) continue;
             if (entry.Kind == SpendAggKind.Hour) continue;   // 小时行没有渠道/模型维度
 
             var channel = registry.Resolve(entry.ProviderId, entry.Agent);
-            string key = channel.Name + "\u0001" + (channel.SourceKey ?? "");
+            string key = BucketKey(channel);
             if (!acc.TryGetValue(key, out var a))
-                acc[key] = a = new Accumulator(channel);
+                acc[key] = a = new Accumulator(channel, configured: false);
             a.Add(entry);
+        }
+
+        // 全时历史：不按区间筛，专门给"本区间没有用量"的套餐显示"以前用过多少"。
+        // 只统计每个桶一次（同一套餐的桶已合并），所以直接遍历全部条目累加即可。
+        foreach (var entry in ledger.Entries)
+        {
+            if (entry.Kind == SpendAggKind.Hour) continue;
+            var channel = registry.Resolve(entry.ProviderId, entry.Agent);
+            if (acc.TryGetValue(BucketKey(channel), out var a)) a.AddLifetime(entry);
         }
 
         // 会话去重
@@ -113,16 +149,21 @@ public static class ChannelUsageIndex
             if (entry.Timestamp < from || entry.Timestamp >= to) continue;
             if (entry.SessionId is null) continue;
             var channel = registry.Resolve(entry.ProviderId, entry.Agent);
-            if (acc.TryGetValue(channel.Name + "\u0001" + (channel.SourceKey ?? ""), out var a))
+            if (acc.TryGetValue(BucketKey(channel), out var a))
                 a.SessionIds.Add(entry.SessionId);
         }
 
+        // 排序:有数据的按用量降序在前,配置里存在但本区间没用过的排后面
         return acc.Values
-            .Where(a => a.HasData)
-            .Select(a => a.ToUsage())
-            .OrderByDescending(c => c.TotalTokens)
+            .Select(a => a.ToUsage(ledger))
+            .Where(c => c.HasData || c.Configured)
+            .OrderByDescending(c => c.HasData)
+            .ThenByDescending(c => c.TotalTokens)
             .ToList();
     }
+
+    /// <summary>分桶键 = 套餐名 + 数据源键（同一套餐的多个 provider id 落进同一个桶）。</summary>
+    private static string BucketKey(ChannelInfo c) => c.Name + "\u0001" + (c.SourceKey ?? "");
 
     /// <summary>所有区间见过的渠道（不含区间筛选；列表用它显示"这台机器用过哪些套餐"）。</summary>
     public static List<ChannelUsage> BuildAllTime(SpendLedger ledger) => Build(ledger, SpendSpan.All);
@@ -130,6 +171,7 @@ public static class ChannelUsageIndex
     private sealed class Accumulator
     {
         private readonly ChannelInfo _channel;
+        private readonly bool _configured;
         private readonly HashSet<string> _agents = new(StringComparer.Ordinal);
         private readonly HashSet<string> _providerIds = new(StringComparer.Ordinal);
         private readonly Dictionary<DateOnly, DayAgg> _daily = new();
@@ -146,16 +188,32 @@ public static class ChannelUsageIndex
         private DateTime? _last;
         private DateOnly _todayDay;
 
+        /// <summary>全时（不受区间限制）的历史:给本区间零用量的套餐显示"以前用过多少"。</summary>
+        private long _lifeTokens;
+        private long _lifeRequests;
+        private DateTime? _lifeFirst;
+        private DateTime? _lifeLast;
+
         public readonly HashSet<string> SessionIds = new(StringComparer.Ordinal);
 
-        public Accumulator(ChannelInfo channel)
+        public Accumulator(ChannelInfo channel, bool configured)
         {
             _channel = channel;
+            _configured = configured;
             foreach (var id in channel.ProviderIds) _providerIds.Add(id);
             _todayDay = DateOnly.FromDateTime(DateTime.Now);
         }
 
         public bool HasData => _tally.Total + _unclassified > 0 || _requests > 0;
+
+        /// <summary>全时统计（区间外的记录也累加，只为"以前用过"这一行）。</summary>
+        public void AddLifetime(SpendEntry e)
+        {
+            _lifeTokens += e.TotalTokens;
+            _lifeRequests += e.Requests;
+            if (_lifeFirst is null || e.Timestamp < _lifeFirst) _lifeFirst = e.Timestamp;
+            if (_lifeLast is null || e.Timestamp > _lifeLast) _lifeLast = e.Timestamp;
+        }
 
         public void Add(SpendEntry e)
         {
@@ -188,9 +246,8 @@ public static class ChannelUsageIndex
             if (_last is null || e.Timestamp > _last) _last = e.Timestamp;
         }
 
-        public ChannelUsage ToUsage()
-        {
-            // 逐日补空白
+        public ChannelUsage ToUsage(SpendLedger ledger)
+        {            // 逐日补空白
             var daily = new List<(DateOnly, long, long, long, long, long, double, long)>();
             if (_daily.Count > 0)
             {
@@ -223,13 +280,21 @@ public static class ChannelUsageIndex
                 Name = _channel.Name,
                 Agent = _agents.Count switch
                 {
-                    0 => "未知来源",
+                    // 没有任何用量记录时(配置里有、本机没用过)用配置来源兜底,
+                    // 不要显示成"未知来源"
+                    0 => _channel.Agent,
                     1 => _agents.First(),
                     _ => string.Join(" + ", _agents.OrderBy(x => x, StringComparer.Ordinal)),
                 },
                 SourceKey = _channel.SourceKey,
                 ProviderIds = _providerIds.OrderBy(x => x, StringComparer.Ordinal).ToList(),
                 Agents = _agents.OrderBy(x => x, StringComparer.Ordinal).ToList(),
+                Configured = _configured,
+                Enabled = _channel.Enabled,
+                LifetimeFirst = _lifeFirst,
+                LifetimeLast = _lifeLast,
+                LifetimeTokens = _lifeTokens,
+                LifetimeRequests = _lifeRequests,
                 Tally = _tally,
                 UnclassifiedTokens = _unclassified,
                 UnpricedTokens = _unpriced,

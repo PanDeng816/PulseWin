@@ -500,7 +500,9 @@
 
                         <!-- 套餐切换(每个套餐一个按钮,选中即下面显示它的数据) -->
                         <Border Style="{StaticResource GroupCard}" Padding="12,10">
-                            <StackPanel x:Name="ChannelTabsPanel" Orientation="Horizontal"/>
+                            <!-- 套餐切换按钮用 WrapPanel:套餐可能有好几个(含未启用/无用量
+                                 的),横向 StackPanel 不换行会被右缘截断 -->
+                            <WrapPanel x:Name="ChannelTabsPanel" Orientation="Horizontal"/>
                         </Border>
 
                         <!-- 选中套餐的详细信息 -->
