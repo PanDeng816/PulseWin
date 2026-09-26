@@ -242,6 +242,20 @@
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="ShowPercent_Changed" Unchecked="ShowPercent_Changed"/>
                                 </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="只在有用量时显示 5 小时圈" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="关掉内圈的源只画总额度外环。5 小时窗口没用过的源不画内圈——内圈出现就表示这个源正在被用" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="IdleInnerRingBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
+                                              HorizontalAlignment="Right" VerticalAlignment="Center"
+                                              Checked="IdleInnerRing_Changed" Unchecked="IdleInnerRing_Changed"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

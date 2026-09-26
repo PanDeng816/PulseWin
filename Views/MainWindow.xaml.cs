@@ -260,6 +260,24 @@ public partial class MainWindow : Window
         Close();
     }
 
+    /// <summary>
+    /// 离屏出图专用(<c>--rail-shot</c>):注入合成数据、停掉主循环,让 rail 停在
+    /// 一个可预测的可见形态上。**不读快照、不碰指针**——这是验证"环长什么样"的
+    /// 确定性手段(环是自绘的,截图之外没法核对)。
+    /// </summary>
+    internal void InjectForShot(List<SubData> subs)
+    {
+        _ticker.Stop();
+        _docked = true;
+        _dockEdge = DockEdge.Right;
+        _peekVisible = true;
+        _subs = subs;
+        _refreshUntil = new double[subs.Count];
+        _refreshStart = new double[subs.Count];
+        RebuildLayout();
+        InvalidateVisual();
+    }
+
     /// <summary>托盘菜单:手动切换停靠 rail 的滑入滑出。</summary>
     public void ToggleRailVisible()
     {
@@ -381,9 +399,6 @@ public partial class MainWindow : Window
         // 池数变化会改变 rail 长度;窗口尺寸必须跟着走,否则环会画到窗外
         ApplyRailSize();
     }
-
-    private PoolData? PoolOf(SubData sub, string kind) =>
-        sub.Pools.FirstOrDefault(p => p.PoolKind == kind);
 
     /// <summary>
     /// 设置变了:作废缓存并按新设置重新布局。显示源/读数这两个开关会改变 rail
@@ -941,8 +956,13 @@ public partial class MainWindow : Window
         }
         else
         {
-            // 从内到外两圈:5小时(内,细)→ 总额度(外,粗)
-            DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, sub, idx, now, vertical, refreshing);
+            // 从内到外两圈:5小时(内,细)→ 总额度(外,粗)。
+            // 但**空着的 5 小时圈不画**(设置项 HideIdleInnerRing,默认开):
+            // 大多数源的 5 小时窗口是 0%,那一圈空轨道只增加噪音;省掉它之后
+            // "内圈出现"本身就表示这个源正在被用。外圈的位置与环心不动,
+            // 所以源之间不会因为有没有内圈而错位。
+            if (ShowInnerRing(sub))
+                DrawArcLayer(dc, c, Pt.P(InnerRingDpt), Pt.P(InnerWpt), five, sub, idx, now, vertical, refreshing);
             DrawArcLayer(dc, c, Pt.P(OuterRingDpt), Pt.P(OuterWpt), month, sub, idx, now, vertical, refreshing);
         }
 
@@ -1059,12 +1079,33 @@ public partial class MainWindow : Window
     /// <summary>最外圈:GOAT/GO 的月弧,或余额型数据源唯一的那一圈。</summary>
     private static bool IsOutermost(string poolKind) => poolKind is "Monthly" or "Balance";
 
+    /// <summary>
+    /// 这个源要不要画内圈(5 小时环)。
+    ///
+    /// **判定 = "5 小时窗口内是否被用过"**:刚重置(还没用)的窗口 `Used` 是 0,
+    /// 此时只画外圈;一旦这个源动过(哪怕只花掉 0.1%),内圈就出现——所以
+    /// "哪个源正在被用"看一眼就知道,不必逐个去读百分比。
+    ///
+    /// 关掉设置项(<see cref="AppSettings.HideIdleInnerRing"/>)就退回旧行为:总是两圈。
+    /// 读数缺失(还没拿到数据)时按"要画"处理,免得数据没到就少一圈、来了又跳出来。
+    /// </summary>
+    private static bool ShowInnerRing(SubData sub)
+    {
+        if (!AppSettings.Current.HideIdleInnerRing) return true;
+        var five = PoolOf(sub, "FiveHour");
+        // 没有这一池的源(比如将来某个只报月额度的):不硬造一圈出来
+        if (five is null) return false;
+        if (!five.IsAvailable || five.Used is null) return true;   // 读数还没到,保持原样
+        return five.Used > 0;
+    }
+
+    private static PoolData? PoolOf(SubData sub, string kind) =>
+        sub.Pools.FirstOrDefault(p => p.PoolKind == kind);
+
     private void DrawArcLayer(DrawingContext dc, Point c, double midD, double lineW, PoolData? pool,
         SubData sub, int idx, double now, bool vertical, bool refreshing)
     {
         double midR = midD / 2;
-
-        // 轨道(18% 白)恒画,表示该圈存在
         dc.DrawEllipse(null, CachedRingPen(TrackBrush, lineW), c, midR, midR);
 
         if (pool is null || !pool.IsAvailable) return;

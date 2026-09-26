@@ -74,6 +74,7 @@ public partial class SettingsWindow : Window
         ProxyCombo.SelectedIndex = Math.Clamp(s.ProxyMode, 0, 2);
         ProxyBox.Text = s.ProxyAddress ?? "";
         ShowPercentBox.IsChecked = s.ShowPercent;
+        IdleInnerRingBox.IsChecked = s.HideIdleInnerRing;
         SizeSmall.IsChecked = s.RingSize == 0;
         SizeStandard.IsChecked = s.RingSize == 1;
         SizeLarge.IsChecked = s.RingSize == 2;
@@ -298,6 +299,15 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         AppSettings.Current.ShowPercent = ShowPercentBox.IsChecked == true;
         UpdatePercentHint();
+        SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    /// <summary>"只在有用量时显示 5 小时圈"开关。只影响绘制,不改 rail 尺寸(环心不动)。</summary>
+    private void IdleInnerRing_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.HideIdleInnerRing = IdleInnerRingBox.IsChecked == true;
         SettingsChanged?.Invoke();
         SaveSoon();
     }

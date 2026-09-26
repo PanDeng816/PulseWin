@@ -58,6 +58,15 @@ public sealed class AppSettings
     public List<string> VisibleSources { get; set; } = new();
 
     /// <summary>
+    /// 只在**用了 5 小时额度**的源上画出内圈(5 小时环);没用的源只画外圈(总额度)。
+    ///
+    /// 默认开:rail 上一排"双环"里,大部分源的这个 5 小时窗口其实是 0%——那一圈空轨道
+    /// 只增加视觉噪音,不带来信息。显示成单环之后,"哪个源正在被用"一眼就能看出来
+    /// (内圈出现本身就是信号)。
+    /// </summary>
+    public bool HideIdleInnerRing { get; set; } = true;
+
+    /// <summary>
     /// 旧版字段(仅用于读入迁移,写出时不再产生)。留着是因为 settings.json 里可能还有它们,
     /// 删掉字段会让老配置的勾选状态丢掉。
     /// </summary>
@@ -212,6 +221,7 @@ public sealed class AppSettings
         OpenCodeTint = null;
         DeepSeekTint = null;
         ShowPercent = clean.ShowPercent;
+        HideIdleInnerRing = clean.HideIdleInnerRing;
         RingSize = clean.RingSize;
         RingSpacing = clean.RingSpacing;
         HideToSliver = clean.HideToSliver;
@@ -247,6 +257,7 @@ public sealed class AppSettings
             : DeepSeekCurrency.Trim().ToUpperInvariant(),
         VisibleSources = NormalizeVisibleSources(),
         ShowPercent = ShowPercent,
+        HideIdleInnerRing = HideIdleInnerRing,
         RingSize = Math.Clamp(RingSize, 0, 2),
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
         HideToSliver = HideToSliver,
@@ -351,6 +362,7 @@ public sealed class AppSettings
         DeepSeekCurrency = DeepSeekCurrency,
         VisibleSources = new List<string>(VisibleSources),
         ShowPercent = ShowPercent,
+        HideIdleInnerRing = HideIdleInnerRing,
         RingSize = RingSize,
         RingSpacing = RingSpacing,
         HideToSliver = HideToSliver,

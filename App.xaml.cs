@@ -20,12 +20,20 @@ public partial class App : System.Windows.Application
     /// <summary>已经提示过的未处理异常(去重,防止每帧抛的异常连环弹框)。</summary>
     private readonly HashSet<string> _reportedExceptions = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// 无界面/诊断运行时(<c>--spend</c>/<c>--ui-shot</c>/…)。此时**绝不弹模态框**:
+    /// 没有人在看一个正在出图的进程,弹框只会卡在那儿等一个不会来的点击。
+    /// </summary>
+    private bool _headless;
+
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunValueName = "PulseWin";
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        _headless = e.Args.Any(a => a.StartsWith("--", StringComparison.Ordinal));
+
         // 兜底:任何未处理异常都记进 diagnostics 并提示,而不是弹原始 .NET 崩溃框。
         //
         // **同一个异常只提示一次**。这个兜底是给"偶尔出的意外"用的;但若异常发生在
@@ -35,6 +43,19 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += (_, args) =>
         {
             Diagnostics.Note("未处理异常", args.Exception);
+            args.Handled = true;
+
+            // 退出/诊断期间的异常**不打扰用户**:
+            //  · 诊断模式(自动出图、dump)没有人在看;
+            //  · "应用程序对象正在关闭"是收尾期必然出现的收尾噪音——此时后台回调
+            //    (牌价表更新、单实例信号)可能还挂在 Dispatcher 队列上,Shutdown 之后
+            //    它们执行就会抛这一条。它不代表任何功能坏了,弹框纯粹是打扰
+            //    (本机实测:跑一次 --ui-shot 就在桌面上留一个模态框等点击)。
+            if (_headless) return;
+            if (args.Exception is InvalidOperationException
+                && args.Exception.Message.Contains("正在关闭", StringComparison.Ordinal))
+                return;
+
             string key = args.Exception.GetType().Name + "|" + args.Exception.Message;
             if (_reportedExceptions.Add(key))
             {
@@ -43,7 +64,6 @@ public partial class App : System.Windows.Application
                     + "\n\n(同类错误之后不再重复提示。)",
                     "Pulse", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-            args.Handled = true;
         };
 
         bool openSettings = e.Args.Any(a =>
@@ -105,6 +125,15 @@ public partial class App : System.Windows.Application
         if (e.Args.Any(a => string.Equals(a, "--check-migration", StringComparison.OrdinalIgnoreCase)))
         {
             RunMigrationCheck();
+            Shutdown();
+            return;
+        }
+
+        // 诊断用:用合成数据离屏渲染 rail 主界面成 PNG 后退出。环是自绘的,
+        // "空闲源只画外圈"这类改动只能看图核对(靠等真实数据既不快也不可复现)。
+        if (e.Args.Any(a => string.Equals(a, "--rail-shot", StringComparison.OrdinalIgnoreCase)))
+        {
+            RailShot.Run();
             Shutdown();
             return;
         }

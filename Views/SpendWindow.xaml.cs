@@ -79,7 +79,12 @@ public partial class SpendWindow : Window
             // 价目变了:账本里的金额是按旧价算的,必须作废重来,否则窗口与"模型"页
             // 会拿两份不同价的账本。
             SpendLedgerCache.Invalidate();
-            Dispatcher.BeginInvoke(ReloadLedger);
+            // 这个回调在**后台线程**上跑,而且可能晚于窗口关闭(网络慢时尤甚),
+            // 也可能晚于整个应用退出(诊断出图就是这种)。两者都让 BeginInvoke 抛
+            // InvalidOperationException,所以先确认还活着再排队。
+            if (_closed || Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
+            try { Dispatcher.BeginInvoke(ReloadLedger); }
+            catch (InvalidOperationException) { /* 刚好在退出:不再重算,窗口都要没了 */ }
         });
 
         bool hasData = _ledger is not null;
