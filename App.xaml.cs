@@ -80,6 +80,15 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:把"模型"页的每模型聚合与 Command Code 浏览器会话通道的状态打到
+        // Data\models-dump.txt 后退出(不开界面)。口径对不对要在数字上核对,不是截图。
+        if (e.Args.Any(a => string.Equals(a, "--models", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunModelsDump();
+            Shutdown();
+            return;
+        }
+
         // 只允许一个实例:两个 rail 会让 API 请求翻倍并互相争抢快照文件。
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)
@@ -212,6 +221,71 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             Diagnostics.Note("写价目更新结果失败", ex);
+        }
+    }
+
+    /// <summary>
+    /// 把"模型"页的每模型聚合与 Command Code 浏览器会话通道的状态写进
+    /// Data\models-dump.txt 后退出。与 --spend 同类:口径要在数字上核对。
+    /// </summary>
+    private static void RunModelsDump()
+    {
+        var text = new System.Text.StringBuilder();
+        try
+        {
+            var prices = ModelPrices.Current;
+            text.AppendLine($"价目表来源: {prices.Source}   模型 {prices.ModelCount} 条");
+            var ledger = SpendLedger.Build(prices);
+            text.AppendLine($"账本: {ledger.Entries.Count} 条聚合/明细 + {ledger.LiveEntries.Count} 条源库明细");
+            text.AppendLine();
+
+            foreach (var span in new[] { SpendSpan.Today, SpendSpan.Week, SpendSpan.All })
+            {
+                var rows = ModelUsageIndex.Build(ledger, span);
+                text.AppendLine($"===== {span}  模型 {rows.Count} 个 =====");
+                foreach (var m in rows)
+                {
+                    string cache = m.CacheHit is { } hit ? $"{hit * 100:0.0}%" : "—";
+                    string price = m.Price is { } p
+                        ? $"${p.Input:0.###}/${p.Output:0.###}"
+                        : m.IsPriced ? "(单价未留档)" : "(无公开价)";
+                    text.AppendLine($"  {m.Model,-38} {SpendFormat.TokensExact(m.TotalTokens),15}  {SpendFormat.Amount(m.Cost, m.HasUnpriced),10}"
+                        + $"  请求 {m.Requests,6}  会话 {m.Sessions,4}  项目 {m.Projects,3}  缓存命中 {cache,7}  {price}  [{string.Join("/", m.Agents)}]"
+                        + $"  {m.FirstUsed:MM-dd}~{m.LastUsed:MM-dd}");
+                }
+                text.AppendLine();
+            }
+
+            // 逐模型明细通道(需要浏览器登录态)
+            text.AppendLine("===== Command Code 浏览器会话通道 =====");
+            var buckets = CommandCodeWebSession.TryFetchModelCacheAsync(
+                DateTimeOffset.Now.AddDays(-7), DateTimeOffset.Now).GetAwaiter().GetResult();
+            text.AppendLine($"状态: {CommandCodeWebSession.LastStatus ?? "(未返回)"}");
+            if (buckets is { Count: > 0 })
+            {
+                text.AppendLine($"逐模型明细 {buckets.Count} 条:");
+                foreach (var g in buckets.GroupBy(b => b.Model).Take(30))
+                {
+                    long input = g.Sum(x => x.Input + x.CacheWrite + x.CacheRead);
+                    long cacheRead = g.Sum(x => x.CacheRead);
+                    text.AppendLine($"  {g.Key,-38} input={input,14:N0}  cacheRead={cacheRead,14:N0}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine("失败: " + ex);
+        }
+
+        try
+        {
+            string path = Path.Combine(SnapshotSource.DataDirectory, "models-dump.txt");
+            File.WriteAllText(path, text.ToString());
+            Diagnostics.Note($"模型页数据已输出到 {path}");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("写模型页数据失败", ex);
         }
     }
 

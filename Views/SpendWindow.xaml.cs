@@ -74,17 +74,20 @@ public partial class SpendWindow : Window
 
         // 牌价表过期就在后台拉一份新的(上游规矩:失败继续用旧的、五分钟后再试)。
         // **不阻塞这次渲染**——界面照旧用现有表出数,拉到新的再重算一遍。
-        ModelPricesUpdater.RefreshIfStale(() => Dispatcher.BeginInvoke(ReloadLedger));
+        ModelPricesUpdater.RefreshIfStale(() =>
+        {
+            // 价目变了:账本里的金额是按旧价算的,必须作废重来,否则窗口与"模型"页
+            // 会拿两份不同价的账本。
+            SpendLedgerCache.Invalidate();
+            Dispatcher.BeginInvoke(ReloadLedger);
+        });
 
         bool hasData = _ledger is not null;
         PriceSourceText.Text = hasData ? "重新读取本地记录…" : "正在读取本地记录…";
 
-        Task.Run(() =>
-        {
-            var prices = ModelPrices.Current;
-            var ledger = SpendLedger.Build(prices);
-            return (prices, ledger);
-        }).ContinueWith(task =>
+        // **走共享账本**:与设置窗的"模型"页共用同一份(引用计数,谁都没用时才释放),
+        // 不再各建各的——构建一次要扫两个 SQLite 库,两份就是白翻一倍内存与 CPU。
+        SpendLedgerCache.AcquireAsync().ContinueWith(task =>
         {
             _loading = false;
             if (task.IsFaulted)
@@ -92,8 +95,19 @@ public partial class SpendWindow : Window
                 PriceSourceText.Text = "读取失败:" + task.Exception?.GetBaseException().Message;
                 return;
             }
-            var (prices, ledger) = task.Result;
+            var ledger = task.Result;
+
+            // 等待期间窗口可能已经关了:那份引用必须立刻还掉,否则关窗后内存不回落。
+            if (_closed)
+            {
+                SpendLedgerCache.Release();
+                return;
+            }
+
+            if (_holdsLedgerRef) SpendLedgerCache.Release();   // 还上一次,避免计数虚高
+            _holdsLedgerRef = true;
             _ledger = ledger;
+            var prices = ModelPrices.Current;
             var summary = SpendSummary.Build(ledger, _span);
             PriceSourceText.Text = $"价目表:{prices.Source}({prices.ModelCount} 个模型)"
                 + (prices.FetchedAt is { } at ? $",抓取于 {at:yyyy-MM-dd}" : "")
@@ -102,6 +116,9 @@ public partial class SpendWindow : Window
             Render(summary);
         }, TaskScheduler.FromCurrentSynchronizationContext());
     }
+
+    private bool _holdsLedgerRef;
+    private bool _closed;
 
     private void Render(SpendSummary summary)
     {
@@ -423,6 +440,19 @@ public partial class SpendWindow : Window
 
     private static double Fraction(long value, long max) =>
         max <= 0 ? 0 : Math.Clamp((double)value / max, 0, 1) * 1.0;
+
+    /// <summary>关窗时还掉共享账本的引用(计数归零时账本释放,内存立刻回落)。</summary>
+    protected override void OnClosed(EventArgs e)
+    {
+        _closed = true;
+        if (_holdsLedgerRef)
+        {
+            _holdsLedgerRef = false;
+            SpendLedgerCache.Release();
+        }
+        _ledger = null;
+        base.OnClosed(e);
+    }
 
     /// <summary>列表行。<see cref="BarWidth"/> 已算成像素,绑定直接用。</summary>
     public sealed class RowVm

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -67,6 +67,23 @@ public sealed class AppSettings
 
     /// <summary>前台窗口是全屏应用时自动把 rail 藏起来(看视频/演示不被打扰)。</summary>
     public bool HideInFullScreen { get; set; } = false;
+
+    /// <summary>
+    /// 是否启用 **Command Code 浏览器会话通道**:读本机浏览器(Edge/Chrome)的登录 cookie,
+    /// 去调只有登录态才开放的逐模型明细接口(缓存读/写 token 等)。
+    ///
+    /// **默认关**,有两个硬理由:
+    /// ① 有真实前车之鉴——同类工具 CodexBar-Win 因"解密浏览器 cookie 读配额"被
+    ///    杀毒软件全家误判成 infostealer,最后撤掉全部二进制。读 cookie 这件事
+    ///    本身就会触发安全软件的启发式规则,哪怕用途正当。
+    /// ② 浏览器运行时 cookie 数据库是**排他锁定**的(本机实测连只读共享打开都
+    ///    WinError 32),所以这条通道基本只在浏览器完全关闭时才有机会读到——
+    ///    日常开着浏览器时它多半是"读不到",体验并不稳定。
+    ///
+    /// 本地来源(ZCode / OpenCode 的记录库)不给缓存读/写以外的任何东西缺项,
+    /// 逐模型页在它关着的时候也完整可用。
+    /// </summary>
+    public bool UseBrowserSessionForModelDetail { get; set; } = false;
 
     /// <summary>
     /// rail 上数据源的显示顺序,逗号分隔的来源键(如 "goat,opencode,deepseek")。
@@ -151,6 +168,7 @@ public sealed class AppSettings
         RingSpacing = clean.RingSpacing;
         HideToSliver = clean.HideToSliver;
         HideInFullScreen = clean.HideInFullScreen;
+        UseBrowserSessionForModelDetail = clean.UseBrowserSessionForModelDetail;
         SourceOrder = clean.SourceOrder;
         ProxyMode = clean.ProxyMode;
         ProxyAddress = clean.ProxyAddress;
@@ -190,6 +208,7 @@ public sealed class AppSettings
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
+        UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
         SourceOrder = NormalizeOrder(SourceOrder),
         ProxyMode = Math.Clamp(ProxyMode, 0, 2),
         ProxyAddress = string.IsNullOrWhiteSpace(ProxyAddress) ? null : ProxyAddress.Trim(),
@@ -241,6 +260,7 @@ public sealed class AppSettings
         RingSpacing = RingSpacing,
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
+        UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
         SourceOrder = SourceOrder,
         ProxyMode = ProxyMode,
         ProxyAddress = ProxyAddress,
