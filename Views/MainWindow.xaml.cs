@@ -49,57 +49,19 @@ public partial class MainWindow : Window
     // sliver = 自动隐藏时窗口滑到"只露出边缘一条 6pt 细条"的位置(窗口尺寸不变,
     // 命中/绘制都限定在细条上),展开就是正常的滑入动画。上游 hide until pointed at 同款。
     private bool _sliverMode;
+    private bool _sliverTarget;   // 收起动画停稳后要切到的形态(见 SetPeekVisible/Tick)
+
+    /// <summary>
+    /// 全屏隐藏期间是否拒绝热区展开(见 UpdatePeek)。也用于渲染:全屏收起时不画细条。
+    /// </summary>
     private bool _fullScreenHide;
 
     // —— 液态玻璃 ——
-    // true = 系统已开 acrylic 背景模糊,面板自己不再填黑底(底色由模糊层的 tint 提供)。
-    // 开关/失败回退/透明度变化都走 ApplyGlassBackdrop。
-    private bool _glassActive;
-
-    /// <summary>
-    /// 本窗口是否**真的开过** acrylic。这是"要不要清"的唯一依据:在分层窗口上调
-    /// SetWindowCompositionAttribute 会把 per-pixel alpha 打坏(圆角外变不透明黑、
-    /// 面板不再与桌面混合),所以没开过就绝不碰它。
-    /// </summary>
-    private bool _glassApplied;
-
-    /// <summary>
-    /// 启动时定格的玻璃开关。**运行期不再跟随设置变化**:一旦调过
-    /// SetWindowCompositionAttribute,alpha 就已受损且无法恢复,中途开关只会留下
-    /// 一块黑矩形。所以这个开关按"重启生效"处理(与代理设置同理),窗口只认启动值。
-    /// </summary>
-    private bool _glassLaunch;
-
-    /// <summary>
-    /// 按当前设置开关液态玻璃;系统不认(老 Win10 等)时自动回退半透明黑。
-    ///
-    /// **不要在没开玻璃时调 ClearAcrylic**:v1.7.2 之前这里无条件调,结果每次启动
-    /// (默认就是关玻璃)都会把 alpha 打坏 —— rail 与卡片成了一整块不透明黑矩形,
-    /// 圆角看不见、桌面也透不出来,即用户报的"圆弧和透明度都没了"。
-    /// 只有真的开过玻璃,才需要清。
-    /// </summary>
-    private void ApplyGlassBackdrop()
-    {
-        IntPtr hwnd = new WindowInteropHelper(this).Handle;
-        if (_glassLaunch && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity))
-        {
-            _glassActive = true;
-            _glassApplied = true;
-        }
-        else
-        {
-            if (_glassApplied)
-            {
-                // 曾经开过、现在要关:必须显式清掉模糊。代价是这之后 alpha 已受损,
-                // 圆角要等下次启动才恢复(所以玻璃默认关,且不建议运行中开关)。
-                Native.ClearAcrylic(hwnd);
-                _glassApplied = false;
-            }
-            _glassActive = false;
-        }
-        _dirty = true;
-        InvalidateVisual();
-    }
+    // v1.7.3 已整体移除。它有两个无法调和的代价:①acrylic 的模糊区域只能是**整个
+    // 窗口矩形**,跟不了 rail/卡片的圆弧形状,一开就把所有圆角变成直角(v1.7.0/1.7.1
+    // 被用户连否两次);②在分层窗口上调 SetWindowCompositionAttribute 会**不可逆地
+    // 打坏 per-pixel alpha**(v1.7.2 的"圆弧与透明度全没了"就是它)。而视觉效果只有
+    // 80% 黑 tint 平铺一块,用户看不出"玻璃"。面板本来就是自绘黑色玻璃,不需要系统模糊。
 
     // —— 渲染节流 ——
     private bool _dirty = true;                  // 本帧内容是否有变化
@@ -138,12 +100,26 @@ public partial class MainWindow : Window
     /// <summary>rail 当前是否露在外面(右键菜单与托盘菜单的文案要用)。</summary>
     public bool IsRailVisible => !_docked || _peekVisible;
 
+    /// <summary>当前已加载的数据源(托盘仪表复用,避免每轮同步都重读一次快照文件)。</summary>
+    public IReadOnlyList<SubData> Subs => _subs;
+
     private const bool AutoHideEnabled = true;
     private const double HotZoneWidth = 16;
     private const double HideDelaySeconds = 0.9;
     private const double PeekStep = 0.5;
     /// <summary>点击刷新后动画的安全上限(正常情况下 SnapshotsChanged 会提前结束它)。</summary>
     private const double RefreshAnimationTimeoutS = 45;
+
+    /// <summary>
+    /// 主循环的两档节拍。16ms(≈60fps)只用在"真的有东西在动"的时候:滑入/滑出、
+    /// 拖动、hover 动画、刷新扫光、环心呼吸。静止且藏屏外时降到 100ms——
+    /// 指针轮询、光标命中、保活/全屏判定都不需要 60Hz,而 60Hz 空转是这台机器上
+    /// 常驻 CPU 与重绘的主要来源(用户实测 idle CPU 会随 hover 状态长期偏高)。
+    /// 热区探入仍需及时:100ms 内识别到指针进入热区,动画本身还是 60fps 跑的
+    /// (SetPeekVisible 后 _dirty/动画立即切回快档)。
+    /// </summary>
+    private const int TickFastMs = 16;
+    private const int TickSlowMs = 100;
 
     /// <summary>贴边小条的尺寸(pt,上游 DockLayout.collapsedWidth/collapsedHeight)。</summary>
     private const double SliverWidthPt = 6;
@@ -269,7 +245,9 @@ public partial class MainWindow : Window
             MenuAnchor = point;
             RailMenuRequested?.Invoke(point);
         });
-        _ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        // 从慢档起步:启动后 rail 很快就自动藏起来,不该一上来就 60fps 空转。
+        // 有动效/可见时 Tick 会自己切回快档。
+        _ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(TickSlowMs) };
         _ticker.Tick += (_, _) => Tick();
         _ticker.Start();
     }
@@ -313,8 +291,6 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         Native.HookHitTest(this, HitArea);
-        _glassLaunch = AppSettings.Current.GlassBackdrop;   // 玻璃开关启动时定格
-        ApplyGlassBackdrop();
         ReloadData();
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         DockTo(DockEdge.Right, wa);
@@ -326,9 +302,13 @@ public partial class MainWindow : Window
     /// <summary>sliver 在窗口内的矩形(停靠缘一侧、沿 rail 居中)。</summary>
     private Rect SliverRect()
     {
-        double w = Pt.P(SliverWidthPt), len = Pt.P(SliverLengthPt);
+        double w = Pt.P(SliverWidthPt), len = Pt.P(SliverLengthPt) * BerthScale;
+        // 细条必须画在**窗口露在屏内**的那一侧。侧轨隐藏时窗口只滑到"露出停靠缘 6pt"处:
+        // 右停靠 → 窗口左缘压住屏幕右缘,露出来的是**窗口的左边 6pt**;左停靠则相反
+        // (露出的是窗口右边)。这里以前写反了,细条整个画在屏外,所以"贴边小条"看起来
+        // 根本不存在(用户报的"自动隐藏没用"就是这个)。
         return IsVertical
-            ? new Rect(_dockEdge == DockEdge.Left ? 0 : Width - w, (Height - len) / 2, w, len)
+            ? new Rect(_dockEdge == DockEdge.Left ? Width - w : 0, (Height - len) / 2, w, len)
             : new Rect((Width - len) / 2, Height - w, len, w);
     }
 
@@ -412,8 +392,6 @@ public partial class MainWindow : Window
     public void ApplySettings()
     {
         _textCache.Clear();
-        // 玻璃开关是启动定格的(_glassLaunch),这里不再重判:运行中调 WCA 会
-        // 不可逆地打坏 alpha,而重绘本就用不上它。
         ReloadData();
     }
 
@@ -421,6 +399,8 @@ public partial class MainWindow : Window
     {
         double now = _clock.Elapsed.TotalSeconds;
         _dirty = false;
+        bool animate = false;   // 本帧有没有动效在跑(决定快/慢档)
+        _pointerOnRail = false;
 
         // 快照文件没变(mtime 相同)就不重建数据对象:引擎每 60s 才落盘一次
         if (_lastReloadCheck == 0 || now - _lastReloadCheck > 15)
@@ -449,8 +429,19 @@ public partial class MainWindow : Window
             HandlePointer(diu, Native.LeftButtonDown, now);
         }
 
-        if (AnimatePeek()) _dirty = true;
-        if (refreshing) _dirty = true;   // 亮段扫动是逐帧动画
+        if (AnimatePeek()) { _dirty = true; animate = true; _wasAnimating = true; }
+        else if (_wasAnimating)
+        {
+            // 滑入/滑出刚停:补一次失效。分层窗口在滑出屏外时 WPF 会丢掉失效请求且
+            // 之后不再补,不补这一下,sliver 细条可能停在"还没画出来"的状态。
+            _wasAnimating = false;
+            // 动画停稳才切成 sliver 形态:滑出途中继续画完整 rail,否则 rail 会
+            // 在滑到一半时"闪"成一条细线,观感很跳。
+            _sliverMode = _sliverTarget;
+            _dirty = true;
+        }
+        if (refreshing) { _dirty = true; animate = true; }   // 亮段扫动是逐帧动画
+        if (_hoverRing is not null) animate = true;          // hover 时卡片/光晕要跟手
 
         // ZCode 是不是在跑:每秒读一次它的日志增量。只读新增的字节,没动静时开销就是
         // 一次文件长度检查;在跑的时候环心图标要呼吸,那是逐帧动画,所以每帧都得重画。
@@ -459,27 +450,37 @@ public partial class MainWindow : Window
             _activityPollSecond = (int)now;
             if (_activity.Poll()) _dirty = true;
         }
-        if (_activity.IsWorking) _dirty = true;
+        if (_activity.IsWorking) { _dirty = true; animate = true; }
 
         // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住),并强制重画一帧。
         // 分层窗口(AllowsTransparency)滑出到屏外期间, WPF 会把失效请求丢掉且之后不再补:
         // 只靠"数据变了才重绘"的话, 环上会永久停在旧数字(卡片是新的、环是旧的)。
         // **菜单开着时必须跳过**:菜单窗也是 topmost 且激活在前,这一下会把 rail 提到
         // 菜单上面——右键菜单弹两秒后被 rail 盖住,就是它干的。
-        if (_peekVisible && !_menuOpen && (_tickCount++ % 60 == 0))
+        // 用时间判定(2 秒一次)而不是 tick 计数:慢档下 tick 间隔是变的,
+        // 按 60 计数会在慢档变成 6 秒一次,置顶保活就形同虚设。
+        if (_peekVisible && !_menuOpen)
         {
-            Native.BringToTopmost(this);
-            _dirty = true;
+            if (_lastKeepAlive == 0 || now - _lastKeepAlive >= 1)
+            {
+                _lastKeepAlive = now;
+                Native.BringToTopmost(this);
+                _dirty = true;
+            }
         }
 
         // 全屏隐藏:前台窗口盖满所在显示器(±8px 容差)时把 rail 收起来;退出全屏后
-        // 交还给正常的热区逻辑(不自动弹回,不打扰)。
-        if ((int)now % 2 == 0 && _activityPollSecond != (int)now)
+        // 交还给正常的热区逻辑(不自动弹回,不打扰)。用时间判定(2 秒一次),理由同上。
+        // **开关关掉时必须把状态清回 false**:否则 UpdatePeek 会一直以为"还在全屏隐藏"
+        // 而拒绝展开,rail 就永远回不来了。
+        if (!AppSettings.Current.HideInFullScreen)
         {
-            // 借活动轮询的秒级节拍之外,单独 2 秒一次即可
+            if (_fullScreenHide) _fullScreenHide = false;
         }
-        if (_tickCount % 120 == 0 && AppSettings.Current.HideInFullScreen && !_dragging && !_menuOpen)
+        else if (!_dragging && !_menuOpen
+            && (_lastFullScreenCheck == 0 || now - _lastFullScreenCheck >= 2))
         {
+            _lastFullScreenCheck = now;
             bool fs = Native.ForegroundIsFullScreen();
             if (fs != _fullScreenHide)
             {
@@ -495,9 +496,36 @@ public partial class MainWindow : Window
 
         // 只在内容真的变了才重绘:静止且藏屏外时一帧都不画
         if (_dirty) InvalidateVisual();
+
+        // 帧率自适应:只在**真的有东西在动**时用快档。静止不动时即使 rail 露在屏幕上,
+        // 也不需要 60fps——指针轮询与命中用慢档完全够(探入热区后 SetPeekVisible 让
+        // 动画跑起来,下一帧就切回快档,手感不受影响)。
+        //
+        // **唯一的例外是指针正停在 rail 上**:那时用户随时可能在环上单击触发刷新,
+        // 或开始拖动。100ms 慢档下按下与抬起有可能落在同一帧两侧被判成"没有拖动",
+        // 于是就用快档保证命中不被漏掉(指针不在 rail 上时照旧慢档,CPU 仍是 0)。
+        //
+        // **不要为了"响应快"让 _peekVisible 常驻快档**:那是 60Hz 永久空转,
+        // 实测 idle CPU 会长期停在个位数百分比(用户抱怨"挺占内存"其实也含这份重绘)。
+        SetTempo(animate || _pointerOnRail);
     }
 
-    private int _tickCount;
+    /// <summary>本帧指针是否落在 rail(或详情卡)上——决定要不要用快档(见 Tick)。</summary>
+    private bool _pointerOnRail;
+
+    /// <summary>切换主循环节拍(只在档位变化时改 Interval,避免每帧写属性)。</summary>
+    private void SetTempo(bool fast)
+    {
+        int want = fast ? TickFastMs : TickSlowMs;
+        if (_tempoMs == want) return;
+        _tempoMs = want;
+        _ticker.Interval = TimeSpan.FromMilliseconds(want);
+    }
+
+    private int _tempoMs = TickSlowMs;
+    private double _lastKeepAlive;
+    private double _lastFullScreenCheck;
+    private bool _wasAnimating;
 
     // —— ZCode 活动(环心呼吸) ——
     private readonly ZCodeActivity _activity = new();
@@ -509,7 +537,10 @@ public partial class MainWindow : Window
     {
         Point rel = new(diu.X - Left, diu.Y - Top);
         bool inWindow = rel.X >= -2 && rel.Y >= -2 && rel.X <= Width + 2 && rel.Y <= Height + 2;
-        int? ring = inWindow ? RingUnder(rel) : null;
+        // sliver 模式(贴在屏边的小条)下窗口大部分在屏外,而环心仍在窗口中央——
+        // 命中半径会盖住露出的那 6pt 细条。悬停细条只该"展开",不该弹出一张
+        // 指向屏外环心的详情卡,所以这里不给它环命中。
+        int? ring = inWindow && !_sliverMode ? RingUnder(rel) : null;
         bool overBerth = inWindow && _hitBerth is { } g && g.FillContains(rel);
 
         if (leftDown)
@@ -573,6 +604,7 @@ public partial class MainWindow : Window
         }
 
         bool overContent = overBerth || ring != null || overCard || _dragging || leftDown;
+        _pointerOnRail = inWindow || overCard;
         UpdatePeek(diu, overContent, leftDown, now);
 
         // rail 滑入/拖动中位置在变:每帧把卡窗贴回 rail 旁
@@ -582,6 +614,11 @@ public partial class MainWindow : Window
     private void UpdatePeek(Point diu, bool overContent, bool leftDown, double now)
     {
         if (!AutoHideEnabled || !_docked || _dragging || _menuOpen) return;
+        // 全屏隐藏期间**不许热区把它拉回来**:全屏看视频时指针本来就常在屏幕边缘
+        // (视频控制条、鼠标乱晃),允许热区展开的话"全屏时隐藏"瞬间就被撤销——
+        // 这正是用户觉得这个开关"没什么用"的原因。退出全屏后(_fullScreenHide 归 false)
+        // 热区恢复正常,不自动弹回,不打扰。
+        if (_fullScreenHide) return;
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
 
         // 热区只覆盖 rail 自己所在的那段区域(垂直居中的主界面高度范围),
@@ -616,26 +653,40 @@ public partial class MainWindow : Window
 
     private void SetPeekVisible(bool show, Rect wa)
     {
+        // —— 隐藏的两种形态 ——
+        // sliver 开:窗口只滑到"露出停靠缘 6pt",那 6pt 细条就是收起后的信号灯;
+        // sliver 关:**完全滑出屏外**(多退 2pt,避免窗口边缘还压着屏幕边界)。
+        // v1.7.0 引入 sliver 时把两个分支写成了同一个"留 6pt",于是"关掉贴边小条"
+        // 也照样在屏幕边缘留一条黑边——这正是用户说的"自动隐藏没什么用":
+        // 开与关看不出区别,而且那条黑边既不是细条也不是隐藏。
         _peekVisible = show;
         _hideSince = -1;
-        bool sliver = !show && AppSettings.Current.HideToSliver;
-        _sliverMode = sliver;
+        bool sliver = !show && AppSettings.Current.HideToSliver && !_fullScreenHide;
+        _sliverTarget = sliver;
+        // 展开时立刻退出细条形态(要滑的就是完整 rail);收起时先保持完整形态滑出去,
+        // 动画停稳后(见 Tick)再切细条,免得滑到一半变成一条线。
+        if (show) _sliverMode = false;
         double sliverW = Pt.P(SliverWidthPt);
         switch (_dockEdge)
         {
             case DockEdge.Right:
-                // sliver:窗口滑到只露出右缘一条细条(窗口其余部分在屏外,内容画在露出的那一条上)
-                _targetLeft = show ? wa.Right - Width : wa.Right - sliverW;
+                _targetLeft = show ? wa.Right - Width
+                    : sliver ? wa.Right - sliverW
+                    : wa.Right + 2;
                 _targetTop = FitTop(wa, Height);
                 break;
             case DockEdge.Left:
-                _targetLeft = show ? wa.X : wa.X - Width + sliverW;
+                _targetLeft = show ? wa.X
+                    : sliver ? wa.X - Width + sliverW
+                    : wa.X - Width - 2;
                 _targetTop = FitTop(wa, Height);
                 break;
             default:
-                // 顶轨:sliver 是水平细条,只露出顶部(窗口内顶部)
-                _targetLeft = sliver ? wa.X + Math.Max(0, (wa.Width - Width) / 2) : Left;
-                _targetTop = show ? wa.Y : wa.Y - Height + sliverW;
+                // 顶轨:sliver 是水平细条,只露出顶部;关掉则整条滑出屏幕上方
+                _targetLeft = show ? wa.X + Math.Max(0, (wa.Width - Width) / 2) : Left;
+                _targetTop = show ? wa.Y
+                    : sliver ? wa.Y - Height + sliverW
+                    : wa.Y - Height - 2;
                 break;
         }
         if (!show) { HideCard(); _hoverRing = null; }
@@ -821,9 +872,8 @@ public partial class MainWindow : Window
         var full = new Rect(0, 0, Width, Height);
         var berth = BerthGeometry(full);
         _hitBerth = berth;
-        // 玻璃激活时底色由系统模糊层的 tint 提供,面板只画轮廓;否则按旧方式填半透明黑。
-        // 用缓存取画笔:设置里改了不透明度后自动跟着变
-        dc.DrawGeometry(_glassActive ? null : CachedBrush(PanelPalette.Surface), HairlinePen, berth);
+        // 面板永远是自绘的黑色玻璃(不透明度可调):v1.7.3 起不再有系统 acrylic 分支。
+        dc.DrawGeometry(CachedBrush(PanelPalette.Surface), HairlinePen, berth);
 
         for (int s = 0; s < _subs.Count; s++)
             DrawComposite(dc, _subs[s], RingCenter(s), s, now);

@@ -60,13 +60,6 @@ public sealed class AppSettings
     public int RingSpacing { get; set; } = 1;
 
     /// <summary>
-    /// 液态玻璃:用系统的 acrylic 背景模糊代替半透明纯黑(SetWindowCompositionAttribute)。
-    /// **默认关**:acrylic 的模糊区域只能是整个窗口矩形,跟不了 rail/卡片的圆弧形状,
-    /// 开着会让所有圆角变直角(v1.7.0 实测被否)。除非以后找到保形方案,不要默认开。
-    /// </summary>
-    public bool GlassBackdrop { get; set; } = false;
-
-    /// <summary>
     /// 自动隐藏时收缩成贴在屏幕边缘的 6pt 细条(上游 hide until pointed at),
     /// 而不是滑出屏外。细条上带最紧张源的警报色;指针靠近热区即展开。
     /// </summary>
@@ -156,7 +149,6 @@ public sealed class AppSettings
         ShowPercent = clean.ShowPercent;
         RingSize = clean.RingSize;
         RingSpacing = clean.RingSpacing;
-        GlassBackdrop = clean.GlassBackdrop;
         HideToSliver = clean.HideToSliver;
         HideInFullScreen = clean.HideInFullScreen;
         SourceOrder = clean.SourceOrder;
@@ -196,7 +188,6 @@ public sealed class AppSettings
         ShowPercent = ShowPercent,
         RingSize = Math.Clamp(RingSize, 0, 2),
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
-        GlassBackdrop = GlassBackdrop,
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
         SourceOrder = NormalizeOrder(SourceOrder),
@@ -248,7 +239,6 @@ public sealed class AppSettings
         ShowPercent = ShowPercent,
         RingSize = RingSize,
         RingSpacing = RingSpacing,
-        GlassBackdrop = GlassBackdrop,
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
         SourceOrder = SourceOrder,

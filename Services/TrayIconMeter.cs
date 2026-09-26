@@ -20,6 +20,9 @@ public sealed class TrayIconMeter : IDisposable
     private IntPtr _currentHandle;
     private Icon? _currentWrapper;
 
+    /// <summary>上一次画出来的读数(百分数 + 颜色 + 完整文案)。完全相同就跳过重建。</summary>
+    private string? _lastSignature;
+
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool DestroyIcon(IntPtr handle);
 
@@ -28,6 +31,10 @@ public sealed class TrayIconMeter : IDisposable
     /// 返回 null 表示"没有可画的百分比,用品牌图标"。
     /// 句柄管理:Icon.FromHandle 是**不拥有句柄的包装**,所以这里自留 HICON、
     /// 换图标时 DestroyIcon——交给 Icon.Dispose() 反而销毁不掉,这才是泄漏源。
+    ///
+    /// **读数没变就不重画**:引擎每轮同步都会调到这里(默认 60s),而百分比多数时候
+    /// 是不动的。每次重建都要 new Bitmap + Graphics + DrawString + GetHicon,
+    /// 白做一遍还会让托盘图标闪一下;用签名挡住,只有真的变了才重建。
     /// </summary>
     public (Icon? Icon, string Tooltip) Build(IReadOnlyList<SubData> subs, Icon brand)
     {
@@ -45,11 +52,25 @@ public sealed class TrayIconMeter : IDisposable
         }
 
         var tooltip = BuildTooltip(subs);
-        DisposeMeter();
-        if (worst is null) return (null, tooltip);
+        if (worst is null)
+        {
+            // 没有可画的百分比:回退品牌图标。要清掉上一张仪表,否则托盘会留着旧环。
+            if (_lastSignature is not null)
+            {
+                DisposeMeter();
+                _lastSignature = null;
+            }
+            return (null, tooltip);
+        }
 
+        string signature = $"{worst.Fraction:0.0000}|{UsageTintGdi(worst).ToArgb()}|{worstName}|{tooltip}";
+        if (signature == _lastSignature && _currentWrapper is not null)
+            return (_currentWrapper, tooltip);
+
+        DisposeMeter();
         _currentHandle = DrawMeter(worst.Fraction, UsageTintGdi(worst));
         _currentWrapper = Icon.FromHandle(_currentHandle);
+        _lastSignature = signature;
         return (_currentWrapper, $"{worstName} 最紧张:{worst.DisplayText}   ·   " + tooltip);
     }
 

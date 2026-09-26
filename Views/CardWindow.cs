@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace PulseWin;
@@ -43,17 +42,6 @@ public sealed class CardWindow : Window
     private SubData? _sub;
     private Rect _body;
     private bool _showStale;
-    private bool _glassActive;
-
-    /// <summary>本窗口是否真的开过 acrylic(只在开过时才需要清,见 ShowCard 的说明)。</summary>
-    private bool _glassApplied;
-
-    /// <summary>
-    /// 玻璃开关的首次取值。**不放在静态初始化器里**:CardWindow 是 MainWindow 的
-    /// 字段初始化器,那一刻 AppSettings 还没 Attach 到数据目录,读到的是默认值。
-    /// 首次 ShowCard 时再定格,之后进程内不再变(运行中改设置不生效,与代理同理)。
-    /// </summary>
-    private bool? _glassLaunch;
     private readonly DispatcherTimer _ticker;
 
     public CardWindow()
@@ -89,33 +77,10 @@ public sealed class CardWindow : Window
         Top = topLeft.Y;
     }
 
-    /// <summary>首次调用时定格玻璃开关(此时设置已从磁盘加载),之后不再重新读。</summary>
-    private bool GlassLaunch => _glassLaunch ??= AppSettings.Current.GlassBackdrop;
-
+    /// <summary>把窗口显示出来(自绘黑色玻璃圆角卡;v1.7.3 起不再有系统 acrylic 分支)。</summary>
     public void ShowCard()
     {
-        if (!IsVisible)
-        {
-            Show();
-            // 卡窗与 rail 同一种表面,玻璃开着时自己也不填黑底。
-            // 同 MainWindow:没开玻璃就**不要**碰 SetWindowCompositionAttribute,
-            // 否则分层窗口的 alpha 会失效,卡片圆角外变成不透明黑矩形。
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
-            if (GlassLaunch && Native.ApplyAcrylic(hwnd, AppSettings.Current.SurfaceOpacity))
-            {
-                _glassActive = true;
-                _glassApplied = true;
-            }
-            else
-            {
-                if (_glassApplied)
-                {
-                    Native.ClearAcrylic(hwnd);   // 曾开过才需要清
-                    _glassApplied = false;
-                }
-                _glassActive = false;
-            }
-        }
+        if (!IsVisible) Show();
         if (!_ticker.IsEnabled) _ticker.Start();
         Native.BringToTopmost(this); // 卡窗也要压在其他置顶窗口之上
     }
@@ -134,9 +99,7 @@ public sealed class CardWindow : Window
         double dpi = Native.Scale(this);
 
         double r = Card.CornerRadius;
-        if (!_glassActive)
-            dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, _body, r, r);
-        // 玻璃激活时卡片不填底,让系统模糊层的 tint 当底色
+        dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, _body, r, r);
 
         double x = _body.X, y = _body.Y;
         double w = _body.Width;

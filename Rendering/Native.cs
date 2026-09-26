@@ -43,83 +43,11 @@ public static class Native
     private const uint SWP_NOACTIVATE = 0x0010;
 
 
-    // ————— 液态玻璃(acrylic 背景模糊) —————
-
-    private const int ACCENT_DISABLED = 1;
-    private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct AccentPolicy
-    {
-        public int AccentState;
-        public uint AccentFlags;
-        public uint GradientColor;   // AABBGGRR:alpha 就是 tint 强度,00=全透明玻璃
-        public int AnimationId;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowCompositionAttribute(IntPtr hWnd, ref WindowCompositionAttributeData data);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct WindowCompositionAttributeData
-    {
-        public WindowCompositionAttribute Attribute;
-        public IntPtr Data;
-        public int SizeOfData;
-    }
-
-    private enum WindowCompositionAttribute { WCA_ACCENT_POLICY = 19 }
-
-    /// <summary>
-    /// 给分层窗口开系统的 acrylic 背景模糊(Win10 1803+/Win11)。<paramref name="tintAlpha"/>
-    /// 是黑色 tint 的不透明度 0~1——玻璃的"底色深浅"。返回 false 表示系统不认,调用方回退纯透明黑。
-    /// </summary>
-    public static bool ApplyAcrylic(IntPtr hwnd, double tintAlpha)
-    {
-        var policy = new AccentPolicy
-        {
-            AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND,
-            GradientColor = (uint)(Math.Clamp(tintAlpha, 0, 1) * 255) << 24,  // 黑 = 0x00000000
-        };
-        IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf(policy));
-        try
-        {
-            Marshal.StructureToPtr(policy, ptr, false);
-            var data = new WindowCompositionAttributeData
-            {
-                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
-                Data = ptr,
-                SizeOfData = Marshal.SizeOf(policy),
-            };
-            return SetWindowCompositionAttribute(hwnd, ref data) != 0;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(ptr);
-        }
-    }
-
-    /// <summary>关掉玻璃(回退纯透明黑时调用)。</summary>
-    public static void ClearAcrylic(IntPtr hwnd)
-    {
-        var policy = new AccentPolicy { AccentState = ACCENT_DISABLED };
-        IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf(policy));
-        try
-        {
-            Marshal.StructureToPtr(policy, ptr, false);
-            var data = new WindowCompositionAttributeData
-            {
-                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
-                Data = ptr,
-                SizeOfData = Marshal.SizeOf(policy),
-            };
-            SetWindowCompositionAttribute(hwnd, ref data);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(ptr);
-        }
-    }
+    // ————— 液态玻璃已移除(v1.7.3) —————
+    // 这里原来有 ApplyAcrylic/ClearAcrylic(SetWindowCompositionAttribute),已整体删除。
+    // 两个硬原因:①acrylic 模糊区只能是窗口矩形,跟着圆角不变——一开圆角全变直角;
+    // ②在 WPF 分层窗口上调用它会把 per-pixel alpha **不可逆**打坏(rail 与卡片变成
+    // 不透明黑矩形)。面板本来就是自绘黑色玻璃,不需要系统模糊。
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();

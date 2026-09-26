@@ -361,13 +361,19 @@ public partial class App : System.Windows.Application
     /// <summary>
     /// 把托盘图标换成最紧张源的小环。任何失败都退回品牌图标——仪表只是锦上添花,
     /// 不能因为它托盘没图标。
+    ///
+    /// 优先复用 MainWindow 已经加载好的数据(它对同一份快照做了缓存与短路径),
+    /// 不再每轮同步都从磁盘把三个 JSON 重读反序列化一遍。窗口还没准备好时
+    /// (启动瞬间)才退回去自己读一次。
     /// </summary>
     private void UpdateTrayMeter()
     {
         if (_tray is null || _icon is null) return;
         try
         {
-            var subs = SnapshotSource.LoadAll();
+            var subs = _main is { } main && main.Subs.Count > 0
+                ? main.Subs
+                : SnapshotSource.LoadAll();
             var (icon, tooltip) = _trayMeter.Build(subs, _icon);
             _tray.Icon = icon ?? _icon;
             if (tooltip.Length > 63) tooltip = tooltip[..63];

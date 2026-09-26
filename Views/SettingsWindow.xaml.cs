@@ -86,7 +86,6 @@ public partial class SettingsWindow : Window
         SpacingTight.IsChecked = s.RingSpacing == 0;
         SpacingStandard.IsChecked = s.RingSpacing == 1;
         SpacingLoose.IsChecked = s.RingSpacing == 2;
-        GlassBox.IsChecked = s.GlassBackdrop;
         SliverBox.IsChecked = s.HideToSliver;
         FullScreenBox.IsChecked = s.HideInFullScreen;
         OrderCombo.SelectedIndex = s.SourceOrder switch
@@ -402,14 +401,6 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         AppSettings.Current.RingSpacing = SpacingTight.IsChecked == true ? 0 : SpacingLoose.IsChecked == true ? 2 : 1;
-        SettingsChanged?.Invoke();
-        SaveSoon();
-    }
-
-    private void Glass_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        AppSettings.Current.GlassBackdrop = GlassBox.IsChecked == true;
         SettingsChanged?.Invoke();
         SaveSoon();
     }

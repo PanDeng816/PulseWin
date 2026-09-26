@@ -216,20 +216,6 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="液态玻璃" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="系统级背景模糊(Win10 1803+);不支持时自动回退半透明黑。想要更透就把下面的不透明度调低" Style="{StaticResource RowSub}" MaxWidth="300" HorizontalAlignment="Left"/>
-                                    </StackPanel>
-                                    <CheckBox x:Name="GlassBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
-                                              HorizontalAlignment="Right" VerticalAlignment="Center"
-                                              Checked="Glass_Changed" Unchecked="Glass_Changed"/>
-                                </Grid>
-                                <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
                                         <TextBlock Text="背景不透明度" Style="{StaticResource RowTitle}"/>
                                         <TextBlock Text="底板越透,桌面透出越多;压不住浅色桌面时往右调" Style="{StaticResource RowSub}"/>
                                     </StackPanel>
@@ -270,7 +256,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="隐藏时收成贴边小条" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="不用时折叠成贴在屏幕边缘的细条,有源越过警报阈值时细条会变色;指针靠近即展开。关掉则滑出屏幕外" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="不用时折叠成贴在屏幕边缘的细条,有源越过警报阈值时细条会变色;指针靠近即展开。关掉则完全滑出屏幕外" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
                                     </StackPanel>
                                     <CheckBox x:Name="SliverBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -284,7 +270,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="全屏时隐藏" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="前台是全屏应用(视频/游戏/演示)时自动收起,退出全屏后指针到屏边唤回" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="前台是全屏应用(视频/游戏/演示)时自动收起,期间指针到屏边也不会弹出;退出全屏后指针到屏边唤回" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
                                     </StackPanel>
                                     <CheckBox x:Name="FullScreenBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
