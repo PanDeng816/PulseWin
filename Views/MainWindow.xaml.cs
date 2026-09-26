@@ -91,6 +91,14 @@ public partial class MainWindow : Window
     {
         _menuOpen = open;
         _hideSince = -1;
+        // 菜单一弹出就把 hover 卡片收掉。菜单锚点就在 rail 的那个环上,所以菜单
+        // 出现后指针坐标仍落在该环的判定范围内 —— 不主动清掉的话卡片会一直留着,
+        // 正好挡在菜单上(用户报的"右键菜单被详细界面挡住")。
+        if (open)
+        {
+            _hoverRing = null;
+            HideCard();
+        }
         _dirty = true;
     }
 
@@ -364,7 +372,8 @@ public partial class MainWindow : Window
 
         // 正在悬停的卡片要跟着换成新数据:ShowSubCard 在同一条环上会提前返回,
         // 不在这里重配的话,鼠标停在环上不动时卡片会一直显示打开那一刻的旧值。
-        if (_card.IsVisible && _cardFor is { } shown && shown < _subs.Count)
+        // (菜单开着时卡片本就不该显示,见 SetMenuOpen。)
+        if (!_menuOpen && _card.IsVisible && _cardFor is { } shown && shown < _subs.Count)
             ShowSubCard(shown, force: true);
 
         // 引擎回报了新数据:结束"刷新中"动画(点击环触发的)
@@ -610,9 +619,12 @@ public partial class MainWindow : Window
             diu.X >= _card.Left - 4 && diu.X <= _card.Left + _card.Width + 4 &&
             diu.Y >= _card.Top - 4 && diu.Y <= _card.Top + _card.Height + 4;
 
-        int? newHover = overCard && _hoverRing is { } keep
-            ? keep
-            : (!_dragging && (_docked || !_peekVisible) ? ring : null);
+        // 菜单开着的时候**不显示卡片**:菜单就弹在 rail 旁边,指针坐标必然还在某个
+        // 环的范围内,不挡这一条的话卡片会立刻又冒出来盖住菜单。
+        int? newHover = _menuOpen ? null
+            : overCard && _hoverRing is { } keep
+                ? keep
+                : (!_dragging && (_docked || !_peekVisible) ? ring : null);
         if (newHover != _hoverRing)
         {
             _hoverRing = newHover;

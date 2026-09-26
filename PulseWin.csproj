@@ -10,7 +10,7 @@
     <AssemblyName>PulseWin</AssemblyName>
     <RootNamespace>PulseWin</RootNamespace>
     <!-- 更新检查要拿它和 GitHub 上的 tag 比 -->
-    <Version>1.11.1</Version>
+    <Version>1.11.2</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- 用量统计要读 SQLite(Microsoft.Data.Sqlite 带原生 e_sqlite3.dll);
