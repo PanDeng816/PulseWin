@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -375,7 +375,7 @@ public partial class SettingsWindow : Window
             _ when sender == NavRings => ("圆环与数字", PageRings),
             _ when sender == NavBehavior => ("行为", PageBehavior),
             _ when sender == NavSources => ("数据源", PageSources),
-            _ when sender == NavModels => ("模型", PageModels),
+            _ when sender == NavModels => ("套餐用量", PageModels),
             _ when sender == NavRefresh => ("刷新与网络", PageRefresh),
             _ when sender == NavAbout => ("关于", PageAbout),
             _ => ("外观", PageAppearance),
@@ -397,21 +397,22 @@ public partial class SettingsWindow : Window
         if (page == PageAbout) RefreshUpdateHint();
     }
 
-    // ————————————————— 模型页 —————————————————
+    // ————————————————— 套餐用量页 —————————————————
 
     private SpendSpan _modelSpan = SpendSpan.Week;
-    private List<ModelUsage> _modelRows = [];
-    private string? _selectedModel;
+    private List<ChannelUsage> _channels = [];
+    private ChannelUsage? _selectedChannel;
     private bool _modelsBusy;
     private bool _modelsLoaded;
 
     /// <summary>
     /// 本窗口此刻**是否还需要**账本。用于堵住一个竞态：账本构建是异步的，
-    /// 若用户在构建完成前就离开模型页/关窗，同步的 <see cref="ReleaseModelsLedger"/>
+    /// 若用户在构建完成前就离开套餐页/关窗，同步的 <see cref="ReleaseModelsLedger"/>
     /// 会因为"还没加载完"什么都不做，而构建完成后引用就永久挂住了。
-    /// 所以离开时置 false，构建完成后发现已不需要就自己还掉。
     /// </summary>
     private bool _wantLedger;
+
+    private SpendLedger? _modelsLedger;
 
     private void ModelSpan_Checked(object sender, RoutedEventArgs e)
     {
@@ -423,9 +424,11 @@ public partial class SettingsWindow : Window
             _ when sender == ModelSpanAll => SpendSpan.All,
             _ => SpendSpan.Week,
         };
-        _selectedModel = null;
-        ModelDetailPanel.Visibility = Visibility.Collapsed;
-        RefreshModelRows();
+        string? keep = _selectedChannel?.Name;
+        RefreshChannelRows();
+        // 区间变了尽量停在同一个套餐上(它还在就选中它)
+        if (keep is not null)
+            SelectChannel(_channels.FirstOrDefault(c => c.Name == keep));
     }
 
     /// <summary>开关"浏览器会话明细":存盘并重取一次(开了就立即去读 cookie)。</summary>
@@ -437,7 +440,7 @@ public partial class SettingsWindow : Window
         _ = RefreshWebSessionNoteAsync();
     }
 
-    /// <summary>打开模型页:取共享账本(引用计数 +1),按当前区间渲染列表。</summary>
+    /// <summary>打开套餐页:取共享账本(引用计数 +1),按当前区间渲染套餐列表。</summary>
     private async void EnsureModelsLoaded()
     {
         _wantLedger = true;
@@ -458,13 +461,13 @@ public partial class SettingsWindow : Window
 
             _modelsLoaded = true;
             _modelsLedger = ledger;
-            RefreshModelRows();
+            RefreshChannelRows();
             _ = RefreshWebSessionNoteAsync();
         }
         catch (Exception ex)
         {
             ModelsStatus.Text = "读取失败:" + ex.Message;
-            Diagnostics.Note("模型页读取账本失败", ex);
+            Diagnostics.Note("套餐页读取账本失败", ex);
         }
         finally
         {
@@ -472,37 +475,18 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private SpendLedger? _modelsLedger;
-
-    /// <summary>离开模型页:放掉账本引用(计数归零时内存立刻归还)。</summary>
+    /// <summary>离开套餐页:放掉账本引用(计数归零时内存立刻归还)。</summary>
     private void ReleaseModelsLedger()
     {
         _wantLedger = false;
         if (!_modelsLoaded) return;
         _modelsLoaded = false;
         _modelsLedger = null;
-        _modelRows = [];
-        ModelListPanel.Children.Clear();
-        ModelDetailPanel.Visibility = Visibility.Collapsed;
+        _channels = [];
+        _selectedChannel = null;
+        ChannelTabsPanel.Children.Clear();
+        ChannelDetailPanel.Visibility = Visibility.Collapsed;
         SpendLedgerCache.Release();
-    }
-
-    private void RefreshModelRows()
-    {
-        if (_modelsLedger is not { } ledger) return;
-        _modelRows = ModelUsageIndex.Build(ledger, _modelSpan);
-        RenderModelList();
-
-        var (from, _) = SpendSummary.Range(_modelSpan, DateTime.Now);
-        string range = _modelSpan == SpendSpan.All
-            ? $"自 {(ledger.Earliest ?? DateTime.Now):yyyy-MM-dd} 起"
-            : $"{from:yyyy-MM-dd} 起";
-        long total = _modelRows.Sum(m => m.TotalTokens);
-        double cost = _modelRows.Sum(m => m.Cost);
-        bool partial = _modelRows.Any(m => m.HasUnpriced);
-        ModelsStatus.Text = _modelRows.Count == 0
-            ? $"{range}:这个区间没有记录。"
-            : $"{range}:{_modelRows.Count} 个模型 · {SpendFormat.TokensExact(total)} tokens · 估算 {SpendFormat.Amount(cost, partial)}";
     }
 
     /// <summary>逐模型明细是可选通道(要浏览器登录态),异步补一句说明,不阻塞列表。</summary>
@@ -512,254 +496,315 @@ public partial class SettingsWindow : Window
             DateTimeOffset.Now.AddDays(-7), DateTimeOffset.Now);
         if (buckets is { Count: > 0 })
         {
-            ModelsIntro.Text = "本机用过的 AI 模型。数据来自各客户端记录库(ZCode / OpenCode),"
-                + $"并已从浏览器会话读到 {buckets.Count} 条 Command Code 逐模型明细。"
-                + "金额按 models.dev 公开 API 价估算——不是账单。点一行看详情。";
+            ModelsIntro.Text = "按套餐/渠道看用量(数据来自 ZCode / OpenCode 记录库)。"
+                + $"已从浏览器会话读到 {buckets.Count} 条 Command Code 逐模型明细。"
+                + "金额按 models.dev 公开 API 价估算——不是账单。";
         }
         else if (CommandCodeWebSession.LastStatus is { Length: > 0 } note)
         {
-            ModelsIntro.Text = "本机用过的 AI 模型。数据来自各客户端记录库(ZCode / OpenCode),"
-                + "按 models.dev 公开 API 价估算金额——不是账单。"
-                + $"(Command Code 逐模型明细:{note}。)"
-                + "点一行看详情。";
+            ModelsIntro.Text = "按套餐/渠道看用量(数据来自 ZCode / OpenCode 记录库),"
+                + "金额按 models.dev 公开 API 价估算——不是账单。"
+                + $"(Command Code 逐模型明细:{note})";
         }
     }
 
-    private void RenderModelList()
+    private void RefreshChannelRows()
     {
-        ModelListPanel.Children.Clear();
-        if (_modelRows.Count == 0) return;
+        if (_modelsLedger is not { } ledger) return;
+        _channels = ChannelUsageIndex.Build(ledger, _modelSpan);
+        RenderChannelTabs();
 
-        long max = _modelRows.Max(m => m.TotalTokens);
-        bool first = true;
-        foreach (var m in _modelRows)
+        var (from, _) = SpendSummary.Range(_modelSpan, DateTime.Now);
+        string range = _modelSpan == SpendSpan.All
+            ? $"自 {(ledger.Earliest ?? DateTime.Now):yyyy-MM-dd} 起"
+            : $"{from:yyyy-MM-dd} 起";
+        long total = _channels.Sum(c => c.TotalTokens);
+        double cost = _channels.Sum(c => c.Cost);
+        bool partial = _channels.Any(c => c.HasUnpriced);
+        ModelsStatus.Text = _channels.Count == 0
+            ? $"{range}:这个区间没有记录。"
+            : $"{range}:{_channels.Count} 个套餐 · {SpendFormat.TokensExact(total)} tokens · 估算 {SpendFormat.Amount(cost, partial)}";
+
+        // 默认选中用量最大的套餐
+        if (_channels.Count > 0) SelectChannel(_channels[0]);
+    }
+
+    /// <summary>套餐切换按钮:每个套餐一个,选中即下面显示它的数据。</summary>
+    private void RenderChannelTabs()
+    {
+        ChannelTabsPanel.Children.Clear();
+        foreach (var ch in _channels)
         {
-            if (!first)
-                ModelListPanel.Children.Add(new Border
-                {
-                    Background = (System.Windows.Media.Brush)FindResource("SeparatorBrush"),
-                    Height = 1,
-                });
-            first = false;
+            bool active = _selectedChannel is { } sel && sel.Key == ch.Key && sel.Agent == ch.Agent;
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(new TextBlock
+            {
+                Text = ch.Name,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = active ? System.Windows.Media.Brushes.White
+                    : (System.Windows.Media.Brush)FindResource("TextBrush"),
+            });
+            var tok = new TextBlock
+            {
+                Text = "  " + SpendFormat.Tokens(ch.TotalTokens),
+                FontSize = 11,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = active ? System.Windows.Media.Brushes.White
+                    : (System.Windows.Media.Brush)FindResource("TextSubBrush"),
+            };
+            content.Children.Add(tok);
 
-            var row = BuildModelRow(m, max);
-            ModelListPanel.Children.Add(row);
+            var button = new Button
+            {
+                Style = (Style)FindResource("LightButton"),
+                Content = content,
+                Padding = new Thickness(12, 6, 12, 6),
+                Margin = new Thickness(0, 0, 8, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+            };
+            if (active)
+            {
+                button.Background = (System.Windows.Media.Brush)FindResource("AccentBrush");
+                button.Foreground = System.Windows.Media.Brushes.White;
+            }
+            var captured = ch;
+            button.Click += (_, _) => SelectChannel(captured);
+            ChannelTabsPanel.Children.Add(button);
         }
     }
 
-    private FrameworkElement BuildModelRow(ModelUsage m, long max)
+    private void SelectChannel(ChannelUsage? ch)
     {
-        var grid = new Grid { Margin = new Thickness(16, 10, 16, 10), Background = System.Windows.Media.Brushes.Transparent };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        if (ch is null) return;
+        _selectedChannel = ch;
+        RenderChannelTabs();   // 重画选中态
+        ChannelDetailPanel.Visibility = Visibility.Visible;
 
-        var left = new StackPanel();
-        left.Children.Add(new TextBlock
-        {
-            Text = m.Model,
-            FontSize = 13,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush"),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        });
+        ChannelTitle.Text = ch.Name;
+        ChannelSubtitle.Text = $"{ch.Agent} 渠道"
+            + (ch.FirstUsed is { } f && ch.LastUsed is { } l ? $" · {f:MM-dd HH:mm} ~ {l:MM-dd HH:mm}" : "");
 
-        // 进度条:相对最大用量
-        double frac = max <= 0 ? 0 : (double)m.TotalTokens / max;
-        var bar = new Border
+        // —— KPI 六格:总费用 / 总请求 / 总 TOKEN / 缓存命中率 / 缓存读写 / 会话数 ——
+        ChannelKpiGrid.Children.Clear();
+        AddCell(ChannelKpiGrid, "总费用", SpendFormat.Amount(ch.Cost, ch.HasUnpriced),
+            ch.Requests > 0 ? $"均 {SpendFormat.Amount(ch.Cost / ch.Requests, false)}/次" : null,
+            "Money");
+        AddCell(ChannelKpiGrid, "总请求", ch.Requests.ToString("N0"), "当前区间", "Requests");
+        AddCell(ChannelKpiGrid, "总 TOKEN", SpendFormat.Tokens(ch.TotalTokens),
+            $"输入 {SpendFormat.Tokens(ch.Tally.Input)} · 输出 {SpendFormat.Tokens(ch.Tally.Output)}", "Tokens");
+        AddCell(ChannelKpiGrid, "缓存命中率",
+            ch.CacheHit is { } hit ? $"{hit:P1}" : "—",
+            $"命中 {SpendFormat.Tokens(ch.Tally.CacheRead)}", "Cache");
+        AddCell(ChannelKpiGrid, "缓存读 / 写",
+            $"{SpendFormat.Tokens(ch.Tally.CacheRead)} / {SpendFormat.Tokens(ch.Tally.CacheWrite)}",
+            null, "Cache");
+        AddCell(ChannelKpiGrid, "会话数", ch.Sessions.ToString("N0"), "去重 sessionId", "Sessions");
+
+        // —— Token 构成六格 ——
+        ChannelTokenGrid.Children.Clear();
+        var t = ch.Tally;
+        AddCell(ChannelTokenGrid, "输入", SpendFormat.Tokens(t.Input), null, "Tokens");
+        AddCell(ChannelTokenGrid, "输出", SpendFormat.Tokens(t.Output), null, "Tokens");
+        AddCell(ChannelTokenGrid, "缓存读", SpendFormat.Tokens(t.CacheRead),
+            ch.CacheHit is { } ch2 ? $"命中率 {ch2:P1}" : null, "Cache");
+        AddCell(ChannelTokenGrid, "缓存写", SpendFormat.Tokens(t.CacheWrite), null, "Cache");
+        AddCell(ChannelTokenGrid, "未分类", SpendFormat.Tokens(ch.UnclassifiedTokens),
+            ch.UnclassifiedTokens > 0 ? "来源只报总量、不参与计价" : "无", "Muted");
+        AddCell(ChannelTokenGrid, "合计", SpendFormat.TokensExact(ch.TotalTokens), null, "Tokens");
+
+        RenderHourlyChart(ch);
+        RenderDailyChart(ch);
+        RenderChannelModels(ch);
+        RenderChannelMeta(ch);
+    }
+
+    /// <summary>KPI 小格:大数字 + 小标签 + 可选脚注。金额/缓存类用强调色。</summary>
+    private void AddCell(Panel host, string label, string value, string? note, string kind)
+    {
+        var panel = new StackPanel { Margin = new Thickness(0, 0, 12, 12) };
+        System.Windows.Media.Brush accent = kind switch
         {
-            Height = 6,
-            CornerRadius = new CornerRadius(3),
-            Background = (System.Windows.Media.Brush)FindResource("FieldBackBrush"),
-            Margin = new Thickness(0, 6, 0, 5),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            "Money" => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0x9F, 0x0A)),
+            "Tokens" => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x00, 0x7A, 0xFF)),
+            "Cache" => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x00, 0xA8, 0x5C)),
+            "Requests" => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x5E, 0x5C, 0xE6)),
+            "Sessions" => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xBF, 0x5A, 0xF2)),
+            _ => (System.Windows.Media.Brush)FindResource("TextSubBrush"),
         };
-        var barGrid = new Grid();
-        barGrid.Children.Add(bar);
-        var fill = new Border
-        {
-            Height = 6,
-            CornerRadius = new CornerRadius(3),
-            Background = (System.Windows.Media.Brush)FindResource("AccentBrush"),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        fill.Width = Math.Max(6, frac * 220);
-        barGrid.Children.Add(fill);
-        barGrid.HorizontalAlignment = HorizontalAlignment.Left;
-        left.Children.Add(barGrid);
-
-        string cache = m.CacheHit is { } hit ? $" · 缓存命中 {hit:P0}" : "";
-        left.Children.Add(new TextBlock
-        {
-            Text = $"{SpendFormat.Tokens(m.TotalTokens)} tokens · {m.Requests:N0} 次调用{cache}",
-            FontSize = 11,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
-        });
-        grid.Children.Add(left);
-
-        var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
-        right.Children.Add(new TextBlock
-        {
-            Text = SpendFormat.Amount(m.Cost, m.HasUnpriced),
-            FontSize = 13,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush"),
-        });
-        var vendor = new TextBlock
-        {
-            Text = m.FullyUnpriced ? "无公开价" : (m.VendorName ?? "已归档"),
-            FontSize = 11,
-            Margin = new Thickness(0, 2, 0, 0),
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
-        };
-        right.Children.Add(vendor);
-        Grid.SetColumn(right, 1);
-        grid.Children.Add(right);
-
-        var host = new Border { Child = grid, Cursor = System.Windows.Input.Cursors.Hand };
-        var hover = new Style(typeof(Border));
-        hover.Setters.Add(new Setter(Border.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-        hover.Triggers.Add(new Trigger
-        {
-            Property = UIElement.IsMouseOverProperty,
-            Value = true,
-            Setters = { new Setter(Border.BackgroundProperty, (System.Windows.Media.Brush)FindResource("NavHoverBrush")) },
-        });
-        host.Style = hover;
-        host.MouseLeftButtonUp += (_, _) => ShowModelDetail(m.Model);
-        return host;
-    }
-
-    private void ShowModelDetail(string model)
-    {
-        var m = _modelRows.FirstOrDefault(x => x.Model == model);
-        if (m is null) return;
-        _selectedModel = model;
-
-        ModelDetailPanel.Visibility = Visibility.Visible;
-        ModelDetailTitle.Text = m.Model + " · 详情";
-
-        // KPI 四宫格
-        ModelKpiGrid.Children.Clear();
-        AddKpi("总 token", SpendFormat.Tokens(m.TotalTokens));
-        AddKpi("估算金额", SpendFormat.Amount(m.Cost, m.HasUnpriced));
-        AddKpi("调用次数", m.Requests.ToString("N0"));
-        AddKpi("会话数", m.Sessions.ToString("N0"));
-
-        // token 构成
-        var t = m.Tally;
-        ModelTokenLine.Text = $"输入 {SpendFormat.Tokens(t.Input)} · 缓存写 {SpendFormat.Tokens(t.CacheWrite)}"
-            + $" · 缓存读 {SpendFormat.Tokens(t.CacheRead)} · 输出 {SpendFormat.Tokens(t.Output)}"
-            + (m.UnclassifiedTokens > 0 ? $" · 未分类 {SpendFormat.Tokens(m.UnclassifiedTokens)}" : "")
-            + (m.CacheHit is { } hit ? $" · 缓存命中 {hit:P1}" : "");
-
-        RenderModelTrend(m);
-        RenderModelProjects(m);
-
-        // 牌价
-        if (m.Price is { } p)
-        {
-            string cacheRead = p.CacheRead is { } cr ? $"${cr:0.###}/M" : "按输入价";
-            ModelPriceLine.Text = $"输入 ${p.Input:0.###}/M · 输出 ${p.Output:0.###}/M · 缓存读 {cacheRead}"
-                + $" (来源:{p.Vendor})";
-        }
-        else if (m.IsPriced)
-        {
-            // 金额算得出、但单价没留档:记录来自本地用量仓库的天级聚合行,
-            // 金额是建仓当天按牌价算好的,单价本身没存。说清楚,不要误导成"没有价"。
-            ModelPriceLine.Text = "单价未留档:这里的历史记录来自本地用量仓库的汇总行,"
-                + "金额是入库当天按当时牌价算好的,单价本身没有保存。";
-        }
-        else
-        {
-            ModelPriceLine.Text = "这个模型没有公开牌价:只统计 token,金额算不出来。";
-        }
-
-        // 用到的来源与时间范围
-        string agents = m.Agents.Count > 0 ? string.Join("、", m.Agents) : "—";
-        string firstLast = m.FirstUsed is { } f && m.LastUsed is { } l
-            ? $" · {f:MM-dd HH:mm} ~ {l:MM-dd HH:mm}" : "";
-        ModelDetailTitle.Text = $"{m.Model} · 详情({agents}{firstLast})";
-    }
-
-    private void AddKpi(string label, string value)
-    {
-        var panel = new StackPanel { Margin = new Thickness(0, 0, 10, 8) };
-        panel.Children.Add(new TextBlock
-        {
-            Text = value,
-            FontSize = 17,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush"),
-        });
         panel.Children.Add(new TextBlock
         {
             Text = label,
             FontSize = 11,
-            Margin = new Thickness(0, 1, 0, 0),
             Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
         });
-        ModelKpiGrid.Children.Add(panel);
+        panel.Children.Add(new TextBlock
+        {
+            Text = value,
+            FontSize = 19,
+            FontWeight = FontWeights.SemiBold,
+            Margin = new Thickness(0, 2, 0, 0),
+            Foreground = accent,
+        });
+        if (!string.IsNullOrEmpty(note))
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = note,
+                FontSize = 10.5,
+                Margin = new Thickness(0, 2, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
+            });
+        }
+        host.Children.Add(panel);
     }
 
-    /// <summary>该模型的逐日用量柱状图(自绘,不引控件库)。</summary>
-    private void RenderModelTrend(ModelUsage m)
+    /// <summary>今日 24 小时柱状图(自绘)。参考 GoGauge 的"今日趋势 24 小时"。</summary>
+    private void RenderHourlyChart(ChannelUsage ch)
     {
-        ModelTrendBox.Child = null;
-        if (m.Daily.Count == 0) return;
-
+        ChannelHourBox.Child = null;
         var canvas = new Canvas { ClipToBounds = true };
-        long max = m.Daily.Max(d => d.Tokens);
-        double gap = 2;
-        // 宽度在渲染后才知道,用一个代理在尺寸就绪时再画
-        ModelTrendBox.SizeChanged += (_, _) => DrawTrend(canvas, m, max, gap);
-        ModelTrendBox.Child = canvas;
-        DrawTrend(canvas, m, max, gap);
+        ChannelHourBox.Child = canvas;
+        long total = ch.TodayHourly.Sum(h => h.Tokens);
+        ChannelTodayHint.Text = total == 0
+            ? "今天还没有记录(程序未运行的小时不会有采样)。"
+            : $"{SpendFormat.Tokens(total)} tokens · 最忙 {(ch.TodayHourly.OrderByDescending(h => h.Tokens).First().Hour)}:00";
+        canvas.SizeChanged += (_, _) => DrawHourly(canvas, ch.TodayHourly);
+        DrawHourly(canvas, ch.TodayHourly);
     }
 
-    private void DrawTrend(Canvas canvas, ModelUsage m, long max, double gap)
+    private void DrawHourly(Canvas canvas, IReadOnlyList<HourBucket> hours)
     {
         canvas.Children.Clear();
-        double w = ModelTrendBox.ActualWidth;
-        double h = ModelTrendBox.ActualHeight;
-        if (w <= 0 || h <= 0 || m.Daily.Count == 0) return;
+        double w = ChannelHourBox.ActualWidth, h = ChannelHourBox.ActualHeight;
+        if (w <= 0 || h <= 0) return;
 
-        int n = m.Daily.Count;
-        double slot = w / n;
-        double barW = Math.Max(1.5, Math.Min(22, slot * 0.7));
-        var accent = (System.Windows.Media.Brush)FindResource("AccentBrush");
+        double slot = w / 24;
+        double barW = Math.Max(3, Math.Min(20, slot * 0.62));
+        long max = hours.Count > 0 ? hours.Max(x => x.Tokens) : 0;
+        var fillIn = (System.Windows.Media.Brush)FindResource("AccentBrush");
+        var fillOut = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x00, 0xA8, 0x5C));
         var empty = (System.Windows.Media.Brush)FindResource("FieldBackBrush");
+        double plotH = h - 16;
 
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < 24; i++)
         {
-            var (day, tokens, _) = m.Daily[i];
+            var hr = hours[i];
             double x = i * slot + (slot - barW) / 2;
-            if (tokens <= 0)
+            if (hr.Tokens <= 0)
             {
                 var dot = new System.Windows.Shapes.Rectangle
                 {
-                    Width = barW, Height = 1.5, Fill = empty,
-                    ToolTip = $"{day:yyyy-MM-dd}:没有记录",
+                    Width = barW, Height = 1.5, Fill = empty, ToolTip = $"{i:00}:00 没有记录",
                 };
                 Canvas.SetLeft(dot, x);
-                Canvas.SetTop(dot, h - 1.5);
+                Canvas.SetTop(dot, plotH - 1.5);
                 canvas.Children.Add(dot);
                 continue;
             }
-            double bh = max <= 0 ? 0 : Math.Max(2, (double)tokens / max * (h - 16));
+            // 输入(含缓存)/输出 两段堆叠,便于看构成
+            long inputPart = hr.Input + hr.CacheRead + hr.CacheWrite;
+            long outputPart = hr.Output;
+            double totalH = max <= 0 ? 0 : Math.Max(2, (double)hr.Tokens / max * plotH);
+            double outH = hr.Tokens == 0 ? 0 : totalH * outputPart / hr.Tokens;
+            double inH = totalH - outH;
+
+            if (inH > 0)
+            {
+                var inBar = new System.Windows.Shapes.Rectangle
+                {
+                    Width = barW, Height = inH, Fill = fillIn, RadiusX = 1.5, RadiusY = 1.5,
+                    ToolTip = $"{i:00}:00\n{SpendFormat.TokensExact(hr.Tokens)} tokens\n{hr.Requests} 次调用",
+                };
+                Canvas.SetLeft(inBar, x);
+                Canvas.SetTop(inBar, plotH - totalH);
+                canvas.Children.Add(inBar);
+            }
+            if (outH > 0)
+            {
+                var outBar = new System.Windows.Shapes.Rectangle
+                {
+                    Width = barW, Height = outH, Fill = fillOut, RadiusX = 1.5, RadiusY = 1.5,
+                    ToolTip = $"{i:00}:00\n输出 {SpendFormat.TokensExact(outputPart)} tokens",
+                };
+                Canvas.SetLeft(outBar, x);
+                Canvas.SetTop(outBar, plotH - outH);
+                canvas.Children.Add(outBar);
+            }
+        }
+
+        // 只标 0/6/12/18 四个刻度,免得挤
+        foreach (int hh in new[] { 0, 6, 12, 18 })
+        {
+            var label = new TextBlock
+            {
+                Text = $"{hh:00}:00", FontSize = 10,
+                Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
+            };
+            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double x = hh * slot + (slot - label.DesiredSize.Width) / 2;
+            Canvas.SetLeft(label, Math.Max(0, Math.Min(w - label.DesiredSize.Width, x)));
+            Canvas.SetTop(label, h - 13);
+            canvas.Children.Add(label);
+        }
+    }
+
+    /// <summary>每日用量柱状图(自绘)。</summary>
+    private void RenderDailyChart(ChannelUsage ch)
+    {
+        ChannelDailyBox.Child = null;
+        var canvas = new Canvas { ClipToBounds = true };
+        ChannelDailyBox.Child = canvas;
+        canvas.SizeChanged += (_, _) => DrawDaily(canvas, ch.Daily);
+        DrawDaily(canvas, ch.Daily);
+    }
+
+    private void DrawDaily(Canvas canvas,
+        IReadOnlyList<(DateOnly Day, long Tokens, long Input, long Output, long CacheRead, long CacheWrite, double Cost, long Requests)> daily)
+    {
+        canvas.Children.Clear();
+        double w = ChannelDailyBox.ActualWidth, h = ChannelDailyBox.ActualHeight;
+        if (w <= 0 || h <= 0 || daily.Count == 0) return;
+
+        int n = daily.Count;
+        double slot = w / n;
+        double barW = Math.Max(2, Math.Min(22, slot * 0.7));
+        long max = daily.Max(d => d.Tokens);
+        var accent = (System.Windows.Media.Brush)FindResource("AccentBrush");
+        var empty = (System.Windows.Media.Brush)FindResource("FieldBackBrush");
+        double plotH = h - 16;
+
+        for (int i = 0; i < n; i++)
+        {
+            var d = daily[i];
+            double x = i * slot + (slot - barW) / 2;
+            if (d.Tokens <= 0)
+            {
+                var dot = new System.Windows.Shapes.Rectangle
+                {
+                    Width = barW, Height = 1.5, Fill = empty, ToolTip = $"{d.Day:yyyy-MM-dd}:没有记录",
+                };
+                Canvas.SetLeft(dot, x);
+                Canvas.SetTop(dot, plotH - 1.5);
+                canvas.Children.Add(dot);
+                continue;
+            }
+            double bh = max <= 0 ? 0 : Math.Max(2, (double)d.Tokens / max * plotH);
             var bar = new System.Windows.Shapes.Rectangle
             {
-                Width = barW, Height = bh, Fill = accent,
-                RadiusX = 2, RadiusY = 2,
-                ToolTip = $"{day:yyyy-MM-dd}\n{SpendFormat.TokensExact(tokens)} tokens",
+                Width = barW, Height = bh, Fill = accent, RadiusX = 2, RadiusY = 2,
+                ToolTip = $"{d.Day:yyyy-MM-dd}\n{SpendFormat.TokensExact(d.Tokens)} tokens\n"
+                    + $"{SpendFormat.MoneyExact(d.Cost)} · {d.Requests} 次调用",
             };
             Canvas.SetLeft(bar, x);
-            Canvas.SetTop(bar, h - 16 - bh);
+            Canvas.SetTop(bar, plotH - bh);
             canvas.Children.Add(bar);
         }
 
         var first = new TextBlock
         {
-            Text = m.Daily[0].Day.ToString("MM-dd"), FontSize = 10,
+            Text = daily[0].Day.ToString("MM-dd"), FontSize = 10,
             Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
         };
         Canvas.SetLeft(first, 0); Canvas.SetTop(first, h - 13);
@@ -768,7 +813,7 @@ public partial class SettingsWindow : Window
         {
             var last = new TextBlock
             {
-                Text = m.Daily[^1].Day.ToString("MM-dd"), FontSize = 10,
+                Text = daily[^1].Day.ToString("MM-dd"), FontSize = 10,
                 Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
             };
             last.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -778,44 +823,95 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void RenderModelProjects(ModelUsage m)
+    /// <summary>该套餐里各模型的用量行(带占比条)。</summary>
+    private void RenderChannelModels(ChannelUsage ch)
     {
-        ModelProjectsPanel.Children.Clear();
-        if (m.TopProjects.Count == 0)
+        ChannelModelPanel.Children.Clear();
+        if (ch.Models.Count == 0)
         {
-            ModelProjectsPanel.Children.Add(new TextBlock
+            ChannelModelPanel.Children.Add(new TextBlock
             {
-                Text = "没有可归属的项目(记录来自已归档的汇总行)。",
-                FontSize = 11,
+                Text = "这个区间没有模型记录。",
+                FontSize = 12, Margin = new Thickness(16, 4, 16, 14),
                 Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
             });
             return;
         }
-        long max = m.TopProjects.Max(p => p.Tokens);
-        foreach (var p in m.TopProjects)
+
+        long max = ch.Models.Max(m => m.Tokens);
+        bool first = true;
+        foreach (var m in ch.Models)
         {
-            var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.Children.Add(new TextBlock
+            if (!first)
+                ChannelModelPanel.Children.Add(new Border
+                {
+                    Background = (System.Windows.Media.Brush)FindResource("SeparatorBrush"),
+                    Height = 1,
+                });
+            first = false;
+
+            var grid = new Grid { Margin = new Thickness(16, 9, 16, 9) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var left = new StackPanel();
+            left.Children.Add(new TextBlock
             {
-                Text = System.IO.Path.GetFileName(p.Project.TrimEnd('\\', '/')) is { Length: > 0 } name ? name : p.Project,
-                FontSize = 12,
+                Text = m.Model, FontSize = 12.5,
                 Foreground = (System.Windows.Media.Brush)FindResource("TextBrush"),
                 TextTrimming = TextTrimming.CharacterEllipsis,
-                ToolTip = p.Project,
             });
-            var right = new TextBlock
+            var barRow = new Grid { Margin = new Thickness(0, 4, 0, 3) };
+            barRow.Children.Add(new Border
             {
-                Text = SpendFormat.Tokens(p.Tokens),
-                FontSize = 12,
+                Height = 5, CornerRadius = new CornerRadius(2.5),
+                Background = (System.Windows.Media.Brush)FindResource("FieldBackBrush"),
+                HorizontalAlignment = HorizontalAlignment.Left, Width = 200,
+            });
+            barRow.Children.Add(new Border
+            {
+                Height = 5, CornerRadius = new CornerRadius(2.5),
+                Background = (System.Windows.Media.Brush)FindResource("AccentBrush"),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Width = Math.Max(5, (max <= 0 ? 0 : (double)m.Tokens / max) * 200),
+            });
+            left.Children.Add(barRow);
+            string cache = m.CacheHit is { } hit ? $" · 缓存命中 {hit:P0}" : "";
+            left.Children.Add(new TextBlock
+            {
+                Text = $"{SpendFormat.Tokens(m.Tokens)} tokens · {m.Requests:N0} 次{cache}",
+                FontSize = 10.5,
                 Foreground = (System.Windows.Media.Brush)FindResource("TextSubBrush"),
+            });
+            grid.Children.Add(left);
+
+            var amount = new TextBlock
+            {
+                Text = SpendFormat.Amount(m.Cost, m.HasUnpriced),
+                FontSize = 12.5,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 0, 0),
+                Foreground = (System.Windows.Media.Brush)FindResource("TextBrush"),
             };
-            Grid.SetColumn(right, 1);
-            row.Children.Add(right);
-            ModelProjectsPanel.Children.Add(row);
+            Grid.SetColumn(amount, 1);
+            grid.Children.Add(amount);
+
+            ChannelModelPanel.Children.Add(grid);
         }
     }
+
+    /// <summary>归属信息:实际用到的 provider id 与来源库,便于对账。</summary>
+    private void RenderChannelMeta(ChannelUsage ch)
+    {
+        string ids = ch.ProviderIds.Count > 0 ? string.Join("、", ch.ProviderIds) : "(未标注)";
+        string sourceKey = ch.SourceKey is { } sk ? $" · 对应数据源 {sk}" : "";
+        ChannelMetaLine.Text = $"来源客户端 {ch.Agent}{sourceKey}\n"
+            + $"provider id:{ids}\n"
+            + $"统计口径与「用量统计」窗口一致:四类 token 之和对不上来源总量时差额记未分类(计入总数、不计价);"
+            + $"金额按 models.dev 公开牌价估算。";
+    }
+
+    // ————————————————— 行为/外观的批 1 设置 —————————————————
 
     // ————————————————— 行为/外观的批 1 设置 —————————————————
 

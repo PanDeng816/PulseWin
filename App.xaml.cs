@@ -271,6 +271,27 @@ public partial class App : System.Windows.Application
                     text.AppendLine($"  {g.Key,-38} input={input,14:N0}  cacheRead={cacheRead,14:N0}");
                 }
             }
+
+            // 渠道(套餐)维度:每个套餐一页的数据源
+            text.AppendLine();
+            text.AppendLine("===== 套餐/渠道 =====");
+            var registry = ChannelRegistry.Current;
+            text.AppendLine($"本机配置的渠道: {string.Join("、", registry.KnownChannels.Select(c => c.Name + "(" + c.Agent + ")"))}");
+            var channels = ChannelUsageIndex.Build(ledger, SpendSpan.All);
+            text.AppendLine($"有记录 {channels.Count} 个:");
+            foreach (var ch in channels)
+            {
+                string cache = ch.CacheHit is { } hit ? $"{hit * 100:0.0}%" : "—";
+                text.AppendLine($"  [{ch.Name} / {ch.Agent}]");
+                text.AppendLine($"    tokens={ch.TotalTokens:N0}  估算 {SpendFormat.Amount(ch.Cost, ch.HasUnpriced)}"
+                    + $"  请求={ch.Requests}  会话={ch.Sessions}  缓存命中={cache}"
+                    + $"  {ch.FirstUsed:MM-dd}~{ch.LastUsed:MM-dd}  providerIds=[{string.Join(",", ch.ProviderIds)}]");
+                text.AppendLine($"    模型({ch.Models.Count}): "
+                    + string.Join(" / ", ch.Models.Take(6).Select(m => $"{m.Model} {SpendFormat.Tokens(m.Tokens)}")));
+                var today = ch.TodayHourly.Where(h => h.Tokens > 0).ToList();
+                text.AppendLine("    今日逐小时: " + (today.Count == 0 ? "(今天没有记录)"
+                    : string.Join(" ", today.Select(h => $"{h.Hour}:{SpendFormat.Tokens(h.Tokens)}"))));
+            }
         }
         catch (Exception ex)
         {
