@@ -6,6 +6,8 @@ Data/
 # 日常使用的成品 exe 与符号文件放在仓库根目录(exe 同目录的 Data\ 是活数据)
 /PulseWin.exe
 /PulseWin.pdb
+# 替换运行中 exe 时的旧版备份(PulseWin.exe.v1.12.2.old 这种):留着回滚用,但不入库
+/PulseWin.exe.*
 
 # —— 本地数据目录:加密凭据(DPAPI)与用量快照都在这里 ——
 *.bin

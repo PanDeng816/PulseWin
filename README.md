@@ -1,9 +1,10 @@
-﻿# Pulse for Windows
+# Pulse for Windows
 
 一个 Windows 11 屏幕边缘的 AI 额度浮窗:黑色玻璃 rail 上,每个订阅一个
 **复合同心环**(内细圈 = 5 小时用量,外粗圈 = 月总额度),用量 ≤80% 绿色、
 >80% 红色报警;hover 弹出三池明细卡。数据源:Command Code GOAT、OpenCode Go
-与 DeepSeek(余额),自动 60 秒同步,不依赖任何第三方服务。
+与 DeepSeek(余额),自动 60 秒同步,不依赖任何第三方服务。用量统计覆盖
+ZCode 与 OpenCode 的本地库,**以及 DSH(DeepSeek Harness)桌面版的会话记录**。
 
 展示层还原自 [qunqin24/Pulse](https://github.com/qunqin24/Pulse)(macOS),
 数据层移植自
@@ -55,11 +56,14 @@
 - **rail 上点右键 = 菜单**(显示/隐藏、立即刷新、用量统计、设置、退出):命中范围与
   拖动完全一致,所以**能拖动的地方就能右键**;菜单每次点击现构建,刚查到的新版本
   立刻就在里面
-- **环心呼吸 = ZCode 正在跑**:ZCode 在跑一轮的时候,GOAT 环的图标会轻轻呼吸
-  (缩放 92%~100%,约 1.2 秒一轮)。判定读的是 ZCode 自己的应用日志里 `turn.started`
+- **环心呼吸 = ZCode 或 DSH 正在跑**:有客户端在跑一轮的时候,GOAT 环的图标会轻轻呼吸
+  (缩放 92%~100%,约 1.2 秒一轮)。ZCode 的判定读它自己应用日志里 `turn.started`
   与 `turn.completed` / `turn.failed` 的配对——**不是"最近若干秒有写入"**:跑长命令时
   它误灭、回合结束后又会因为客户端继续写记账信息而永远亮着。等待超时按"这一轮在等
-  什么"分档(等工具 5 分钟、等模型 90 秒)
+  什么"分档(等工具 5 分钟、等模型 90 秒)。DSH 的判定读它的会话投影
+  (`~\.dsh\storages\session_projcache\` 里的 `openTurnStartSeq` 有没有闭合),
+  同样带 5 分钟门限——异常退出会留下一个永不闭合的回合,没有门限它就会一直亮着
+  (两个客户端都走 Command Code 网关,所以呼吸的始终是 GOAT 这一圈)
 - **至少保留一个数据源**:取消最后一个勾选时会自动弹回并说明原因——三个全关之后
   浮窗上就什么都没有了
 - **每个源可自定义圆环颜色**(`#RRGGBB`):不填就还是"按用量着色";用满时一律深红
@@ -147,13 +151,17 @@ DeepSeek 的 API **不提供任何用量或消费历史**,所以拿不到真实�
 |---|---|---|
 | ZCode | `~\.zcode\cli\db\db.sqlite` 的 `model_usage` 表(连 `session` 取项目/标题) | 每次请求 |
 | OpenCode | `~\.local\share\opencode\opencode.db` 的 `message` 表(助手消息里的 `tokens`) | 每条消息 |
+| DSH | `~\.dsh\sessions\<工作区>\<会话>\session.v4.jsonl.zstd` 的 `assistant/message` 事件(带 zstd 解压 + 文件级缓存) | 每一步模型调用 |
 
 口径上死守几条规矩(与上游 Pulse 一致),宁可少显示也不显示错的数:
 
 - **四类 token**:输入(新鲜部分)、缓存写、缓存读、输出。**分类之和必须能对上来源
   报告的总量**——对不上的差额进"未分类",计入总数但**绝不塞进输入、也绝不参与计价**。
   (ZCode 的 schema 里 `input_tokens` 含缓存、`output_tokens` 含推理,所以输入侧要减掉
-  缓存重叠、推理不再加第二次;OpenCode 的 `reasoning` 则要并进输出。)
+  缓存重叠、推理不再加第二次;OpenCode 的 `reasoning` 则要并进输出;**DSH 的
+  `inputTokens` 本来就是"未命中缓存的输入"**(它的会话投影里叫 `uncachedInputTokens`)、
+  `cacheWriteTokens` 恒为 0,所以四类直接取用、不要做减法——这两家的口径正好相反,
+  改读取器时务必分清。)
 - **金额一律来自牌价**,不用来源自己记的 `cost` 字段(那是它当时的理解,套餐没价目时
   就是 0)。牌价取自 [models.dev](https://models.dev),**第一方厂商价永远优先**,查不到
   才退到套餐价(如只在 `opencode-go` 上架的 `deepseek-v4.1-flash`)。
@@ -236,6 +244,12 @@ OpenCode 是 `opencode-go`),直接拿来当分组键会显示成没人看得懂�
 读不到再退回内置规则(opencode-go-* 前缀、bigmodel-* 前缀等)。
 两者都认不出的 id 会原样显示成短标签,**宁可不认识也不丢数据**。
 
+**DSH 走的是内置规则**:它记下来的 provider 是**路由名**(在
+`~\.dsh\profiles\<profile>\cordis.patch.yml` 里自定义,如 `commandcode-goat`),
+不是配置里能查到的 id。所以 `commandcode*` / `goat` / `deepseek` 这几个前缀都显式
+归了档——不归的话会多出一行"渠道 commandco",而 DSH 花的钱其实正是 GOAT 那份额度,
+两行会让人以为金额对不上。
+
 ### 可选:浏览器会话明细(默认关;账号级跨设备明细)
 
 这一页有一个**浏览器会话明细**开关,开了之后会读本机浏览器(Edge/Chrome)的登录 cookie,
@@ -273,14 +287,27 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 启动多花一点解压时间。日常使用的 `PulseWin.exe` 放在仓库根目录,便携数据
 `Data\`(凭据/用量历史)必须与它同目录,挪 exe 时记得一起挪。
 
+**根目录那份是"框架依赖单文件"**(约 3 MB,机器上要有 .NET 8 桌面运行时):
+
+```powershell
+dotnet publish -c Release -r win-x64 --self-contained false `
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o <输出目录>
+```
+
+体积小、启动快,适合自用;上面那个自包含版是给没装运行时的机器与 Release 用的。
+注意 `EnableCompressionInSingleFile` **只在自包含时才支持**(框架依赖下会报 NETSDK1176)。
+`--self-contained false` 也必须带 `IncludeNativeLibrariesForSelfExtract`——
+用量统计要读 SQLite,它的原生 `e_sqlite3.dll` 打包进单文件后要靠自解压才找得到。
+
 几个**只输出结果、不开界面**的诊断参数(走的是与界面完全相同的那套口径代码):
 
 | 参数 | 作用 | 输出 |
 |---|---|---|
 | `--spend` | 把用量统计的原始数字打出来(核对口径用,别靠截图) | `Data\spend-dump.txt` |
 | `--models` | 把逐模型聚合、套餐/渠道聚合与浏览器会话通道的状态打出来 | `Data\models-dump.txt` |
+| `--dsh` | DSH 读取器的解析结果、冷/热耗时、缓存命中,以及**与 DSH 自己的会话投影逐会话对账** | `Data\dsh-dump.txt` |
 | `--update-prices` | 强制更新一次模型牌价表并等它做完 | `Data\price-update.txt` |
-| `--activity [目录]` | 读 ZCode 活动日志并输出判定,可指定日志目录 | `Data\activity.txt` |
+| `--activity [目录]` | 读 ZCode 活动日志(可指定目录)与 DSH 会话投影,输出"现在算不算在跑"的判定 | `Data\activity.txt` |
 | `--card-shot` | 用合成数据把 hover 明细卡离屏渲染成 PNG(排版必须在像素上核对) | `Data\card-shot\*.png` |
 | `--ui-shot` | 把设置窗各页、环色选择器与用量统计窗离屏渲染成 PNG(不 Show、不抢焦点) | `Data\ui-shot\*.png` |
 | `--check-migration` | 核对旧设置能正确迁到新格式(用合成用例 + 本机真实 settings.json) | `Data\migration-check.txt` |
@@ -320,6 +347,18 @@ new(
 UI 只保留三处**与实例绑定**的映射(状态对象、凭据解析器、API 客户端),那是注册表不该持
 有的有状态对象。旧设置里的 `ShowGoat`/`SourceOrder`/`GoatTint` 等字段仍能被读入并迁移
 (见 `--check-migration`),存量用户升级不丢配置。
+
+**注意上面这张表管的是"额度源"(rail 上画环的那些)。用量统计的来源是另一套**
+(`Services/Spend/` 下的 `IUsageStore`),两者互不相干:DSH 就不是额度源(它的额度
+属于 GOAT 池),但它是一等公民的用量来源。用量来源有两种形状:
+
+- **别人的运行数据库**(ZCode / OpenCode 的 SQLite):只读打开、查一遍、取
+  `session` 表补项目与标题即可;
+- **追加写的文件流**(DSH 的 zstd 压缩 jsonl):要自己处理三件事——①**容错解压**
+  (活动会话随时可能只写到半个 zstd 帧,读到哪算哪,下一轮长度变了再重读补齐)
+  ②**文件级缓存**(历史会话内容永远不变,按"长度 + 修改时间"命中就复用,否则每次
+  打开用量窗都要把全部会话重新解压一遍)③**整份解析完再回填元数据**(会话标题、
+  工作目录都可能在消息之后才出现,边读边填会让前面的记录没有标题)。
 
 ### 关于"液态玻璃"(v1.7.3 已移除)
 

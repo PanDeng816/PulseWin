@@ -467,14 +467,17 @@ public partial class MainWindow : Window
         if (refreshing) { _dirty = true; animate = true; }   // 亮段扫动是逐帧动画
         if (_hoverRing is not null) animate = true;          // hover 时卡片/光晕要跟手
 
-        // ZCode 是不是在跑:每秒读一次它的日志增量。只读新增的字节,没动静时开销就是
-        // 一次文件长度检查;在跑的时候环心图标要呼吸,那是逐帧动画,所以每帧都得重画。
+        // ZCode / DSH 是不是在跑:每秒各读一次。ZCode 读它日志的增量(只读新增字节),
+        // DSH 读它的会话投影(明文小 JSON,只挑最近写过的几个);在跑的时候环心图标要呼吸,
+        // 那是逐帧动画,所以每帧都得重画。
         if ((int)now != _activityPollSecond)
         {
             _activityPollSecond = (int)now;
-            if (_activity.Poll()) _dirty = true;
+            bool zcodeChanged = _activity.Poll();
+            bool dshChanged = _dshActivity.Poll();
+            if (zcodeChanged || dshChanged) _dirty = true;
         }
-        if (_activity.IsWorking) { _dirty = true; animate = true; }
+        if (AnyClientWorking) { _dirty = true; animate = true; }
 
         // 显示期间每秒保活置顶一次(防止被后来的置顶窗口压住),并强制重画一帧。
         // 分层窗口(AllowsTransparency)滑出到屏外期间, WPF 会把失效请求丢掉且之后不再补:
@@ -554,9 +557,13 @@ public partial class MainWindow : Window
     private double _lastFullScreenCheck;
     private bool _wasAnimating;
 
-    // —— ZCode 活动(环心呼吸) ——
+    // —— 客户端活动(环心呼吸):两个客户端都走 Command Code 网关,所以都点 GOAT 这一圈 ——
     private readonly ZCodeActivity _activity = new();
+    private readonly DshActivity _dshActivity = new();
     private int _activityPollSecond = -1;
+
+    /// <summary>有没有客户端正在跑一轮(ZCode 读它的日志,DSH 读它的会话投影)。</summary>
+    private bool AnyClientWorking => _activity.IsWorking || _dshActivity.IsWorking;
 
     // ————————————————— 指针 —————————————————
 
@@ -1034,9 +1041,9 @@ public partial class MainWindow : Window
         // 所以给它多 3pt 让细节看得清。
         double box = Pt.P(sub.Key == "deepseek" ? 17 : 14);
 
-        // ZCode 正在跑一轮时,环心图标轻轻呼吸(92%~100%,约 1.2 秒一轮)。
-        // **只有 GOAT 环会呼吸**:ZCode 走的是 Command Code 网关,它烧的正是这一圈额度。
-        if (_activity.IsWorking && sub.Key == "goat")
+        // ZCode / DSH 正在跑一轮时,环心图标轻轻呼吸(92%~100%,约 1.2 秒一轮)。
+        // **只有 GOAT 环会呼吸**:这两个客户端都走 Command Code 网关,烧的正是这一圈额度。
+        if (AnyClientWorking && sub.Key == "goat")
             box *= BreathScale(_clock.Elapsed.TotalSeconds);
 
         switch (sub.Key)

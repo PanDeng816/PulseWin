@@ -50,6 +50,16 @@ public sealed class ChannelRegistry
     /// </summary>
     private static readonly (string Match, string Name, string? SourceKey)[] BuiltinRules =
     [
+        // DSH(DeepSeek Harness)不把 provider 名字写在能被这里读到的配置文件里,
+        // 它用的是**路由名**(如 cordis.patch.yml 里的 commandcode-goat)。
+        // 不加这三条,DSH 的用量会显示成"渠道 commandco"、并和 ZCode 的 Command Code GOAT
+        // 裂成两行——同一份额度两个账,用户看到的就是"金额对不上"。
+        ("commandcode-goat", "Command Code GOAT", "goat"),
+        ("commandcode", "Command Code GOAT", "goat"),
+        ("goat", "Command Code GOAT", "goat"),
+        // DSH 也可以直接走官方 DeepSeek 通道(路由名就叫 deepseek),那条路的额度是
+        // DeepSeek 余额而不是 GOAT 池——不归到 DeepSeek 桶会多出一行"渠道 deepseek"。
+        ("deepseek", "DeepSeek", "deepseek"),
         ("bigmodel-start-plan", "BigModel 包月", "bigmodel"),
         ("bigmodel", "BigModel 包月", "bigmodel"),
         // OpenCode Go 的几种路由前缀（Responses / glm 变体也在内）

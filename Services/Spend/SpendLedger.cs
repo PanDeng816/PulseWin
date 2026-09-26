@@ -144,7 +144,9 @@ public sealed class SpendLedger
     public static IReadOnlyList<IUsageStore> AllStores { get; } = new IUsageStore[]
     {
         new ZCodeUsageStore(),
-        new OpenCodeUsageStore()
+        new OpenCodeUsageStore(),
+        // DSH 是"会话文件流"型的来源(不是 SQLite),读取器自带文件级缓存,见该类注释
+        new DshUsageStore()
     };
 
     public static SpendLedger Build(ModelPrices prices)

@@ -10,7 +10,7 @@
     <AssemblyName>PulseWin</AssemblyName>
     <RootNamespace>PulseWin</RootNamespace>
     <!-- 更新检查要拿它和 GitHub 上的 tag 比 -->
-    <Version>1.12.2</Version>
+    <Version>1.13.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- 用量统计要读 SQLite(Microsoft.Data.Sqlite 带原生 e_sqlite3.dll);
@@ -39,6 +39,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <!-- DSH 的会话记录是 zstd 压缩的 jsonl(见 DshUsageStore)。
+         **纯托管**实现,不含原生 dll,所以不影响单文件发布;不要换成带 native 的包。 -->
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.8" />
   </ItemGroup>
 
 </Project>

@@ -108,6 +108,16 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:把 DSH 的会话用量解析结果、文件级缓存命中情况,以及**与 DSH 自己的
+        // 会话投影逐会话对账**打到 Data\dsh-dump.txt 后退出(不开界面)。
+        // 口径对不对必须与"另一条独立路径算出来的数"比,而不是看界面能不能显示。
+        if (e.Args.Any(a => string.Equals(a, "--dsh", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunDshDump();
+            Shutdown();
+            return;
+        }
+
         // 诊断用:把详情卡用合成数据离屏渲染成 PNG 后退出(不开界面、不联网)。
         // 卡片排版(文字会不会被右缘切、底部会不会溢出)必须在像素上核对——
         // 靠真人 hover 复现既慢又不可靠。产物在 Data\card-shot\ 下。
@@ -493,6 +503,26 @@ public partial class App : System.Windows.Application
             text.AppendLine(activity.IsWorking
                 ? "结论: ZCode 正在跑 → GOAT 环心图标会呼吸"
                 : "结论: ZCode 空闲 → 环心图标静止");
+
+            // DSH 的活动判定同样在这里核对:它读的是会话投影,不是日志增量。
+            text.AppendLine();
+            text.AppendLine("—— DSH ——");
+            var dsh = new DshActivity();
+            text.AppendLine($"投影目录: {dsh.ProjectionDirectory}");
+            text.AppendLine(Directory.Exists(dsh.ProjectionDirectory)
+                ? "  存在"
+                : "  不存在(DSH 没跑过 → 按空闲处理)");
+            for (int i = 0; i < 3; i++)
+            {
+                bool dshChanged = dsh.Poll();
+                text.AppendLine($"  t+{i}s  IsWorking={dsh.IsWorking}  开着回合={dsh.OpenTurns}"
+                    + $"  会话={dsh.ActiveSession ?? "-"}  信号时刻={dsh.LastSignalAt?.ToLocalTime():HH:mm:ss}"
+                    + $"  本次变化={dshChanged}  错误={dsh.LastError ?? "无"}");
+                if (i < 2) Thread.Sleep(1000);
+            }
+            text.AppendLine(dsh.IsWorking
+                ? "结论: DSH 正在跑 → GOAT 环心图标会呼吸"
+                : "结论: DSH 空闲");
         }
         catch (Exception ex)
         {
@@ -509,6 +539,129 @@ public partial class App : System.Windows.Application
         {
             Diagnostics.Note("写活动判定失败", ex);
         }
+    }
+
+    /// <summary>
+    /// DSH 用量读取器的诊断:解析结果、冷/热耗时、文件级缓存命中,以及**与 DSH 自己的
+    /// 会话投影逐会话对账**(结果写 Data\dsh-dump.txt)。
+    ///
+    /// 对账是这里最有价值的一步:投影里的 <c>tokenUsage.totals</c> 是 DSH 自己算的累计值,
+    /// 与我们从事件流逐步累加的结果不一致,就说明有事件没读到(最常见的原因是活动会话
+    /// 正在被追加、zstd 尾部被截断)。差异**允许存在**——投影只覆盖"DSH 现在还认得的会话",
+    /// 而用量是一笔长期的账(会话删了、DSH 重装过,投影就没了)——所以这里只报差异,不判谁对。
+    /// </summary>
+    private static void RunDshDump()
+    {
+        var text = new System.Text.StringBuilder();
+        try
+        {
+            var store = new DshUsageStore();
+            text.AppendLine($"会话根目录: {store.Location}");
+            text.AppendLine($"存在: {store.IsPresent}");
+            text.AppendLine();
+
+            var watch = Stopwatch.StartNew();
+            var records = store.Read();
+            long cold = watch.ElapsedMilliseconds;
+            watch.Restart();
+            store.Read();
+            long warm = watch.ElapsedMilliseconds;
+            var (hits, misses, files, cachedRecords, truncations) = DshUsageStore.CacheStats;
+
+            text.AppendLine($"记录 {records.Count} 条   会话 {records.Select(r => r.SessionId).Distinct().Count()} 个"
+                + $"   项目 {records.Select(r => r.Project).Distinct().Count()} 个");
+            text.AppendLine($"耗时: 首次 {cold} ms(全量解压+解析) / 第二次 {warm} ms(命中缓存)");
+            text.AppendLine($"缓存: 文件 {files} / 记录 {cachedRecords} / 命中 {hits} / 未命中 {misses} / 截断 {truncations}");
+            text.AppendLine();
+
+            if (records.Count > 0)
+            {
+                text.AppendLine($"时间: {records.Min(r => r.Timestamp):yyyy-MM-dd HH:mm:ss} ~ {records.Max(r => r.Timestamp):yyyy-MM-dd HH:mm:ss}");
+                text.AppendLine($"四类: input={records.Sum(r => r.Tally.Input):N0}"
+                    + $" cacheWrite={records.Sum(r => r.Tally.CacheWrite):N0}"
+                    + $" cacheRead={records.Sum(r => r.Tally.CacheRead):N0}"
+                    + $" output={records.Sum(r => r.Tally.Output):N0}");
+                text.AppendLine($"总量 {records.Sum(r => r.TotalTokens):N0}"
+                    + $"   未分类 {records.Sum(r => r.UnclassifiedTokens):N0}"
+                    + $"   工具调用 {records.Sum(r => r.ToolCalls):N0}"
+                    + $"   重试 {records.Sum(r => r.Retries)}   失败 {records.Sum(r => r.Failures)}");
+                text.AppendLine();
+                text.AppendLine("—— provider / model ——");
+                foreach (var group in records.GroupBy(r => $"{r.ProviderId}|{r.Model}").OrderByDescending(g => g.Count()))
+                    text.AppendLine($"  {group.Key,-52} x{group.Count()}");
+                text.AppendLine("—— 项目 ——");
+                foreach (var group in records.GroupBy(r => r.Project ?? "(无)").OrderByDescending(g => g.Sum(r => r.TotalTokens)).Take(6))
+                    text.AppendLine($"  {group.Key,-46} {group.Sum(r => r.TotalTokens),15:N0}  ({group.Select(r => r.SessionId).Distinct().Count()} 会话)");
+            }
+
+            text.AppendLine();
+            text.AppendLine("—— 与 DSH 会话投影对账(本机逐步累加 vs 投影 totals) ——");
+            var bySession = records.GroupBy(r => r.SessionId ?? "")
+                .ToDictionary(g => g.Key, g => g.Sum(r => r.TotalTokens), StringComparer.OrdinalIgnoreCase);
+            string projectionDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".dsh", "storages", "session_projcache", "sessions");
+            int compared = 0, mismatched = 0;
+            long difference = 0;
+            if (Directory.Exists(projectionDirectory))
+            {
+                foreach (string file in Directory.EnumerateFiles(projectionDirectory, "*.json"))
+                {
+                    long projected;
+                    try { projected = ReadProjectedTokens(file); }
+                    catch (Exception) { continue; }
+                    if (projected <= 0) continue;
+
+                    string id = Path.GetFileNameWithoutExtension(file);
+                    long mine = bySession.GetValueOrDefault(id);
+                    compared++;
+                    if (projected == mine) continue;
+                    mismatched++;
+                    difference += projected - mine;
+                    if (mismatched <= 10)
+                        text.AppendLine($"  {id,-44} 投影 {projected,14:N0}   本机 {mine,14:N0}   差 {projected - mine,12:N0}");
+                }
+            }
+            text.AppendLine($"  对比 {compared} 个会话,不一致 {mismatched} 个,合计差 {difference:N0} tokens");
+            text.AppendLine("  (差异的常见来源:活动会话尾部截断、会话被删、投影比事件流落后一步)");
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine("失败: " + ex);
+        }
+
+        try
+        {
+            string path = Path.Combine(SnapshotSource.DataDirectory, "dsh-dump.txt");
+            File.WriteAllText(path, text.ToString());
+            Diagnostics.Note($"DSH 用量诊断已输出到 {path}");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("写 DSH 用量诊断失败", ex);
+        }
+    }
+
+    /// <summary>读一份 DSH 会话投影里自报的累计 token 数(四类之和)。读不出来返回 0。</summary>
+    private static long ReadProjectedTokens(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+        using var doc = System.Text.Json.JsonDocument.Parse(stream);
+        if (!doc.RootElement.TryGetProperty("record", out var record)) return 0;
+        if (!record.TryGetProperty("rows", out var rows)) return 0;
+        if (!rows.TryGetProperty("tokenUsage", out var usage)) return 0;
+        if (!usage.TryGetProperty("val", out var value)) return 0;
+        if (!value.TryGetProperty("totals", out var totals)) return 0;
+
+        long sum = 0;
+        foreach (string name in new[] { "uncachedInputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens" })
+        {
+            if (totals.TryGetProperty(name, out var item) && item.ValueKind == System.Text.Json.JsonValueKind.Number
+                && item.TryGetInt64(out long parsed))
+                sum += parsed;
+        }
+        return sum;
     }
 
     /// <summary>
