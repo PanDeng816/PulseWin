@@ -396,7 +396,12 @@ public partial class App : System.Windows.Application
         }
         try
         {
-            _spend = new SpendWindow();
+            var spend = new SpendWindow();
+            // 关掉就放引用:统计窗的账本(几万条明细 + 图表/热图的可视树)很占内存,
+            // 而 WinForms/WPF 关窗后如果还有字段指着它,这块内存就永远不还。
+            // 用完即弃比"留着下次秒开"划算——重开一次只是再读一遍库。
+            spend.Closed += (_, _) => _spend = null;
+            _spend = spend;
             _spend.Show();
         }
         catch (Exception ex)
@@ -417,8 +422,11 @@ public partial class App : System.Windows.Application
         if (_engine is null) return;
         try
         {
-            _settings = new SettingsWindow(_engine);
-            _settings.SettingsChanged += () => _main?.ApplySettings();
+            var settings = new SettingsWindow(_engine);
+            // 同上:设置窗有六页 XAML(含三套色板弹层),关掉后不再留引用。
+            settings.Closed += (_, _) => _settings = null;
+            settings.SettingsChanged += () => _main?.ApplySettings();
+            _settings = settings;
             _settings.Show();
         }
         catch (Exception ex)
