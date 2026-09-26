@@ -58,9 +58,13 @@ public sealed class ChannelUsage
     /// <summary>输出里属于推理的 token 合计（Output 的子集，用于"推理占比"）。</summary>
     public long ReasoningTokens { get; init; }
 
-    /// <summary>推理占输出的比例（没有输出时为 null）。</summary>
+    /// <summary>
+    /// 推理占输出的比例。**只在来源真的报了推理 token 时才算**——"0"与"没记录"在这条
+    /// 流水线上分不开(ZCode 的列可能缺,DSH 的 outputTokens 含推理却不单列),
+    /// 报 0% 就等于把"不知道"说成"没有思考"。
+    /// </summary>
     public double? ReasoningShare =>
-        Tally.Output > 0 ? (double)ReasoningTokens / Tally.Output : null;
+        ReasoningTokens > 0 && Tally.Output > 0 ? (double)ReasoningTokens / Tally.Output : null;
 
     /// <summary>总耗时（毫秒，仅统计来源记了耗时的那些请求）。</summary>
     public long TotalDurationMs { get; init; }
