@@ -274,20 +274,45 @@ public sealed class CardWindow : Window
             : pool.Unit == "cr"
                 ? $"{pool.Used ?? 0:0.#} / {pool.Cap ?? 0:0.#} cr · {pool.RemainingText()}"
                 : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText()}";
-        // 消耗预测:证据足够时给一句"照当前速度",够不到重置就预警(上游 forecast 同款口径)
+        // 消耗预测:证据足够时给一句"照当前速度",够不到重置就预警(上游 forecast 同款口径)。
+        // 文案要短:"照当前速度"这五个字是冗余的("约"已经表意),带着它整行会在
+        // 最坏情况下(长金额 + 长剩余时间 + 预测)超出卡片宽度被裁掉——用户实测
+        // "照当前速度约 19.9 小时后用完"显示不全。真正靠的是下面的 FitText 兜底。
         double? hoursLeft = pool.ResetAt is { } ra ? (ra - DateTimeOffset.UtcNow).TotalHours : null;
         if (avail && pool.HasPercent && !pool.IsSpent
             && BurnRate.Estimate($"{sub.Key}:{pool.PoolKind}", hoursLeft) is { } burn)
         {
             detail += burn.Exhausts
-                ? $" · 照当前速度约 {BurnRate.Describe(burn.Hours)}后用完"
+                ? $" · 约 {BurnRate.Describe(burn.Hours)}后用完"
                 : " · 预计够用到重置";
         }
-        var detailFt = Text(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+        // 行3 必须自己保证不超出卡片:它是单行绘制,内容却会随金额位数、剩余天数
+        // 与有没有预测而变长(实测最坏 $1234.56 / $9999.00 那类能到 340+ diu,
+        // 而内容区只有约 285 diu)。放不下就按比例缩字号(量化 0.5pt,护住文本缓存),
+        // 而不是让字被卡片边缘切掉。
+        var detailFt = FitText(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi, wdt);
         double detailY = barY + barH + Pt.P(5);
         dc.DrawText(detailFt, new Point(p.X, detailY));
 
         return detailY + detailFt.Height + Pt.P(12);
+    }
+
+    /// <summary>
+    /// 取一个能塞进 <paramref name="maxWidth"/> 的文本:先按给定字号试,放不下就按比例缩。
+    /// 字号**量化到 0.5pt**——否则 FormattedText 会因为连续变化的字号不断新建对象。
+    /// 下限 8.5pt:再小就难以辨认,那种情况说明这一行的信息确实过密。
+    /// </summary>
+    private static FormattedText FitText(string s, double baseSize, FontWeight weight,
+        Brush brush, double dpi, double maxWidth)
+    {
+        var ft = Text(s, baseSize, weight, brush, dpi);
+        if (ft.Width <= maxWidth) return ft;
+
+        double step = Pt.P(0.5);
+        double min = Pt.P(8.5);
+        double target = Math.Max(baseSize * maxWidth / ft.Width, min);
+        double quantized = Math.Max(Math.Floor(target / step) * step, min);
+        return Text(s, quantized, weight, brush, dpi);
     }
 
     /// <summary>
