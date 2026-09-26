@@ -3,8 +3,21 @@
 一个 Windows 11 屏幕边缘的 AI 额度浮窗:黑色玻璃 rail 上,每个订阅一个
 **复合同心环**(内细圈 = 5 小时用量,外粗圈 = 月总额度),用量 ≤80% 绿色、
 >80% 红色报警;hover 弹出三池明细卡。数据源:Command Code GOAT、OpenCode Go
-与 DeepSeek(余额),自动 60 秒同步,不依赖任何第三方服务。用量统计覆盖
-ZCode 与 OpenCode 的本地库,**以及 DSH(DeepSeek Harness)桌面版的会话记录**。
+与 DeepSeek(余额),自动 60 秒同步,不依赖任何第三方服务。
+
+> ### ✅ 已适配 DSH(DeepSeek Harness)桌面版
+>
+> **DSH 的用量与"正在跑"状态,在这里都能看到**:
+>
+> - **用量统计**直接读 DSH 的会话记录(`~\.dsh\sessions\` 的 zstd 事件流),按每一步的
+>   token 明细入账,和 ZCode、OpenCode 并列成"来源"三行;套餐页里 DSH 消耗自动归到它
+>   实际走的那个套餐(如 Command Code GOAT),与 ZCode 同页合账——**本机账单里不再有
+>   "看不见的那一块"**。
+> - **子代理会话归根**:DSH 每派一个子代理就起一个独立会话,PulseWin 会把它归回派它的
+>   那个主任务,"最近会话"不再被拆成一堆看起来互不相干的任务。
+> - **环心呼吸**:DSH 正在跑一轮时,GOAT 环的图标会轻轻呼吸(与 ZCode 的判定并列)。
+>
+> 不装 DSH 也不受任何影响:没有 `~\.dsh` 目录时这一路来源自动缺席,不报错、不占资源。
 
 展示层还原自 [qunqin24/Pulse](https://github.com/qunqin24/Pulse)(macOS),
 数据层移植自
@@ -33,6 +46,8 @@ ZCode 与 OpenCode 的本地库,**以及 DSH(DeepSeek Harness)桌面版的会话
 
 ## 功能
 
+- **支持的客户端**:**DSH(DeepSeek Harness)**、**ZCode**、**OpenCode** 的本地用量
+  都能统计(见下文"用量窗口");额度环读的是各订阅/账号的官方接口
 - 屏幕右/左/上边缘停靠或自由浮动;鼠标探到边缘滑出,移开 0.9s 自动隐藏
 - **空闲时几乎不耗电**:主循环按需在 60fps(有动画/指针在 rail 上)与 10fps(静止)
   之间切换,静止藏屏外时一帧都不重绘——实测 idle CPU ≈ 0%、私有内存约 175MB
