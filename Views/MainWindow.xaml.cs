@@ -485,6 +485,9 @@ public partial class MainWindow : Window
             if (fs != _fullScreenHide)
             {
                 _fullScreenHide = fs;
+                // 记一条:这个开关以前从来没生效过(入口点缺失 + 热区立刻拉回),
+                // 现在留痕,方便验证与排查。
+                Diagnostics.Note($"全屏隐藏: 前台全屏 = {fs}");
                 if (fs)
                 {
                     HideCard();

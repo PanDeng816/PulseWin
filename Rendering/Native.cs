@@ -84,7 +84,11 @@ public static class Native
         return covers;
     }
 
-    [DllImport("user32.dll")]
+    // **入口点必须显式写成 GetWindowRect**:方法的本地名是为了和 WPF 的 Window
+    // 区分才叫 GetWindowRectWin,但 user32.dll 里没有这个导出——默认会拿方法名去
+    // 找入口点,于是每次调用都抛 EntryPointNotFoundException("Entry point was not
+    // found.")。这个异常发生在每帧的全屏检测里,配合未处理异常弹框 = 连环弹框卡死。
+    [DllImport("user32.dll", EntryPoint = "GetWindowRect")]
     private static extern bool GetWindowRectWin(IntPtr h, out RECTMonitor r);
 
     [DllImport("user32.dll")]

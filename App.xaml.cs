@@ -17,6 +17,9 @@ public partial class App : System.Windows.Application
     private SingleInstance? _instance;
     private readonly TrayIconMeter _trayMeter = new();
 
+    /// <summary>已经提示过的未处理异常(去重,防止每帧抛的异常连环弹框)。</summary>
+    private readonly HashSet<string> _reportedExceptions = new(StringComparer.Ordinal);
+
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunValueName = "PulseWin";
 
@@ -24,12 +27,22 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         // 兜底:任何未处理异常都记进 diagnostics 并提示,而不是弹原始 .NET 崩溃框。
+        //
+        // **同一个异常只提示一次**。这个兜底是给"偶尔出的意外"用的;但若异常发生在
+        // 每帧的 Tick 里(如 P/Invoke 找不到入口点),每次重绘都会抛一次,而模态框会
+        // 开一个嵌套消息循环、放行下一个 tick —— 于是弹框一个叠一个,程序看起来"卡死"。
+        // 现在按异常类型+消息去重:第一次提示并记日志,后续只记日志不再打扰。
         DispatcherUnhandledException += (_, args) =>
         {
             Diagnostics.Note("未处理异常", args.Exception);
-            System.Windows.MessageBox.Show(
-                $"Pulse 遇到一个错误,已记录到 Data\\diagnostics.json:\n\n{args.Exception.Message}",
-                "Pulse", MessageBoxButton.OK, MessageBoxImage.Warning);
+            string key = args.Exception.GetType().Name + "|" + args.Exception.Message;
+            if (_reportedExceptions.Add(key))
+            {
+                System.Windows.MessageBox.Show(
+                    $"Pulse 遇到一个错误,已记录到 Data\\diagnostics.json:\n\n{args.Exception.Message}"
+                    + "\n\n(同类错误之后不再重复提示。)",
+                    "Pulse", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             args.Handled = true;
         };
 
