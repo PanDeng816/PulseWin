@@ -42,10 +42,39 @@ public sealed class AppSettings
     /// <summary>账户同时持有多种币种时,环跟着哪一种;空 = 第一个有钱的。</summary>
     public string? DeepSeekCurrency { get; set; }
 
-    /// <summary>rail 上要显示哪些数据源(关掉的既不显示也不占高度)。</summary>
-    public bool ShowGoat { get; set; } = true;
-    public bool ShowOpenCode { get; set; } = true;
-    public bool ShowDeepSeek { get; set; } = true;
+    /// <summary>
+    /// rail 上显示哪些数据源,以及它们的顺序。**顺序即数组顺序**——从前这里是
+    /// "三个布尔 + 一个 6 种排列的枚举字符串",源一多就是阶乘爆炸,而且加源要同时改
+    /// 六处。现在统一成一个列表:内容 = 可见的源(按用户排的顺序),不在列表里的源
+    /// 就是不显示。见 <see cref="VisibleSources"/> 与 <see cref="SourceCatalog"/>。
+    ///
+    /// **兼容旧设置**:老版本的 ShowGoat/ShowOpenCode/ShowDeepSeek/SourceOrder 仍能被读入
+    /// (见 <see cref="Sanitized"/> 里的迁移),存量用户升级不丢配置。
+    ///
+    /// **默认留空、由 <see cref="NormalizeVisibleSources"/> 兜底**,而不是直接写死三个源:
+    /// 若非空默认值不动,反序列化一份没有该字段的旧配置时它仍是默认值,
+    /// "旧字段迁移"分支就永远走不到(本机实测踩过这个坑,见 --check-migration)。
+    /// </summary>
+    public List<string> VisibleSources { get; set; } = new();
+
+    /// <summary>
+    /// 旧版字段(仅用于读入迁移,写出时不再产生)。留着是因为 settings.json 里可能还有它们,
+    /// 删掉字段会让老配置的勾选状态丢掉。
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowGoat { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowOpenCode { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowDeepSeek { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SourceOrder { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GoatTint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OpenCodeTint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DeepSeekTint { get; set; }
 
     /// <summary>环下是否显示读数(百分比/金额)。关掉后环间距与 rail 高度同步收窄。</summary>
     public bool ShowPercent { get; set; } = true;
@@ -86,12 +115,6 @@ public sealed class AppSettings
     public bool UseBrowserSessionForModelDetail { get; set; } = false;
 
     /// <summary>
-    /// rail 上数据源的显示顺序,逗号分隔的来源键(如 "goat,opencode,deepseek")。
-    /// 没列出的源排最后;设置窗给六个预设组合。
-    /// </summary>
-    public string SourceOrder { get; set; } = "goat,opencode,deepseek";
-
-    /// <summary>
     /// 网络代理:0=跟随系统(默认)、1=直连、2=手动 HTTP 代理(地址见 ProxyAddress)。
     /// 修改后重启程序生效(HttpClient 是启动时创建的长生命周期对象)。
     /// </summary>
@@ -105,18 +128,20 @@ public sealed class AppSettings
     /// 环色**默认按用量**,这是刻意的:环的颜色表示"离上限还有多远",
     /// 不是"这是哪个产品"(产品由环心图标表示)。想固定成品牌色是可选行为。
     /// </summary>
-    public string? GoatTint { get; set; }
-    public string? OpenCodeTint { get; set; }
-    public string? DeepSeekTint { get; set; }
 
-    /// <summary>按来源键取自定义环色(空 = 不自定义)。</summary>
-    public string? TintFor(string sourceKey) => sourceKey switch
-    {
-        "goat" => GoatTint,
-        "opencode" => OpenCodeTint,
-        "deepseek" => DeepSeekTint,
-        _ => null
-    };
+    /// <summary>本机某个源当前是否显示。</summary>
+    public bool IsSourceVisible(string key) => VisibleSources.Contains(key);
+
+    /// <summary>某个源的环色(#RRGGBB;null = 按用量自动着色)。</summary>
+    public string? TintFor(string sourceKey) =>
+        SourceTints.TryGetValue(sourceKey, out var tint) ? tint : null;
+
+    /// <summary>
+    /// 每个来源自定义环色。**用字典而不是三个字段**:加源不用再加属性,
+    /// 而且 JSON 里就是 { "goat": "#..", "deepseek": "#.." } 一目了然。
+    /// 空值不写(见 <see cref="Sanitized"/>)。
+    /// </summary>
+    public Dictionary<string, string> SourceTints { get; set; } = new();
 
     private static AppSettings? _current;
     private static AppDataPaths? _paths;
@@ -131,6 +156,24 @@ public sealed class AppSettings
     }
 
     public static void Attach(AppDataPaths paths) => _paths = paths;
+
+    /// <summary>
+    /// 从一段 JSON(可能是旧格式)解析出归一后的设置。**独立于单例与磁盘**——
+    /// 升级迁移的正确性靠 <c>--check-migration</c> 这样在临时文件上核对,
+    /// 而不是去动用户真实的 settings.json。
+    /// </summary>
+    public static AppSettings? ParseForTest(string json)
+    {
+        try
+        {
+            var loaded = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
+            return loaded?.Sanitized();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static AppSettings Load()
     {
@@ -160,21 +203,23 @@ public sealed class AppSettings
         DeepSeekBasis = clean.DeepSeekBasis;
         DeepSeekBudget = clean.DeepSeekBudget;
         DeepSeekCurrency = clean.DeepSeekCurrency;
-        ShowGoat = clean.ShowGoat;
-        ShowOpenCode = clean.ShowOpenCode;
-        ShowDeepSeek = clean.ShowDeepSeek;
+        VisibleSources = clean.VisibleSources;
+        ShowGoat = null;            // 旧字段:迁移完成后不再写出
+        ShowOpenCode = null;
+        ShowDeepSeek = null;
+        SourceOrder = null;
+        GoatTint = null;
+        OpenCodeTint = null;
+        DeepSeekTint = null;
         ShowPercent = clean.ShowPercent;
         RingSize = clean.RingSize;
         RingSpacing = clean.RingSpacing;
         HideToSliver = clean.HideToSliver;
         HideInFullScreen = clean.HideInFullScreen;
         UseBrowserSessionForModelDetail = clean.UseBrowserSessionForModelDetail;
-        SourceOrder = clean.SourceOrder;
         ProxyMode = clean.ProxyMode;
         ProxyAddress = clean.ProxyAddress;
-        GoatTint = clean.GoatTint;
-        OpenCodeTint = clean.OpenCodeTint;
-        DeepSeekTint = clean.DeepSeekTint;
+        SourceTints = clean.SourceTints;
         try
         {
             if (_paths is { } p)
@@ -200,31 +245,83 @@ public sealed class AppSettings
         DeepSeekCurrency = string.IsNullOrWhiteSpace(DeepSeekCurrency)
             ? null
             : DeepSeekCurrency.Trim().ToUpperInvariant(),
-        ShowGoat = ShowGoat,
-        ShowOpenCode = ShowOpenCode,
-        ShowDeepSeek = ShowDeepSeek,
+        VisibleSources = NormalizeVisibleSources(),
         ShowPercent = ShowPercent,
         RingSize = Math.Clamp(RingSize, 0, 2),
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
         UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
-        SourceOrder = NormalizeOrder(SourceOrder),
         ProxyMode = Math.Clamp(ProxyMode, 0, 2),
         ProxyAddress = string.IsNullOrWhiteSpace(ProxyAddress) ? null : ProxyAddress.Trim(),
-        GoatTint = NormalizeTint(GoatTint),
-        OpenCodeTint = NormalizeTint(OpenCodeTint),
-        DeepSeekTint = NormalizeTint(DeepSeekTint),
+        SourceTints = NormalizeTints(),
     };
 
-    /// <summary>来源顺序只认三个已知键,别的字符一律丢掉;全空则回默认。归一成 "a,b,c"。</summary>
-    internal static string NormalizeOrder(string? text)
+    /// <summary>
+    /// 归一可见源列表:丢掉未知键、去重、保证至少一个(全空时退回默认全显示)。
+    /// **先看新字段,再回落到旧字段**——存量用户的 settings.json 里只有
+    /// ShowGoat/ShowOpenCode/ShowDeepSeek/SourceOrder,直接读新字段会得到空列表,
+    /// 表现为"升级后所有环都不见了"。
+    /// </summary>
+    private List<string> NormalizeVisibleSources()
     {
-        var known = new[] { "goat", "opencode", "deepseek" };
-        var keys = (text ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).Where(known.Contains).Distinct().ToList();
-        // 补上没出现的键,保持已知顺序,保证三个源都有位置
-        keys.AddRange(known.Where(k => !keys.Contains(k)));
-        return string.Join(",", keys);
+        var keys = SourceCatalog.Keys;
+        var result = (VisibleSources ?? new())
+            .Where(keys.Contains)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        // 迁移:新字段为空(老配置或首次运行)时,从旧字段重建
+        if (result.Count == 0 && MigratedFromLegacySources() is { Count: > 0 } legacy)
+            result = legacy;
+
+        return result.Count > 0 ? result : keys.ToList();
+    }
+
+    /// <summary>旧设置(三个勾选 + 排列字符串)还原成"可见且有序"的源列表。</summary>
+    private List<string>? MigratedFromLegacySources()
+    {
+        // 三个旧布尔全为 null = settings.json 里根本没有旧字段(全新安装),
+        // 交给上层用默认值,不要在这里凭空造一个"只显示 goat"的配置。
+        if (ShowGoat is null && ShowOpenCode is null && ShowDeepSeek is null) return null;
+
+        var visible = new List<string>();
+        if (ShowGoat != false) visible.Add("goat");
+        if (ShowOpenCode != false) visible.Add("opencode");
+        if (ShowDeepSeek != false) visible.Add("deepseek");
+
+        // 旧 SourceOrder 里出现过的键按它排前,其余保持默认顺序
+        if (!string.IsNullOrWhiteSpace(SourceOrder))
+        {
+            var order = SourceOrder.Split(',').Select(k => k.Trim()).ToList();
+            var known = SourceCatalog.Keys;
+            visible = visible.OrderBy(k => order.IndexOf(k) is var i && i >= 0 ? i : 99)
+                .ThenBy(k => known.ToList().IndexOf(k))
+                .ToList();
+        }
+        return visible.Count > 0 ? visible : null;
+    }
+
+    /// <summary>环色字典:只留已知源、合法色值;空色值不写(免得 JSON 里一堆 null)。
+    /// 顺手把旧版三个独立环色字段迁进来。</summary>
+    private Dictionary<string, string> NormalizeTints()
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var (key, value) in SourceTints ?? new())
+        {
+            if (!SourceCatalog.IsKnownKey(key)) continue;
+            if (NormalizeTint(value) is { } tint) result[key] = tint;
+        }
+        // 迁移旧字段(仅当字典里还没有这个键时,新值优先)
+        foreach (var (key, legacy) in new[]
+                 {
+                     ("goat", GoatTint), ("opencode", OpenCodeTint), ("deepseek", DeepSeekTint),
+                 })
+        {
+            if (result.ContainsKey(key)) continue;
+            if (NormalizeTint(legacy) is { } tint) result[key] = tint;
+        }
+        return result;
     }
 
     /// <summary>环色只接受 #RRGGBB / #AARRGGBB;别的写法当作"没设",不让它把界面画坏。
@@ -252,20 +349,15 @@ public sealed class AppSettings
         DeepSeekBasis = DeepSeekBasis,
         DeepSeekBudget = DeepSeekBudget,
         DeepSeekCurrency = DeepSeekCurrency,
-        ShowGoat = ShowGoat,
-        ShowOpenCode = ShowOpenCode,
-        ShowDeepSeek = ShowDeepSeek,
+        VisibleSources = new List<string>(VisibleSources),
         ShowPercent = ShowPercent,
         RingSize = RingSize,
         RingSpacing = RingSpacing,
         HideToSliver = HideToSliver,
         HideInFullScreen = HideInFullScreen,
         UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
-        SourceOrder = SourceOrder,
         ProxyMode = ProxyMode,
         ProxyAddress = ProxyAddress,
-        GoatTint = GoatTint,
-        OpenCodeTint = OpenCodeTint,
-        DeepSeekTint = DeepSeekTint,
+        SourceTints = new Dictionary<string, string>(SourceTints),
     };
 }

@@ -24,13 +24,13 @@ public partial class SettingsWindow : Window
     /// <summary>设置改动后通知主窗重绘(阈值/不透明度都属于渲染参数)。</summary>
     public event Action? SettingsChanged;
 
-    /// <summary>
-    /// 上一次的"显示哪几个源"组合。源开关变了才需要让引擎重新同步——
-    /// 只改"是否显示读数"不该白打一次 API。
-    /// </summary>
-    private (bool Goat, bool Go, bool DeepSeek) _lastSourceFlags;
+    /// <summary>源凭据卡:每个数据源一张,按 <see cref="SourceCatalog"/> 生成。</summary>
+    private readonly Dictionary<string, SourceCard> _sourceCards = new(StringComparer.Ordinal);
 
-    /// <summary>正在把最后一个勾选框按回去(见 Visibility_Changed),用来挡掉回弹引发的事件。</summary>
+    /// <summary>环色拾取器:每个数据源一个,同样按注册表生成。</summary>
+    private readonly Dictionary<string, TintPicker> _tintPickers = new(StringComparer.Ordinal);
+
+    /// <summary>正在把最后一个勾选框按回去(见 OnSourceVisibilityToggled),用来挡掉回弹引发的事件。</summary>
     private bool _revertingSource;
 
     public SettingsWindow(UsageEngine engine)
@@ -45,6 +45,9 @@ public partial class SettingsWindow : Window
         MaxHeight = Math.Max(workArea.Height - 40, 240);
 
         LoadSettings();
+
+        // 圆环顺序列表:拖动/箭头改序后写设置并让主窗重排
+        RingOrder.OrderChanged += RingOrder_OrderChanged;
 
         _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _statusTimer.Tick += (_, _) => RefreshStatus();
@@ -67,19 +70,9 @@ public partial class SettingsWindow : Window
         AlertSlider.Value = Math.Round(s.AlertThreshold * 100);
         OpacitySlider.Value = Math.Round(s.SurfaceOpacity * 100);
         IntervalSlider.Value = s.SyncIntervalSeconds;
-        BasisCombo.SelectedIndex = s.DeepSeekBasis switch
-        {
-            BalanceBasis.BalanceOnly => 1,
-            BalanceBasis.Budget => 2,
-            _ => 0,
-        };
-        BudgetBox.Text = s.DeepSeekBudget?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
         UsdRateBox.Text = s.UsdToCny.ToString("0.##", CultureInfo.InvariantCulture);
         ProxyCombo.SelectedIndex = Math.Clamp(s.ProxyMode, 0, 2);
         ProxyBox.Text = s.ProxyAddress ?? "";
-        ShowGoatBox.IsChecked = s.ShowGoat;
-        ShowGoBox.IsChecked = s.ShowOpenCode;
-        ShowDeepSeekBox.IsChecked = s.ShowDeepSeek;
         ShowPercentBox.IsChecked = s.ShowPercent;
         SizeSmall.IsChecked = s.RingSize == 0;
         SizeStandard.IsChecked = s.RingSize == 1;
@@ -90,37 +83,127 @@ public partial class SettingsWindow : Window
         SliverBox.IsChecked = s.HideToSliver;
         FullScreenBox.IsChecked = s.HideInFullScreen;
         BrowserSessionBox.IsChecked = s.UseBrowserSessionForModelDetail;
-        OrderCombo.SelectedIndex = s.SourceOrder switch
-        {
-            "goat,deepseek,opencode" => 1,
-            "opencode,goat,deepseek" => 2,
-            "opencode,deepseek,goat" => 3,
-            "deepseek,goat,opencode" => 4,
-            "deepseek,opencode,goat" => 5,
-            _ => 0,
-        };
-        _lastSourceFlags = (s.ShowGoat, s.ShowOpenCode, s.ShowDeepSeek);
-        GoatTintPick.Value = s.GoatTint;
-        GoTintPick.Value = s.OpenCodeTint;
-        DeepSeekTintPick.Value = s.DeepSeekTint;
-        UpdateBasisHint();
+
+        // 数据源凭据卡 + 圆环顺序:都从注册表生成,加源不用改这里
+        BuildSourceCards();
+        BuildTintPickers();
+        ReloadRingOrder();
         UpdatePercentHint();
         _loading = false;
         UpdateLabels();
     }
 
-    // ————————————————— 环色 —————————————————
+    // ————————————————— 数据源 / 圆环顺序(都按注册表生成) —————————————————
 
-    /// <summary>色板里选了颜色(或切回自动):只更新变化的那一项,存盘并让浮窗立刻重绘。</summary>
-    private void Tint_ValueChanged(object? sender, EventArgs e)
+    /// <summary>按 <see cref="SourceCatalog"/> 为每个源建一张凭据卡,加源不用改这里。</summary>
+    private void BuildSourceCards()
     {
-        if (_loading) return;
-        var s = AppSettings.Current;
-        if (sender == GoatTintPick) s.GoatTint = GoatTintPick.Value;
-        else if (sender == GoTintPick) s.OpenCodeTint = GoTintPick.Value;
-        else s.DeepSeekTint = DeepSeekTintPick.Value;
-        s.Save();
+        SourceCardsPanel.Children.Clear();
+        _sourceCards.Clear();
+        foreach (var source in SourceCatalog.All)
+        {
+            var card = new SourceCard(source, _engine);
+            card.VisibilityToggled += () => OnSourceVisibilityToggled(card);
+            card.BasisChanged += () =>
+            {
+                SettingsChanged?.Invoke();
+                SaveSoon();
+                _engine.RequestRefreshNow();
+            };
+            _sourceCards[source.Key] = card;
+            SourceCardsPanel.Children.Add(card);
+        }
+    }
+
+    /// <summary>环色拾取器:每个源一个,按注册表生成(从前是三个命名控件 + 三段 if)。</summary>
+    private void BuildTintPickers()
+    {
+        TintPanel.Children.Clear();
+        _tintPickers.Clear();
+        foreach (var source in SourceCatalog.All)
+        {
+            var row = new Grid { Margin = new Thickness(0, 9, 0, 9) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(new TextBlock
+            {
+                Text = source.DisplayName,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            });
+            var picker = new TintPicker { Value = AppSettings.Current.TintFor(source.Key) };
+            picker.ValueChanged += (_, _) =>
+            {
+                if (_loading) return;
+                var s = AppSettings.Current;
+                if (picker.Value is { } tint) s.SourceTints[source.Key] = tint;
+                else s.SourceTints.Remove(source.Key);
+                s.Save();
+                SettingsChanged?.Invoke();
+            };
+            Grid.SetColumn(picker, 1);
+            row.Children.Add(picker);
+            _tintPickers[source.Key] = picker;
+            TintPanel.Children.Add(row);
+        }
+    }
+
+    /// <summary>重建圆环顺序列表(显示哪些源变了 / 顺序变了都走这里)。</summary>
+    private void ReloadRingOrder() => RingOrder.Load(AppSettings.Current.VisibleSources);
+
+    /// <summary>圆环顺序被拖动或箭头改了。</summary>
+    private void RingOrder_OrderChanged(List<string> order)
+    {
+        AppSettings.Current.VisibleSources = order;
+        AppSettings.Current.Save();
         SettingsChanged?.Invoke();
+        SaveSoon();
+    }
+
+    /// <summary>
+    /// 某个源的"显示"勾选变了。写入 <see cref="AppSettings.VisibleSources"/> 并保证
+    /// **至少留一个源**(全关之后 rail 上就没有内容了);源集合变了才让引擎重新同步。
+    /// </summary>
+    private void OnSourceVisibilityToggled(SourceCard card)
+    {
+        if (_loading || _revertingSource) return;
+        var s = AppSettings.Current;
+
+        // 按当前顺序重建可见列表:先保序,再按勾选增减
+        var ordered = s.VisibleSources.Where(SourceCatalog.IsKnownKey).ToList();
+        foreach (var source in SourceCatalog.All)
+            if (!ordered.Contains(source.Key)) ordered.Add(source.Key);
+
+        var visible = ordered.Where(k => _sourceCards[k].IsChecked).ToList();
+
+        if (visible.Count == 0)
+        {
+            // 回弹:把刚取消的那个按回去(直接改控件状态,不走事件)
+            _revertingSource = true;
+            card.SetCheckedQuiet(true);
+            _revertingSource = false;
+            visible.Add(card.Key);
+            SourceHint.Text = "至少要保留一个数据源——全部关掉之后浮窗上就没有内容了。";
+            SourceHint.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SourceHint.Visibility = Visibility.Collapsed;
+        }
+
+        // 可见集合不变(只是回弹)就不用惊动引擎
+        bool changed = !visible.ToHashSet().SetEquals(s.VisibleSources.ToHashSet());
+        s.VisibleSources = visible;
+        s.Save();
+        ReloadRingOrder();
+
+        if (changed) _engine.RequestRefreshNow();
+
+        // 主窗会按新的勾选重新加载数据并重算单元高度,rail 长度随即跟着变
+        SettingsChanged?.Invoke();
+        SaveSoon();
     }
 
     private void UpdateLabels()
@@ -152,56 +235,6 @@ public partial class SettingsWindow : Window
     {
         _saveTimer.Stop();
         _saveTimer.Start();
-    }
-
-    // ————————————————— DeepSeek —————————————————
-
-    private BalanceBasis SelectedBasis() => BasisCombo.SelectedIndex switch
-    {
-        1 => BalanceBasis.BalanceOnly,
-        2 => BalanceBasis.Budget,
-        _ => BalanceBasis.SinceTopUp,
-    };
-
-    private void UpdateBasisHint()
-    {
-        var basis = SelectedBasis();
-        BudgetRow.Visibility = basis == BalanceBasis.Budget ? Visibility.Visible : Visibility.Collapsed;
-        BasisHint.Text = basis switch
-        {
-            BalanceBasis.SinceTopUp =>
-                "以本程序观察到的最高余额为满分:余额上涨只可能是充值,所以一涨就重置回满。"
-                + "首次运行没有历史峰值,环会从 0% 开始,直到真的花了钱。",
-            BalanceBasis.BalanceOnly =>
-                "不画百分比,环上直接显示余额金额(短写法,精确值在悬停卡里)。",
-            _ => "以你填的金额为满分:(预算 − 余额) / 预算。留空或填 0 则退回只看余额。",
-        };
-    }
-
-    private void BasisCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading) return;
-        AppSettings.Current.DeepSeekBasis = SelectedBasis();
-        UpdateBasisHint();
-        SettingsChanged?.Invoke();
-        SaveSoon();
-        _engine.RequestRefreshNow();   // 分母换了,立刻按新基准重算一次
-    }
-
-    private void BudgetBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        string text = BudgetBox.Text?.Trim() ?? "";
-        double? value = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            && double.IsFinite(parsed) && parsed > 0
-            ? parsed
-            : null;
-
-        AppSettings.Current.DeepSeekBudget = value;
-        BudgetBox.Text = value?.ToString("0.##", CultureInfo.InvariantCulture) ?? "";
-        SettingsChanged?.Invoke();
-        SaveSoon();
-        _engine.RequestRefreshNow();
     }
 
     /// <summary>
@@ -245,122 +278,28 @@ public partial class SettingsWindow : Window
 
     private void RefreshStatus()
     {
-        var g = _engine.Goat;
-        GoatSource.Text = string.IsNullOrEmpty(g.CredentialSource) ? "" : $"凭据来源:{g.CredentialSource}";
-        GoatStatus.Text = g.StatusText;
-        GoatHint.Text = g.State switch
-        {
-            SourceState.Connected => "",
-            SourceState.AuthenticationRequired => "未找到可用凭据:可输入 Command Code API Key(或登录过 Command Code CLI 后重启本程序自动读取)。",
-            _ => "正在使用最后一次成功数据;恢复后自动更新。",
-        };
-
-        var go = _engine.Go;
-        GoSource.Text = string.IsNullOrEmpty(go.CredentialSource) ? "" : $"凭据来源:{go.CredentialSource}";
-        GoStatus.Text = go.StatusText;
-        GoHint.Text = go.State switch
-        {
-            SourceState.Connected => "",
-            SourceState.AuthenticationRequired => "未找到可用凭据:可输入 OpenCode Go API Key(或本机 OpenCode auth.json 里有 opencode-go 登录态时自动读取)。",
-            _ => "正在使用最后一次成功数据;恢复后自动更新。",
-        };
-
-        var ds = _engine.DeepSeek;
-        DeepSeekSource.Text = string.IsNullOrEmpty(ds.CredentialSource) ? "" : $"凭据来源:{ds.CredentialSource}";
-        DeepSeekStatus.Text = ds.StatusText;
-        DeepSeekHint.Text = ds.State switch
-        {
-            SourceState.Connected => "",
-            SourceState.AuthenticationRequired => "未找到凭据:输入 DeepSeek API Key(在 platform.deepseek.com 控制台创建)。",
-            _ => "正在使用最后一次成功数据;恢复后自动更新。",
-        };
-
+        foreach (var (key, card) in _sourceCards)
+            card.RefreshStatus(_engine.StatusForSource(key));
         DataDirText.Text = $"数据目录(便携):{SnapshotSource.DataDirectory}";
     }
 
-    private async void SaveGoat_Click(object sender, RoutedEventArgs e)
-    {
-        var key = GoatKey.Text?.Trim();
-        if (string.IsNullOrEmpty(key)) return;
-        GoatHint.Text = "正在验证 Key…";
-        bool ok = await _engine.SaveManualKeyAsync(MonitorSource.CommandCodeGoat, key);
-        GoatHint.Text = ok ? "已保存并连接成功。" : "验证失败:Key 无效或网络异常。";
-        if (ok) GoatKey.Clear();
-    }
-
-    private async void SaveGo_Click(object sender, RoutedEventArgs e)
-    {
-        var key = GoKey.Text?.Trim();
-        if (string.IsNullOrEmpty(key)) return;
-        GoHint.Text = "正在验证 Key…";
-        bool ok = await _engine.SaveManualKeyAsync(MonitorSource.OpenCodeGo, key);
-        GoHint.Text = ok ? "已保存并连接成功。" : "验证失败:Key 无效或网络异常。";
-        if (ok) GoKey.Clear();
-    }
-
-    private async void SaveDeepSeek_Click(object sender, RoutedEventArgs e)
-    {
-        var key = DeepSeekKey.Text?.Trim();
-        if (string.IsNullOrEmpty(key)) return;
-        DeepSeekHint.Text = "正在验证 Key…";
-        bool ok = await _engine.SaveManualKeyAsync(MonitorSource.DeepSeek, key);
-        DeepSeekHint.Text = ok ? "已保存并连接成功。" : "验证失败:Key 无效或网络异常。";
-        if (ok) DeepSeekKey.Clear();
-    }
-
     // ————————————————— 主界面(显示哪些环 / 是否显示读数) —————————————————
-
-    private void Visibility_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_loading || _revertingSource) return;
-        var s = AppSettings.Current;
-        s.ShowGoat = ShowGoatBox.IsChecked == true;
-        s.ShowOpenCode = ShowGoBox.IsChecked == true;
-        s.ShowDeepSeek = ShowDeepSeekBox.IsChecked == true;
-        s.ShowPercent = ShowPercentBox.IsChecked == true;
-
-        // **至少要保留一个数据源**(上游规格:设置必须保证始终留有一个可用入口)。
-        // 三个全关之后主窗虽然还有占位兜底、不至于崩,但 rail 上已经没有任何内容,
-        // 这个状态没有意义。把刚刚取消的那一个按回去,并说明原因——比默默允许存下
-        // 一个空配置要好。
-        if (sender is CheckBox { IsChecked: false } box
-            && !s.ShowGoat && !s.ShowOpenCode && !s.ShowDeepSeek)
-        {
-            _revertingSource = true;
-            box.IsChecked = true;          // 回弹会触发一次新事件,用标志挡掉
-            _revertingSource = false;
-            s.ShowGoat = ShowGoatBox.IsChecked == true;
-            s.ShowOpenCode = ShowGoBox.IsChecked == true;
-            s.ShowDeepSeek = ShowDeepSeekBox.IsChecked == true;
-            SourceHint.Text = "至少要保留一个数据源——三个全关之后浮窗上就没有内容了。";
-            SourceHint.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            SourceHint.Visibility = Visibility.Collapsed;
-        }
-
-        UpdatePercentHint();
-
-        // 源开关变了要顺带让引擎重新同步:刚勾上的源不该等到下一轮(最长 60 秒)
-        // 才有数据,刚取消的源也不必再等一个周期才停。
-        var flags = (s.ShowGoat, s.ShowOpenCode, s.ShowDeepSeek);
-        if (flags != _lastSourceFlags)
-        {
-            _lastSourceFlags = flags;
-            _engine.RequestRefreshNow();
-        }
-
-        // 主窗会按新的勾选重新加载数据并重算单元高度,rail 长度随即跟着变
-        SettingsChanged?.Invoke();
-        SaveSoon();
-    }
 
     private void UpdatePercentHint()
     {
         PercentHint.Text = ShowPercentBox.IsChecked == true
             ? "读数显示在圆环下方,每个单元更高。"
             : "已隐藏读数:rail 上只有圆环,间距与整体高度都会收窄。";
+    }
+
+    /// <summary>"在圆环下显示读数"开关(与"显示哪些源"无关,各管各的)。</summary>
+    private void ShowPercent_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.ShowPercent = ShowPercentBox.IsChecked == true;
+        UpdatePercentHint();
+        SettingsChanged?.Invoke();
+        SaveSoon();
     }
 
     /// <summary>
@@ -1097,24 +1036,6 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         AppSettings.Current.HideInFullScreen = FullScreenBox.IsChecked == true;
         SaveSoon();
-    }
-
-    private static readonly string[] OrderKeys =
-    {
-        "goat,opencode,deepseek", "goat,deepseek,opencode",
-        "opencode,goat,deepseek", "opencode,deepseek,goat",
-        "deepseek,goat,opencode", "deepseek,opencode,goat",
-    };
-
-    private void OrderCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading) return;
-        if (OrderCombo.SelectedIndex is { } i && (uint)i < OrderKeys.Length)
-        {
-            AppSettings.Current.SourceOrder = OrderKeys[i];
-            SettingsChanged?.Invoke();   // 主窗按新顺序重载
-            SaveSoon();
-        }
     }
 
     // ————————————————— 关于页 —————————————————

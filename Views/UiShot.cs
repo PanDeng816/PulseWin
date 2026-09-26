@@ -22,8 +22,58 @@ internal static class UiShot
         string dir = Path.Combine(SnapshotSource.DataDirectory, "ui-shot");
         Directory.CreateDirectory(dir);
 
+        // --ui-shot 没有主窗口,默认的 OnLastWindowClose 会在第一张图后就把应用关掉
+        // (第二张窗只来得及存一张空图,还会抛"应用程序对象正在关闭")。改成显式退出。
+        System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         RenderTintPickers(Path.Combine(dir, "tint-picker.png"));
+        try
+        {
+            using var engine = new UsageEngine();   // 不 Start:引擎只有 Start 后才发网络请求
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-behavior.png"), "行为", "NavBehavior");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-rings.png"), "圆环与数字", "NavRings");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-sources.png"), "数据源", "NavSources");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("设置页出图失败", ex);
+        }
         RenderSpendWindow(Path.Combine(dir, "spend-window.png"));
+    }
+
+    /// <summary>设置窗的某一页(用同一个不 Start 的引擎,避免重复初始化)。</summary>
+    private static void RenderSettingsPage(UsageEngine engine, string path, string title, string navName)
+    {
+        try
+        {
+            var window = new SettingsWindow(engine)
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -32000,
+                Top = -32000,
+                ShowInTaskbar = false,
+            };
+            window.Show();
+            // 切到目标页(侧栏是 RadioButton,直接置 IsChecked 会触发 Nav_Checked)。
+            // **必须在 Show 之后**:Show 之前可视树还没建,切页后内层容器没有实际尺寸。
+            if (window.FindName(navName) is System.Windows.Controls.RadioButton nav)
+                nav.IsChecked = true;
+            // 切页会换掉可见的 StackPanel,布局要让它跑完一遍再截图;
+            // 用 UpdateLayout 还不够——外层窗口尺寸没变,内层是懒布局。
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+            window.UpdateLayout();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+
+            double w = window.ActualWidth, h = window.ActualHeight;
+            if (w < 1 || h < 1) w = window.Width;
+            if (h < 1) h = window.Height;
+            Save(window, new Size(w, h), path);
+            window.Close();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note($"设置页出图失败({title})", ex);
+        }
     }
 
     /// <summary>环色选择器:自动档(最长文案)+ 一个固定色档,验证文字不被右缘切。</summary>

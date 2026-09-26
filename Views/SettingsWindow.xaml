@@ -240,7 +240,7 @@
                                     </StackPanel>
                                     <CheckBox x:Name="ShowPercentBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
-                                              Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
+                                              Checked="ShowPercent_Changed" Unchecked="ShowPercent_Changed"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -285,16 +285,10 @@
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel Margin="0,11">
                                 <TextBlock Text="rail 上数据源的排列" Style="{StaticResource RowTitle}"/>
-                                <ComboBox x:Name="OrderCombo" Width="240" Height="30" Margin="0,8,0,10"
-                                          Style="{StaticResource LightCombo}" HorizontalAlignment="Left"
-                                          SelectionChanged="OrderCombo_SelectionChanged">
-                                    <ComboBoxItem Content="GOAT · OpenCode Go · DeepSeek"/>
-                                    <ComboBoxItem Content="GOAT · DeepSeek · OpenCode Go"/>
-                                    <ComboBoxItem Content="OpenCode Go · GOAT · DeepSeek"/>
-                                    <ComboBoxItem Content="OpenCode Go · DeepSeek · GOAT"/>
-                                    <ComboBoxItem Content="DeepSeek · GOAT · OpenCode Go"/>
-                                    <ComboBoxItem Content="DeepSeek · OpenCode Go · GOAT"/>
-                                </ComboBox>
+                                <TextBlock Text="拖动行首的手柄,或点右侧箭头逐格移动;从上到下就是 rail 上的顺序。只列已显示的圆环——要增减显示哪些源,去「数据源」页勾选。"
+                                           Style="{StaticResource RowSub}" Margin="0,3,0,8"/>
+                                <!-- 可重排列表:源一多时不会像"排列组合下拉框"那样爆炸 -->
+                                <local:RingOrderList x:Name="RingOrder"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -328,155 +322,19 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource RowHint}" Margin="0,10,0,4"
                                            Text="颜色默认表示“离上限还有多远”(按用量着色),不是产品标识——产品由环心图标表示。想固定成品牌色就在这里选;额度用满时一律深红,不受这里影响。"/>
-                                <Grid Margin="0,9">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Command Code GOAT" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
-                                    <local:TintPicker x:Name="GoatTintPick" Grid.Column="1" ValueChanged="Tint_ValueChanged"/>
-                                </Grid>
-                                <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,9">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="OpenCode Go" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
-                                    <local:TintPicker x:Name="GoTintPick" Grid.Column="1" ValueChanged="Tint_ValueChanged"/>
-                                </Grid>
-                                <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,9">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="DeepSeek" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
-                                    <local:TintPicker x:Name="DeepSeekTintPick" Grid.Column="1" ValueChanged="Tint_ValueChanged"/>
-                                </Grid>
+                                <!-- 每个源一行,按 SourceCatalog 生成(见 BuildTintPickers) -->
+                                <StackPanel x:Name="TintPanel"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
 
                     <!-- ============ 数据源 ============ -->
+                    <!-- 每张凭据卡按 SourceCatalog 生成(见 SourceCard.cs):加一个源只改注册表,
+                         不用在这里复制一整块 XAML、再去代码里同步命名控件。 -->
                     <StackPanel x:Name="PageSources" Visibility="Collapsed">
                         <TextBlock Text="凭据自动从环境变量 / CLI 登录态读取;也可以在下面手动输入 API Key(按当前 Windows 用户 DPAPI 加密保存)。"
                                    Style="{StaticResource RowHint}" Margin="1,0,0,12"/>
-
-                        <!-- Command Code GOAT -->
-                        <Border Style="{StaticResource GroupCard}">
-                            <StackPanel>
-                                <DockPanel Margin="0,10">
-                                    <CheckBox x:Name="ShowGoatBox" DockPanel.Dock="Right" Style="{StaticResource LightCheckBox}"
-                                              Content="显示" HorizontalAlignment="Right"
-                                              Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
-                                    <StackPanel>
-                                        <TextBlock Text="Command Code GOAT" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1F"/>
-                                        <TextBlock x:Name="GoatSource" FontSize="11" Foreground="#86868B" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </DockPanel>
-                                <TextBlock x:Name="GoatStatus" FontSize="12" Foreground="#86868B" TextWrapping="Wrap"/>
-                                <Grid Margin="0,9,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="GoatKey" Height="30" VerticalContentAlignment="Center"
-                                             Style="{StaticResource LightTextBox}"/>
-                                    <Button Grid.Column="1" Content="保存" Width="60" Height="30" Margin="8,0,0,0"
-                                            Style="{StaticResource PrimaryButton}" Click="SaveGoat_Click"/>
-                                </Grid>
-                                <TextBlock x:Name="GoatHint" Style="{StaticResource RowHint}" Margin="0,7,0,10" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- OpenCode Go -->
-                        <Border Style="{StaticResource GroupCard}">
-                            <StackPanel>
-                                <DockPanel Margin="0,10">
-                                    <CheckBox x:Name="ShowGoBox" DockPanel.Dock="Right" Style="{StaticResource LightCheckBox}"
-                                              Content="显示" HorizontalAlignment="Right"
-                                              Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
-                                    <StackPanel>
-                                        <TextBlock Text="OpenCode Go" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1F"/>
-                                        <TextBlock x:Name="GoSource" FontSize="11" Foreground="#86868B" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </DockPanel>
-                                <TextBlock x:Name="GoStatus" FontSize="12" Foreground="#86868B" TextWrapping="Wrap"/>
-                                <Grid Margin="0,9,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="GoKey" Height="30" VerticalContentAlignment="Center"
-                                             Style="{StaticResource LightTextBox}"/>
-                                    <Button Grid.Column="1" Content="保存" Width="60" Height="30" Margin="8,0,0,0"
-                                            Style="{StaticResource PrimaryButton}" Click="SaveGo_Click"/>
-                                </Grid>
-                                <TextBlock x:Name="GoHint" Style="{StaticResource RowHint}" Margin="0,7,0,10" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- DeepSeek -->
-                        <Border Style="{StaticResource GroupCard}">
-                            <StackPanel>
-                                <DockPanel Margin="0,10">
-                                    <CheckBox x:Name="ShowDeepSeekBox" DockPanel.Dock="Right" Style="{StaticResource LightCheckBox}"
-                                              Content="显示" HorizontalAlignment="Right"
-                                              Checked="Visibility_Changed" Unchecked="Visibility_Changed"/>
-                                    <StackPanel>
-                                        <TextBlock Text="DeepSeek" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1F"/>
-                                        <TextBlock x:Name="DeepSeekSource" FontSize="11" Foreground="#86868B" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </DockPanel>
-                                <TextBlock x:Name="DeepSeekStatus" FontSize="12" Foreground="#86868B" TextWrapping="Wrap"/>
-                                <Grid Margin="0,9,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="DeepSeekKey" Height="30" VerticalContentAlignment="Center"
-                                             Style="{StaticResource LightTextBox}"/>
-                                    <Button Grid.Column="1" Content="保存" Width="60" Height="30" Margin="8,0,0,0"
-                                            Style="{StaticResource PrimaryButton}" Click="SaveDeepSeek_Click"/>
-                                </Grid>
-                                <TextBlock x:Name="DeepSeekHint" Style="{StaticResource RowHint}" Margin="0,7,0,0" TextWrapping="Wrap"/>
-
-                                <Border Style="{StaticResource RowSeparator}"/>
-                                <!-- DeepSeek 只报余额、不报任何额度,所以环的百分比要自己定基准 -->
-                                <Grid Margin="0,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="环的基准" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock x:Name="BasisHint" Text="" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
-                                    <ComboBox x:Name="BasisCombo" Width="150" Height="30" Grid.Column="1"
-                                              Style="{StaticResource LightCombo}" VerticalAlignment="Center"
-                                              SelectionChanged="BasisCombo_SelectionChanged">
-                                        <ComboBoxItem Content="自上次充值"/>
-                                        <ComboBoxItem Content="只看余额"/>
-                                        <ComboBoxItem Content="我的预算"/>
-                                    </ComboBox>
-                                </Grid>
-                                <Grid x:Name="BudgetRow" Margin="0,0,0,10" Visibility="Collapsed">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="预算金额" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="你认为的“满箱”是多少" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
-                                    <TextBox x:Name="BudgetBox" Grid.Column="1" Width="150" Height="30"
-                                             VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
-                                             LostFocus="BudgetBox_LostFocus"/>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
+                        <StackPanel x:Name="SourceCardsPanel"/>
                         <TextBlock x:Name="SourceHint" FontSize="11" Foreground="#C7502E"
                                    Margin="1,0,0,10" TextWrapping="Wrap" Visibility="Collapsed"/>
                     </StackPanel>

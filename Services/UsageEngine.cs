@@ -186,31 +186,45 @@ public sealed class UsageEngine : IDisposable
     }
 
     private static readonly MonitorSource[] AllSources =
-    [
-        MonitorSource.CommandCodeGoat, MonitorSource.OpenCodeGo, MonitorSource.DeepSeek
-    ];
+        SourceCatalog.All.Select(s => s.Id).ToArray();
 
     /// <summary>
     /// 这个源在设置里是否被勾选显示。没勾选的源**连 API 都不打**:rail 上不画它,
     /// 就没有理由为它花配额、攒失败计数。设置里改回勾选后由设置窗口触发一次
     /// 立即同步,不必等下一轮(最长 60 秒)才恢复。
     /// </summary>
-    private static bool EnabledInSettings(MonitorSource source)
+    private static bool EnabledInSettings(MonitorSource source) =>
+        AppSettings.Current.IsSourceVisible(SourceCatalog.ById(source).Key);
+
+    /// <summary>
+    /// 状态对象、凭据解析器、API 客户端**都带实例**,所以仍在这里按源映射。注册表只管
+    /// "静态元数据"(名字、文件名、提示语),不持有这些有状态对象——否则它的构造就会
+    /// 牵动网络与磁盘。
+    /// </summary>
+    private SourceStatus StatusFor(MonitorSource source) => source switch
     {
-        var settings = AppSettings.Current;
-        return source switch
-        {
-            MonitorSource.CommandCodeGoat => settings.ShowGoat,
-            MonitorSource.OpenCodeGo => settings.ShowOpenCode,
-            _ => settings.ShowDeepSeek,
-        };
-    }
+        MonitorSource.CommandCodeGoat => Goat,
+        MonitorSource.OpenCodeGo => Go,
+        _ => DeepSeek,
+    };
+
+    /// <summary>按源短键取状态(设置页的凭据卡按注册表生成,手里只有键)。</summary>
+    public SourceStatus StatusForSource(string key) =>
+        SourceCatalog.ByKey(key) is { } source ? StatusFor(source.Id) : new SourceStatus();
 
     private IUsageProvider ProviderFor(MonitorSource source) => source switch
     {
         MonitorSource.CommandCodeGoat => _goatApi,
         MonitorSource.OpenCodeGo => _goApi,
         _ => _deepSeekApi,
+    };
+
+    /// <summary>三个凭据解析器是两种类型(OpenCode 的走另一套 auth.json),但接口同形。</summary>
+    private IReadOnlyList<CredentialCandidate> DiscoverCandidatesFor(MonitorSource source) => source switch
+    {
+        MonitorSource.CommandCodeGoat => _goatResolver.DiscoverCandidates(),
+        MonitorSource.OpenCodeGo => _goResolver.DiscoverCandidates(),
+        _ => _deepSeekResolver.DiscoverCandidates(),
     };
 
     private SnapshotCache CacheFor(MonitorSource source) => source switch
@@ -226,25 +240,10 @@ public sealed class UsageEngine : IDisposable
     /// </summary>
     private async Task<(bool Ok, bool PermissionDenied)> SyncSourceAsync(MonitorSource source, CancellationToken token)
     {
-        var status = source switch
-        {
-            MonitorSource.CommandCodeGoat => Goat,
-            MonitorSource.OpenCodeGo => Go,
-            _ => DeepSeek,
-        };
-        string name = source switch
-        {
-            MonitorSource.CommandCodeGoat => "GOAT",
-            MonitorSource.OpenCodeGo => "OpenCode Go",
-            _ => "DeepSeek",
-        };
+        var status = StatusFor(source);
+        string name = SourceCatalog.ById(source).DisplayName;
         var provider = ProviderFor(source);
-        var candidates = source switch
-        {
-            MonitorSource.CommandCodeGoat => _goatResolver.DiscoverCandidates(),
-            MonitorSource.OpenCodeGo => _goResolver.DiscoverCandidates(),
-            _ => _deepSeekResolver.DiscoverCandidates(),
-        };
+        var candidates = DiscoverCandidatesFor(source);
 
         try
         {

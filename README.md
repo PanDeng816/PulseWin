@@ -250,21 +250,42 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 | `--update-prices` | 强制更新一次模型牌价表并等它做完 | `Data\price-update.txt` |
 | `--activity [目录]` | 读 ZCode 活动日志并输出判定,可指定日志目录 | `Data\activity.txt` |
 | `--card-shot` | 用合成数据把 hover 明细卡离屏渲染成 PNG(排版必须在像素上核对) | `Data\card-shot\*.png` |
-| `--ui-shot` | 把环色选择器与用量统计窗离屏渲染成 PNG(不 Show、不抢焦点) | `Data\ui-shot\*.png` |
+| `--ui-shot` | 把设置窗各页、环色选择器与用量统计窗离屏渲染成 PNG(不 Show、不抢焦点) | `Data\ui-shot\*.png` |
+| `--check-migration` | 核对旧设置能正确迁到新格式(用合成用例 + 本机真实 settings.json) | `Data\migration-check.txt` |
 
 ## 设置与数据
 
 托盘 → **设置…**:
-- 显示两个数据源的连接状态与凭据来源
+- 显示各数据源的连接状态与凭据来源
 - 可手动输入 API Key(先联网验证,通过后 DPAPI 加密保存并立即同步)
 - 调整显示与刷新偏好,即时生效并写入 `Data\settings.json`:
   - **报警阈值**(50%~99%,默认 80%)
   - **背景不透明度**(30%~100%,默认 80%)
   - **同步间隔**(15~300 秒,默认 60 秒)
   - **显示哪些圆环**(至少留一个)、**环下是否显示读数**
+  - **圆环顺序**:在「行为」页用**可重排列表**调整(拖动行首手柄或点上下箭头)
   - **每个源的圆环颜色**(留空 = 按用量着色)
   - **自动隐藏**的两个开关(见下)
   - **网络代理**(跟随系统/直连/手动 HTTP;**重启后生效**)
+
+### 加一个新的数据源
+
+数据源是一张注册表(<see>`Services/SourceCatalog.cs`</see>)驱动的,加一个源只需**加一条记录**
+(键、显示名、rail 标题、月池叫法、是否余额型、快照/凭据文件名、凭据提示),不再需要改六处:
+
+```csharp
+new(
+    Id: MonitorSource.YourSource, Key: "yoursource",
+    DisplayName: "Your Source", RailName: "YS", MonthlyLabel: "本月",
+    IsBalance: false, CredentialHelp: "…",
+    SnapshotFile: p => p.YourSnapshotFile,
+    CredentialFile: p => p.YourCredentialFile),
+```
+
+设置存取(可见源与顺序)、快照加载、引擎同步、设置页的凭据卡与环色项都从这个表生成。
+UI 只保留三处**与实例绑定**的映射(状态对象、凭据解析器、API 客户端),那是注册表不该持
+有的有状态对象。旧设置里的 `ShowGoat`/`SourceOrder`/`GoatTint` 等字段仍能被读入并迁移
+(见 `--check-migration`),存量用户升级不丢配置。
 
 ### 关于"液态玻璃"(v1.7.3 已移除)
 

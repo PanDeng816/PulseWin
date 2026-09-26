@@ -134,10 +134,6 @@ public static class SnapshotSource
     private static readonly AppDataPaths Paths = new();
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private static readonly SourceProfile GoatProfile = new("goat", "GOAT", "总额度");
-    private static readonly SourceProfile GoProfile = new("opencode", "GO", "本月");
-    private static readonly SourceProfile DeepSeekProfile = new("deepseek", "DeepSeek", "余额");
-
     public static string DataDirectory => Paths.RootDirectory;
 
     /// <summary>数据目录路径对象(用量统计等模块要拿同一份,避免各建各的)。</summary>
@@ -150,8 +146,9 @@ public static class SnapshotSource
     public static long Stamp()
     {
         long stamp = 0;
-        foreach (var file in new[] { Paths.SnapshotFile, Paths.OpenCodeSnapshotFile, Paths.DeepSeekSnapshotFile })
+        foreach (var source in SourceCatalog.All)
         {
+            string file = source.SnapshotFile(Paths);
             try
             {
                 if (File.Exists(file)) stamp += File.GetLastWriteTimeUtc(file).Ticks;
@@ -167,38 +164,32 @@ public static class SnapshotSource
     /// <summary>
     /// 按设置里勾选的源加载。关掉的源连高度都不占——rail 长度直接跟着走,
     /// 所以"只显示某几个"不需要 UI 另做隐藏逻辑。
+    /// **顺序 = 设置里 VisibleSources 的顺序**(从前是三个 if + 事后排序,现在是直接遍历)。
     /// </summary>
     public static List<SubData> LoadAll()
     {
         var settings = AppSettings.Current;
-        var subs = new List<SubData>(3);
-        if (settings.ShowGoat) Add(subs, Paths.SnapshotFile, GoatProfile);
-        if (settings.ShowOpenCode) Add(subs, Paths.OpenCodeSnapshotFile, GoProfile);
-        if (settings.ShowDeepSeek)
+        var subs = new List<SubData>(SourceCatalog.All.Count);
+        foreach (var key in settings.VisibleSources)
         {
+            if (SourceCatalog.ByKey(key) is not { } source) continue;
+            if (LoadOne(source.SnapshotFile(Paths), ProfileFor(source)) is not { } sub) continue;
+
             // 余额型数据源额外带上"今日每小时消耗"——那不在快照里,
             // 是本程序自己按小时采样攒出来的(见 DeepSeekLedger)
-            if (LoadOne(Paths.DeepSeekSnapshotFile, DeepSeekProfile) is { } deepSeek)
+            if (source.IsBalance)
             {
-                deepSeek.HourlySpend = new DeepSeekLedger(Paths)
-                    .TodayHourlySpend(deepSeek.AccountLabel, DateTimeOffset.UtcNow);
-                subs.Add(deepSeek);
+                sub.HourlySpend = new DeepSeekLedger(Paths)
+                    .TodayHourlySpend(sub.AccountLabel, DateTimeOffset.UtcNow);
             }
+            subs.Add(sub);
         }
-        // 按用户设置的顺序排(如 "goat,deepseek,opencode");没列出的键按默认顺序垫底
-        var order = settings.SourceOrder.Split(',').Select(k => k.Trim()).ToList();
-        subs.Sort((a, b) =>
-        {
-            int ia = order.IndexOf(a.Key), ib = order.IndexOf(b.Key);
-            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-        });
         return subs;
-
-        static void Add(List<SubData> target, string file, SourceProfile profile)
-        {
-            if (LoadOne(file, profile) is { } sub) target.Add(sub);
-        }
     }
+
+    /// <summary>注册表条目 → 加载用的显示身份。</summary>
+    private static SourceProfile ProfileFor(SourceDescriptor source) =>
+        new(source.Key, source.RailName, source.MonthlyLabel);
 
     private static SubData? LoadOne(string file, SourceProfile profile)
     {

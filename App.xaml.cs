@@ -99,6 +99,16 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:核对"旧设置(三个勾选 + 排列字符串)能正确迁到新字段"。这是升级路径上
+        // 最容易出错也最不该出错的一环——迁错的表现是"升级后某些环不见了",而用户
+        // 不会想到去看 settings.json。结果打到 Data\migration-check.txt 后退出。
+        if (e.Args.Any(a => string.Equals(a, "--check-migration", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunMigrationCheck();
+            Shutdown();
+            return;
+        }
+
         // 诊断用:把工具窗(设置/统计)离屏渲染成 PNG 后退出。用真实窗口控件(会读本机
         // 库出真数据),但不 Show、不抢焦点、不受"已有实例"守卫影响,产物在 Data\ui-shot\ 下。
         // **不在这里 Shutdown**:出图是异步的(要等窗口把数据加载完),由 UiShot 自己收尾。
@@ -142,6 +152,84 @@ public partial class App : System.Windows.Application
         if (openSettings) OpenSettings();
         if (e.Args.Any(a => string.Equals(a, "--spend-window", StringComparison.OrdinalIgnoreCase)))
             OpenSpend();
+    }
+
+    /// <summary>
+    /// 核对旧设置能正确迁到 <see cref="AppSettings.VisibleSources"/>。
+    ///
+    /// **为什么值得单独验**:迁错的表现是"升级后某个环不见了",而用户不会想到去翻
+    /// settings.json;这条路径平时根本走不到(只有存量用户的旧配置才含旧字段)。
+    /// 这里在**临时目录**上写一份旧格式设置、读回来、逐条对照,不碰用户的真实配置。
+    /// </summary>
+    private static void RunMigrationCheck()
+    {
+        var text = new System.Text.StringBuilder();
+        try
+        {
+            // 一组典型旧配置:关掉 OpenCode、顺序把 deepseek 排前、两个自定义环色
+            var legacy = """
+                {
+                  "ShowGoat": true,
+                  "ShowOpenCode": false,
+                  "ShowDeepSeek": true,
+                  "SourceOrder": "deepseek,goat,opencode",
+                  "GoatTint": "#4D6BFE",
+                  "DeepSeekTint": "#22D3EE"
+                }
+                """;
+            var s = AppSettings.ParseForTest(legacy);
+            if (s is null) { text.AppendLine("解析失败"); }
+            else
+            {
+                text.AppendLine("=== 从旧设置迁移(输入: ShowGoat=true ShowOpenCode=false ShowDeepSeek=true) ===");
+                text.AppendLine($"            (SourceOrder=deepseek,goat,opencode; 环色 goat=#4D6BFE deepseek=#22D3EE)");
+                text.AppendLine();
+                text.AppendLine($"可见源 = [{string.Join(", ", s.VisibleSources)}]   (期望 deepseek, goat)");
+                text.AppendLine($"goat 可见     = {s.IsSourceVisible("goat")}   (期望 True)");
+                text.AppendLine($"opencode 可见 = {s.IsSourceVisible("opencode")}   (期望 False)");
+                text.AppendLine($"deepseek 可见 = {s.IsSourceVisible("deepseek")}   (期望 True)");
+                text.AppendLine($"goat 环色     = {s.TintFor("goat") ?? "(无)"}   (期望 #4D6BFE)");
+                text.AppendLine($"deepseek 环色 = {s.TintFor("deepseek") ?? "(无)"}   (期望 #22D3EE)");
+                text.AppendLine($"opencode 环色 = {s.TintFor("opencode") ?? "(无)"}   (期望 (无))");
+
+                // 全默认的新安装(没有任何字段)应当得到"三个源都显示"
+                var fresh = AppSettings.ParseForTest("{}");
+                text.AppendLine();
+                text.AppendLine($"全新安装可见源 = [{string.Join(", ", fresh?.VisibleSources ?? new())}]   (期望 goat, opencode, deepseek)");
+
+                // 旧配置里三个全关(边界):新逻辑必须至少留一个
+                var allOff = AppSettings.ParseForTest("""{"ShowGoat":false,"ShowOpenCode":false,"ShowDeepSeek":false}""");
+                text.AppendLine($"三个全关时可见源 = [{string.Join(", ", allOff?.VisibleSources ?? new())}]   (期望回默认三个,不留空)");
+
+                // **用本机真实的 settings.json 再验一遍**——合成用例覆盖不了真实文件的每个字段组合,
+                // 而"升级后我的环不见了"恰恰只会发生在真实文件上。
+                string realFile = Path.Combine(SnapshotSource.DataPaths.RootDirectory, "settings.json");
+                if (File.Exists(realFile))
+                {
+                    var real = AppSettings.ParseForTest(File.ReadAllText(realFile));
+                    text.AppendLine();
+                    text.AppendLine($"=== 本机真实设置({realFile}) ===");
+                    text.AppendLine($"迁移后可见源 = [{string.Join(", ", real?.VisibleSources ?? new())}]");
+                    foreach (var key in SourceCatalog.Keys)
+                        text.AppendLine($"  {key,-9} 可见 = {real?.IsSourceVisible(key)}  环色 = {real?.TintFor(key) ?? "(无)"}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine("迁移自检失败: " + ex);
+        }
+
+        try
+        {
+            string outPath = Path.Combine(SnapshotSource.DataDirectory, "migration-check.txt");
+            File.WriteAllText(outPath, text.ToString());
+            Diagnostics.Note($"设置迁移自检已输出到 {outPath}");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("写出设置迁移自检失败", ex);
+        }
     }
 
     /// <summary>
