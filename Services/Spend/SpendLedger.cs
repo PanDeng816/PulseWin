@@ -64,9 +64,18 @@ public sealed record SpendEntry(
     /// <summary>重试次数。</summary>
     long Retries = 0,
     /// <summary>失败/取消次数(1 = 这条就是失败/取消)。</summary>
-    long Failures = 0)
+    long Failures = 0,
+    /// <summary>
+    /// 来源自己的会话号(见 <see cref="AgentUsageRecord.SourceSessionId"/>):
+    /// <see cref="SessionId"/> 用于分组(DSH 的子代理会话归根后指向主会话),
+    /// 这一个**只用于本地仓库的去重**——去重键必须认它,否则归根规则一变就会重复计数。
+    /// </summary>
+    string? SourceSessionId = null)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
+
+    /// <summary>去重用的会话号(来源没单独给就是 SessionId)。</summary>
+    public string? DedupSessionId => SourceSessionId ?? SessionId;
 
     /// <summary>这条记录里有没有算不出价的 token(界面要据此显示 "—" 或给小计加星号)。</summary>
     public bool HasUnpriced => UnpricedTokens > 0;
@@ -210,7 +219,8 @@ public sealed class SpendLedger
                     TtftSamples: record.TimeToFirstTokenMs > 0 ? 1 : 0,
                     ToolCalls: record.ToolCalls,
                     Retries: record.Retries,
-                    Failures: record.Failures));
+                    Failures: record.Failures,
+                    SourceSessionId: record.SourceSessionId));
             }
         }
 

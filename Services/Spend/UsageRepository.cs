@@ -375,7 +375,12 @@ public static class UsageRepository
         return rows;
     }
 
-    /// <summary>跨轮去重键:与跨源去重同形,再加仓库前缀防止与账本层的键撞车。</summary>
+    /// <summary>
+    /// 跨轮去重键:与跨源去重同形,再加仓库前缀防止与账本层的键撞车。
+    /// **认的是"来源自己的会话号"**(<see cref="SpendEntry.DedupSessionId"/>)而不是分组用的
+    /// <see cref="SpendEntry.SessionId"/>——DSH 的子代理会话归根到主会话之后,分组号变了、
+    /// 但这条明细还是同一条,认分组号的话会被当成新记录再灌一遍。
+    /// </summary>
     private static string DedupKey(SpendEntry e) =>
-        $"repo|{e.Agent}|{e.SessionId}|{e.Timestamp:yyyyMMddHHmmssfff}|{e.Model}|{e.TotalTokens}";
+        $"repo|{e.Agent}|{e.DedupSessionId}|{e.Timestamp:yyyyMMddHHmmssfff}|{e.Model}|{e.TotalTokens}";
 }

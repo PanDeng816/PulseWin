@@ -570,6 +570,10 @@ public partial class App : System.Windows.Application
 
             text.AppendLine($"记录 {records.Count} 条   会话 {records.Select(r => r.SessionId).Distinct().Count()} 个"
                 + $"   项目 {records.Select(r => r.Project).Distinct().Count()} 个");
+            var (subagents, folded, orphans) = DshUsageStore.LastFold;
+            text.AppendLine($"子代理会话 {subagents} 个:已归根到主会话 {folded} 个"
+                + (orphans > 0 ? $",找不到父会话(父已被删) {orphans} 个" : "")
+                + "   —— 归根后子任务不再单列,用量算在它派出的那个主任务上");
             text.AppendLine($"耗时: 首次 {cold} ms(全量解压+解析) / 第二次 {warm} ms(命中缓存)");
             text.AppendLine($"缓存: 文件 {files} / 记录 {cachedRecords} / 命中 {hits} / 未命中 {misses} / 截断 {truncations}");
             text.AppendLine();
@@ -596,7 +600,10 @@ public partial class App : System.Windows.Application
 
             text.AppendLine();
             text.AppendLine("—— 与 DSH 会话投影对账(本机逐步累加 vs 投影 totals) ——");
-            var bySession = records.GroupBy(r => r.SessionId ?? "")
+            // **按来源会话号分组对账,不能按分组号**:投影是"每个会话自己的累计",
+            // 而子代理会话的记录已经被归根到主会话(SessionId 指向主会话),
+            // 拿分组号去比会让子会话显示成本机的 0、主会话凭空多出一大块。
+            var bySession = records.GroupBy(r => r.SourceSessionId ?? r.SessionId ?? "")
                 .ToDictionary(g => g.Key, g => g.Sum(r => r.TotalTokens), StringComparer.OrdinalIgnoreCase);
             string projectionDirectory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),

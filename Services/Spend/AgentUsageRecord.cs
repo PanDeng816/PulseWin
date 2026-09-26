@@ -33,13 +33,23 @@ public sealed record AgentUsageRecord(
     /// <summary>重试次数。</summary>
     long Retries = 0,
     /// <summary>失败/取消的次数(1 = 这次就是失败/取消;0 = 成功完成)。</summary>
-    long Failures = 0)
+    long Failures = 0,
+    /// <summary>
+    /// 来源自己的会话号。**只在"会话号被改写过"的来源上出现**——DSH 的子代理会话会
+    /// 被归根到主会话(见 <see cref="DshUsageStore"/>):<see cref="SessionId"/> 承担
+    /// **分组**(子任务花的钱算在主任务头上),这一个才承担**去重**。null = 与 SessionId 相同。
+    ///
+    /// **为什么必须分开**:去重键从前直接用 SessionId,那么归根规则一改,同一批明细的键
+    /// 就全变了 → 本地仓库把它们当成新记录再灌一遍 → 数字直接翻倍(明细本身没变,变的只是
+    /// "它属于哪个会话")。分开之后,归根怎么改都不影响"这条明细我见过没有"。
+    /// </summary>
+    string? SourceSessionId = null)
 {
     public long TotalTokens => Tally.Total + UnclassifiedTokens;
 
     /// <summary>来源自报的记录标识,用于跨源去重。</summary>
     public string DedupKey =>
-        $"{Agent}|{SessionId}|{Timestamp:yyyyMMddHHmmssfff}|{Model}|{TotalTokens}";
+        $"{Agent}|{SourceSessionId ?? SessionId}|{Timestamp:yyyyMMddHHmmssfff}|{Model}|{TotalTokens}";
 }
 
 /// <summary>

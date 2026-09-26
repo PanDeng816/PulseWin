@@ -78,8 +78,20 @@ public sealed class DshUsageStore : IUsageStore
         public long LastUsed { get; set; }
     }
 
-    /// <summary>一份会话解析后的产物。记录里的会话号/项目/标题都已回填好。</summary>
-    private sealed record ParsedFile(List<AgentUsageRecord> Records, bool Truncated);
+    /// <summary>
+    /// 一份会话解析后的产物。记录里的会话号/项目/标题都已经回填成**这个会话自己的**——
+    /// 归根到主会话是读完全部会话之后统一做的(见 <see cref="FoldSubagents"/>)。
+    /// <see cref="ChildSessionIds"/> 来自本会话里的 <c>subagent/catalog</c> 事件,
+    /// 即它派出去的每个子代理会话的会话号。
+    /// </summary>
+    private sealed record ParsedFile(
+        string SessionId,
+        string? Project,
+        string? Title,
+        bool IsSubagent,
+        IReadOnlyList<string> ChildSessionIds,
+        List<AgentUsageRecord> Records,
+        bool Truncated);
 
     /// <summary>缓存与解析的诊断计数(给 --dsh 用:命中率说明缓存到底有没有起作用)。</summary>
     public static (long Hits, long Misses, int Files, long Records, long Truncations) CacheStats
@@ -90,9 +102,14 @@ public sealed class DshUsageStore : IUsageStore
         }
     }
 
+    /// <summary>
+    /// 最近一次读取时的归根统计(诊断用):子代理会话数、其中成功归根的、以及找不到父的孤儿。
+    /// </summary>
+    public static (int Subagents, int Folded, int Orphans) LastFold { get; private set; }
+
     public IReadOnlyList<AgentUsageRecord> Read()
     {
-        var all = new List<AgentUsageRecord>();
+        var files = new List<ParsedFile>();
         foreach (var (path, sessionId) in EnumerateSessionFiles())
         {
             var info = new FileInfo(path);
@@ -121,9 +138,80 @@ public sealed class DshUsageStore : IUsageStore
                 parsed = Parse(path, sessionId);
                 lock (CacheGate) Store(path, info.Length, ticks, parsed, now);
             }
-            if (parsed.Records.Count > 0) all.AddRange(parsed.Records);
+            files.Add(parsed);
         }
+        return FoldSubagents(files);
+    }
+
+    /// <summary>
+    /// 把**子代理会话**的用量归根到主会话。
+    ///
+    /// **为什么要做**:DSH 每派一个子代理就起一个独立会话(自己的会话文件、自己的标题,
+    /// 如"任务: 把 D:\Program-Work\05CADTools…"),在本机用量里它就是平等的一行——
+    /// 于是"最近会话"被拆成一堆看起来互不相干的任务,而用户认的是"我开的那个任务"。
+    /// 父子关系记在**父会话**的 <c>subagent/catalog</c> 事件里(<c>childId</c> + <c>label</c>),
+    /// 本机实测 6/6 个子代理会话都能找到父(0 孤儿)。
+    ///
+    /// 做法与 <see cref="ZCodeUsageStore"/> 对子会话的处理一致:分组用的会话号换成根会话,
+    /// 标题与项目也取根会话的;但每条记录的**来源会话号照旧保留**,给去重键用
+    /// (见 <see cref="AgentUsageRecord.SourceSessionId"/>——不保留的话,归根规则一改,
+    /// 本地仓库就会把这批明细当新记录再灌一遍)。
+    ///
+    /// 找不到父(父会话文件已被删)就原样保留,不做猜测;链上有环也停下(坏数据不该让代码转不出来)。
+    /// </summary>
+    private static IReadOnlyList<AgentUsageRecord> FoldSubagents(List<ParsedFile> files)
+    {
+        var byId = new Dictionary<string, ParsedFile>(StringComparer.OrdinalIgnoreCase);
+        var parentOf = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var parsed in files)
+        {
+            byId[parsed.SessionId] = parsed;
+            foreach (string child in parsed.ChildSessionIds) parentOf[child] = parsed.SessionId;
+        }
+
+        var all = new List<AgentUsageRecord>();
+        int subagents = 0, folded = 0, orphans = 0;
+        foreach (var parsed in files)
+        {
+            if (parsed.IsSubagent) subagents++;
+            string root = ResolveRoot(parsed.SessionId, parentOf, byId);
+            if (!byId.TryGetValue(root, out var rootParsed)
+                || string.Equals(root, parsed.SessionId, StringComparison.OrdinalIgnoreCase))
+            {
+                if (parsed.IsSubagent) orphans++;      // 父会话文件已经不在了
+                all.AddRange(parsed.Records);
+                continue;
+            }
+            if (parsed.IsSubagent) folded++;
+            foreach (var entry in parsed.Records)
+            {
+                all.Add(entry with
+                {
+                    SessionId = root,
+                    SourceSessionId = entry.SourceSessionId ?? entry.SessionId,
+                    Title = rootParsed.Title ?? entry.Title,
+                    Project = rootParsed.Project ?? entry.Project,
+                });
+            }
+        }
+        LastFold = (subagents, folded, orphans);
         return all;
+    }
+
+    /// <summary>沿父子链上溯到根。父会话文件不在时停在能找到的那一层。</summary>
+    private static string ResolveRoot(
+        string sessionId, Dictionary<string, string> parentOf, Dictionary<string, ParsedFile> byId)
+    {
+        string current = sessionId;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { current };
+        for (int guard = 0; guard < 16; guard++)
+        {
+            if (!parentOf.TryGetValue(current, out string? parent)) break;
+            if (!byId.ContainsKey(parent)) break;
+            if (!seen.Add(parent)) break;
+            current = parent;
+        }
+        return current;
     }
 
     private static void Store(string path, long length, long ticks, ParsedFile parsed, long now)
@@ -188,6 +276,8 @@ public sealed class DshUsageStore : IUsageStore
     private static ParsedFile Parse(string path, string sessionDirectoryName)
     {
         string? sessionId = null, project = null, title = null;
+        bool isSubagent = false;
+        var children = new List<string>();
         var steps = new List<StepRecord>();
         var retries = new Dictionary<(int Turn, int Step), int>();
         var failures = new Dictionary<(int Turn, int Step), int>();
@@ -243,6 +333,20 @@ public sealed class DshUsageStore : IUsageStore
                     var root = doc.RootElement;
                     sessionId = Str(root, "id") ?? sessionId;
                     project = UsageStoreSupport.ProjectIdentity(Str(root, "cwd")) ?? project;
+                    // delegationDepth > 0 = 这条会话是某个主会话派出去的子代理
+                    isSubagent = GetLong(root, "delegationDepth") > 0;
+                    continue;
+                }
+                if (type.SequenceEqual("subagent/catalog"))
+                {
+                    // 本会话派出的子代理:childId 就是那个子会话的会话号,是归根的唯一线索
+                    using var doc = JsonDocument.Parse(line);
+                    if (doc.RootElement.TryGetProperty("data", out var data)
+                        && Str(data, "childId") is { Length: > 0 } child
+                        && !children.Contains(child))
+                    {
+                        children.Add(child);
+                    }
                     continue;
                 }
                 if (type.SequenceEqual("session/title"))
@@ -282,7 +386,7 @@ public sealed class DshUsageStore : IUsageStore
                 Retries: s.Retries,
                 Failures: s.Failures));
         }
-        return new ParsedFile(records, truncated);
+        return new ParsedFile(id, project, title, isSubagent, children, records, truncated);
     }
 
     /// <summary>一步(一次模型调用)的原始数字,回填元数据之前的中间形态。</summary>
