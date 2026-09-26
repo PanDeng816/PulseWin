@@ -39,7 +39,7 @@ internal static class UiShot
         {
             Diagnostics.Note("设置页出图失败", ex);
         }
-        RenderSpendWindow(Path.Combine(dir, "spend-window.png"));
+        RenderSpendWindow(dir);
     }
 
     /// <summary>设置窗的某一页(用同一个不 Start 的引擎,避免重复初始化)。</summary>
@@ -121,7 +121,7 @@ internal static class UiShot
         Save(host, host.DesiredSize, path);
     }
 
-    private static void RenderSpendWindow(string path)
+    private static void RenderSpendWindow(string dir)
     {
         var window = new SpendWindow
         {
@@ -132,24 +132,76 @@ internal static class UiShot
         };
         window.Show();
 
-        // 等数据加载完:统计窗读本机两个库 + 画图,异步完成后才有内容。
+        // 等数据加载完:用量窗读本机两个库 + 画图,异步完成后才有内容。
+        // 出图直接渲染 ScrollViewer 的内容(StackPanel 全高)——窗口高度会被
+        // Win32 压回屏幕,但内容元素的完整高度不受限,一张长图收下所有卡片。
+        // 先出总览,再驱动真实 tab 按钮切到套餐页出第二张(与手点同一条路径)。
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(22) };
         timer.Tick += (_, _) =>
         {
             timer.Stop();
             try
             {
+                SaveFullContent(window, Path.Combine(dir, "usage-overview.png"));
+                // 另存一张"窗口本身"(含顶部工具条:tab/区间/状态行)——头部不在滚动区里,
+                // 长图收不到它,而状态行文案("正在读取…"有没有被改写成结果)只有它能看到。
                 window.UpdateLayout();
-                Save(window, new Size(window.ActualWidth, window.ActualHeight), path);
+                Save(window, new Size(window.ActualWidth, window.ActualHeight), Path.Combine(dir, "usage-window-chrome.png"));
+                window.UiShotOpenFirstChannel();
+                var second = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+                second.Tick += (_, _) =>
+                {
+                    second.Stop();
+                    try
+                    {
+                        SaveFullContent(window, Path.Combine(dir, "usage-channel.png"));
+                    }
+                    catch (Exception ex) { Diagnostics.Note("用量窗套餐页出图失败", ex); }
+                    finally
+                    {
+                        window.Close();
+                        System.Windows.Application.Current.Shutdown();
+                    }
+                };
+                second.Start();
             }
-            catch (Exception ex) { Diagnostics.Note("统计窗出图失败", ex); }
-            finally
+            catch (Exception ex)
             {
+                Diagnostics.Note("用量窗出图失败", ex);
                 window.Close();
                 System.Windows.Application.Current.Shutdown();
             }
         };
         timer.Start();
+    }
+
+    /// <summary>把用量窗滚动区的内容(StackPanel 全高)渲染成一张长图。</summary>
+    private static void SaveFullContent(SpendWindow window, string path)
+    {
+        window.UpdateLayout();
+        var sv = FindScrollViewer(window);
+        if (sv?.Content is FrameworkElement content && content.ActualHeight > 0)
+        {
+            content.UpdateLayout();
+            Save(content, new Size(content.ActualWidth, content.ActualHeight), path);
+        }
+        else
+        {
+            Save(window, new Size(window.ActualWidth, window.ActualHeight), path);
+        }
+    }
+
+    /// <summary>窗口里的滚动容器(用量窗的内容区)。</summary>
+    private static ScrollViewer? FindScrollViewer(DependencyObject root)
+    {
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is ScrollViewer sv) return sv;
+            if (FindScrollViewer(child) is { } found) return found;
+        }
+        return null;
     }
 
     private static void Save(FrameworkElement element, Size size, string path)

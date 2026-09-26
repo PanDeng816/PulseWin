@@ -15,7 +15,6 @@ public partial class App : System.Windows.Application
     private SettingsWindow? _settings;
     private SpendWindow? _spend;
     private SingleInstance? _instance;
-    private readonly TrayIconMeter _trayMeter = new();
 
     /// <summary>已经提示过的未处理异常(去重,防止每帧抛的异常连环弹框)。</summary>
     private readonly HashSet<string> _reportedExceptions = new(StringComparer.Ordinal);
@@ -561,7 +560,7 @@ public partial class App : System.Windows.Application
                 _main!.IsRailVisible ? "隐藏浮窗" : "显示浮窗", () => _main.ToggleRailVisible()),
             new FlyoutMenu.Item("立即刷新", () => _engine?.RequestRefreshNow()),
             new FlyoutMenu.Gap(),
-            new FlyoutMenu.Item("用量统计…", OpenSpend),
+            new FlyoutMenu.Item("用量…", OpenSpend),
             new FlyoutMenu.Item("设置…", OpenSettings),
         };
 
@@ -627,6 +626,13 @@ public partial class App : System.Windows.Application
     /// 不再每轮同步都从磁盘把三个 JSON 重读反序列化一遍。窗口还没准备好时
     /// (启动瞬间)才退回去自己读一次。
     /// </summary>
+    /// <summary>
+    /// 托盘:常驻**品牌图标**,悬停文字给额度摘要。
+    ///
+    /// v1.12.2 之前这里会把"最紧张的池"画成小环当图标(仪表化),现在改成固定品牌图标——
+    /// 用户明确表示任务栏里的状态小环认不出是什么程序。挂载点保持不动:摘要在每次
+    /// 同步后照旧刷新,阈值告警气泡也仍在这里触发。
+    /// </summary>
     private void UpdateTrayMeter()
     {
         if (_tray is null || _icon is null) return;
@@ -635,19 +641,63 @@ public partial class App : System.Windows.Application
             var subs = _main is { } main && main.Subs.Count > 0
                 ? main.Subs
                 : SnapshotSource.LoadAll();
-            var (icon, tooltip) = _trayMeter.Build(subs, _icon);
-            _tray.Icon = icon ?? _icon;
+            string tooltip = TraySummary.BuildTooltip(subs);
             if (tooltip.Length > 63) tooltip = tooltip[..63];
+            _tray.Icon = _icon;
             _tray.Text = tooltip;
+            CheckQuotaAlerts(subs);
         }
         catch (Exception ex)
         {
             _tray.Icon = _icon;
-            Diagnostics.Note("托盘仪表更新失败,回退品牌图标", ex);
+            Diagnostics.Note("托盘摘要更新失败,保持品牌图标", ex);
         }
     }
 
-    /// <summary>用量统计窗口(单例:再点就把它亮出来)。</summary>
+    /// <summary>每个额度池上一次的用量百分比(告警"从下穿上"检测;键 = 源/池)。</summary>
+    private readonly Dictionary<string, double> _alertPercent = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// 额度告警:某个池的用量**从阈值下方穿到上方**时弹一次托盘气泡(只恢复/降下去不报,
+    /// 也不在每次同步都重复报)。阈值就是 rail 转红的那一档(设置里的报警阈值),两边一个口径。
+    /// 余额型池没有"用掉就没了"的重置语义,不参与。
+    /// </summary>
+    private void CheckQuotaAlerts(IReadOnlyList<SubData> subs)
+    {
+        if (_headless || _tray is null) return;
+        double threshold = Math.Clamp(AppSettings.Current.AlertThreshold, 0.5, 0.99) * 100;
+        foreach (var sub in subs)
+        {
+            foreach (var pool in sub.Pools)
+            {
+                if (pool.PoolKind == "Balance" || !pool.HasPercent) continue;
+                double pct = pool.Fraction * 100;
+                string key = sub.Key + "/" + pool.PoolKind;
+                double last = _alertPercent.TryGetValue(key, out var v) ? v : pct;
+                _alertPercent[key] = pct;
+                if (last < threshold && pct >= threshold)
+                {
+                    string detail = pool.Cap is { } cap
+                        ? $"已用 {Money.Short(pool.Used ?? 0, pool.Unit)} / {Money.Short(cap, pool.Unit)}"
+                        : $"已用 {pool.PercentText}";
+                    try
+                    {
+                        _tray.ShowBalloonTip(8000, "Pulse 额度提醒",
+                            $"{sub.Name} {pool.Label}{detail},{pool.RemainingText()}。",
+                            System.Windows.Forms.ToolTipIcon.Warning);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 气泡在部分系统配置下会失败:提示是锦上添花,不因它报错
+                        Diagnostics.Note("额度告警气泡失败", ex);
+                    }
+                    Diagnostics.Note($"额度告警:{key} {pct:0.0}% ≥ {threshold:0}%");
+                }
+            }
+        }
+    }
+
+    /// <summary>用量窗口(单例:再点就把它亮出来)。</summary>
     private void OpenSpend()
     {
         if (_spend is { IsLoaded: true })
@@ -684,9 +734,10 @@ public partial class App : System.Windows.Application
         try
         {
             var settings = new SettingsWindow(_engine);
-            // 同上:设置窗有六页 XAML(含三套色板弹层),关掉后不再留引用。
+            // 同上:设置窗有多页 XAML(含三套色板弹层),关掉后不再留引用。
             settings.Closed += (_, _) => _settings = null;
             settings.SettingsChanged += () => _main?.ApplySettings();
+            settings.OpenUsageRequested += OpenSpend;
             _settings = settings;
             _settings.Show();
         }
@@ -732,7 +783,6 @@ public partial class App : System.Windows.Application
     {
         UpdateChecker.Stop();
         _tray?.Dispose();
-        _trayMeter.Dispose();
         _icon?.Dispose();
         _settings?.Close();
         _spend?.Close();

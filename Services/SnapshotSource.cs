@@ -75,7 +75,11 @@ public sealed class SubData
     public required string Key { get; init; }
     public required string Name { get; init; }
     public required string AccountLabel { get; init; }
-    public long? PeriodTokens { get; init; }   // 本月已用 token(仅 GOAT 有)
+    public long? PeriodTokens { get; init; }   // 账期已用 token(仅 GOAT 有;服务端计量,覆盖所有设备/key)
+    /// <summary>账期已用请求数(仅 GOAT 有,服务端计量)。</summary>
+    public long? PeriodRequests { get; init; }
+    /// <summary>账期已扣费用(仅 GOAT 有,单位与额度池相同 = credits)。</summary>
+    public double? PeriodCost { get; init; }
     public DateTimeOffset? FetchedAt { get; init; }  // 引擎最后一次成功同步的时刻
     public List<PoolData> Pools { get; init; } = new();
 
@@ -187,6 +191,26 @@ public static class SnapshotSource
         return subs;
     }
 
+    /// <summary>
+    /// 加载**全部**有快照的数据源,不受 rail 可见性限制——用量窗口的额度条要列出
+    /// 每个订阅的剩余与重置,哪怕这个源没在悬浮环上显示。
+    /// </summary>
+    public static List<SubData> LoadAllSources()
+    {
+        var subs = new List<SubData>(SourceCatalog.All.Count);
+        foreach (var source in SourceCatalog.All)
+        {
+            if (LoadOne(source.SnapshotFile(Paths), ProfileFor(source)) is not { } sub) continue;
+            if (source.IsBalance)
+            {
+                sub.HourlySpend = new DeepSeekLedger(Paths)
+                    .TodayHourlySpend(sub.AccountLabel, DateTimeOffset.UtcNow);
+            }
+            subs.Add(sub);
+        }
+        return subs;
+    }
+
     /// <summary>注册表条目 → 加载用的显示身份。</summary>
     private static SourceProfile ProfileFor(SourceDescriptor source) =>
         new(source.Key, source.RailName, source.MonthlyLabel);
@@ -238,6 +262,8 @@ public static class SnapshotSource
                 Name = profile.Name,
                 AccountLabel = snapshot.AccountLabel,
                 PeriodTokens = snapshot.PeriodTokens,
+                PeriodRequests = snapshot.PeriodRequests,
+                PeriodCost = snapshot.PeriodCost,
                 FetchedAt = snapshot.FetchedAt,
                 Pools = pools,
             };

@@ -349,9 +349,34 @@ public sealed class SpendSummary
         };
     }
 
+    /// <summary>
+    /// 与 <paramref name="span"/> 等长的**上一周期**(环比用):今天→昨天、7 天→前 7 天、
+    /// 30 天→前 30 天。全部区间没有"上一周期",返回 null。
+    /// </summary>
+    public static (DateTime From, DateTime To)? PreviousRange(SpendSpan span, DateTime nowLocal)
+    {
+        var (from, _) = Range(span, nowLocal);
+        return span switch
+        {
+            SpendSpan.Today => ((DateTime, DateTime)?)(from.AddDays(-1), from),
+            SpendSpan.Week => (from.AddDays(-7), from),
+            SpendSpan.Month => (from.AddDays(-30), from),
+            _ => null,
+        };
+    }
+
     public static SpendSummary Build(SpendLedger ledger, SpendSpan span)
     {
         var (from, to) = Range(span, DateTime.Now);
+        return Build(ledger, span, from, to);
+    }
+
+    /// <summary>任意区间(from 含、to 不含)的汇总。环比、下钻某天、自定义区间都走这条。</summary>
+    public static SpendSummary Build(SpendLedger ledger, DateTime from, DateTime to) =>
+        Build(ledger, SpendSpan.All, from, to);
+
+    private static SpendSummary Build(SpendLedger ledger, SpendSpan span, DateTime from, DateTime to)
+    {
         var selected = ledger.Entries
             .Where(e => e.Timestamp >= from && e.Timestamp < to)
             .ToList();
@@ -624,9 +649,10 @@ public static class SpendFormat
     /// </summary>
     private static double Rate => AppSettings.Current.UsdToCny;
 
-    /// <summary>token 数的短写法:1.2万 / 3.4亿。</summary>
+    /// <summary>token 数的短写法:1.2万 / 3.4亿。负数(对照差值)先取绝对值再带符号。</summary>
     public static string Tokens(long value)
     {
+        if (value < 0) return "-" + Tokens(-value);
         if (value < 10_000) return value.ToString("N0");
         if (value < 100_000_000) return (value / 10_000d).ToString("0.#") + "万";
         return (value / 100_000_000d).ToString("0.##") + "亿";

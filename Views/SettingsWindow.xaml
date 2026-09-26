@@ -150,8 +150,6 @@
                     <TextBlock Text="数据" Style="{StaticResource NavGroup}"/>
                     <RadioButton x:Name="NavSources" Style="{StaticResource NavItem}" Tag="&#xE772;"
                                  GroupName="nav" Content="数据源" Checked="Nav_Checked"/>
-                    <RadioButton x:Name="NavModels" Style="{StaticResource NavItem}" Tag="&#xE9D2;"
-                                 GroupName="nav" Content="套餐用量" Checked="Nav_Checked"/>
                     <RadioButton x:Name="NavRefresh" Style="{StaticResource NavItem}" Tag="&#xE777;"
                                  GroupName="nav" Content="刷新与网络" Checked="Nav_Checked"/>
                     <TextBlock Text="应用" Style="{StaticResource NavGroup}"/>
@@ -351,98 +349,40 @@
                         <StackPanel x:Name="SourceCardsPanel"/>
                         <TextBlock x:Name="SourceHint" FontSize="11" Foreground="#C7502E"
                                    Margin="1,0,0,10" TextWrapping="Wrap" Visibility="Collapsed"/>
-                    </StackPanel>
 
-                    <!-- ============ 套餐用量 ============ -->
-                    <StackPanel x:Name="PageModels" Visibility="Collapsed">
-                        <TextBlock x:Name="ModelsIntro" Style="{StaticResource RowHint}" Margin="1,0,0,12"
-                                   Text="按套餐/渠道看用量。数据来自各客户端自己的记录库(ZCode / OpenCode),按 models.dev 公开 API 价估算金额——不是账单。上面切换套餐,下面看该套餐的详细数据。"/>
-
-                        <!-- 区间切换 -->
-                        <Grid Margin="1,0,0,10">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="ModelSpanToday" Style="{StaticResource Segment}" Content="今天" GroupName="modelspan" Checked="ModelSpan_Checked"/>
-                                <RadioButton x:Name="ModelSpanWeek" Style="{StaticResource Segment}" Content="7 天" GroupName="modelspan" IsChecked="True" Checked="ModelSpan_Checked"/>
-                                <RadioButton x:Name="ModelSpanMonth" Style="{StaticResource Segment}" Content="30 天" GroupName="modelspan" Checked="ModelSpan_Checked"/>
-                                <RadioButton x:Name="ModelSpanAll" Style="{StaticResource Segment}" Content="全部" GroupName="modelspan" Checked="ModelSpan_Checked"/>
+                        <!-- 用量展示已整体搬到「用量」窗口(原"套餐用量"页),这里只留入口 -->
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel>
+                                <Grid Margin="0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="用量数据" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
+                                                   Text="各客户端记录的用量、按套餐拆分、逐小时与时段分布,都在独立的「用量」窗口里。"/>
+                                    </StackPanel>
+                                    <Button x:Name="OpenUsageButton" Grid.Column="1" Style="{StaticResource LightButton}"
+                                            Content="打开用量窗口…" Click="OpenUsage_Click"
+                                            HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                                <!-- BigModel 没有配额接口:手填包月预算,用量窗额度条才有进度条 -->
+                                <Grid Margin="0,4,0,11">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="BigModel 包月预算(元/月,选填)" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
+                                                   Text="BigModel 不提供用量接口。填了它,用量窗口的额度条才会显示「本月估算 / 预算」进度条;不填只显示本月估算金额与月底预测。"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="BigModelBudgetBox" Grid.Column="1" Width="90" VerticalAlignment="Center"
+                                             HorizontalContentAlignment="Right" TextChanged="BigModelBudget_Changed"/>
+                                </Grid>
                             </StackPanel>
-                        </Grid>
-
-                        <TextBlock x:Name="ModelsStatus" Style="{StaticResource RowHint}" Margin="1,0,0,10" TextWrapping="Wrap"/>
-
-                        <!-- 套餐切换(每个套餐一个按钮,选中即下面显示它的数据) -->
-                        <Border Style="{StaticResource GroupCard}" Padding="12,10">
-                            <!-- 套餐切换按钮用 WrapPanel:套餐可能有好几个(含未启用/无用量
-                                 的),横向 StackPanel 不换行会被右缘截断 -->
-                            <WrapPanel x:Name="ChannelTabsPanel" Orientation="Horizontal"/>
                         </Border>
-
-                        <!-- 选中套餐的详细信息 -->
-                        <StackPanel x:Name="ChannelDetailPanel" Visibility="Collapsed">
-                            <!-- KPI 六格:总费用 / 总请求 / 总 TOKEN / 缓存命中率 / 缓存读+写 / 会话数 -->
-                            <Border Style="{StaticResource GroupCard}">
-                                <StackPanel Margin="0,12">
-                                    <TextBlock x:Name="ChannelTitle" Style="{StaticResource RowTitle}" FontSize="15" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="ChannelSubtitle" Style="{StaticResource RowSub}" Margin="0,3,0,0"/>
-                                    <UniformGrid x:Name="ChannelKpiGrid" Columns="3" Margin="0,12,0,2"/>
-                                    <Border Style="{StaticResource RowSeparator}"/>
-                                    <!-- Token 六格构成(输入/输出/缓存读/缓存写/未分类/合计) -->
-                                    <TextBlock Text="Token 构成" Style="{StaticResource RowTitle}" Margin="0,10,0,0"/>
-                                    <UniformGrid x:Name="ChannelTokenGrid" Columns="3" Margin="0,8,0,2"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 今日 24 小时 -->
-                            <Border Style="{StaticResource GroupCard}">
-                                <StackPanel Margin="0,12">
-                                    <TextBlock Text="今日逐小时" Style="{StaticResource RowTitle}"/>
-                                    <TextBlock x:Name="ChannelTodayHint" Style="{StaticResource RowSub}" Margin="0,3,0,8"/>
-                                    <Border x:Name="ChannelHourBox" Height="110" Background="Transparent"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 性能与行为(来自客户端记录的遥测:推理/耗时/首字/工具/重试) -->
-                            <Border Style="{StaticResource GroupCard}">
-                                <StackPanel Margin="0,12">
-                                    <TextBlock Text="性能与行为" Style="{StaticResource RowTitle}"/>
-                                    <TextBlock x:Name="ChannelPerfHint" Style="{StaticResource RowSub}" Margin="0,3,0,8"/>
-                                    <UniformGrid x:Name="ChannelPerfGrid" Columns="3" Margin="0,2,0,2"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 每日趋势 -->
-                            <Border Style="{StaticResource GroupCard}">
-                                <StackPanel Margin="0,12">
-                                    <TextBlock Text="每日用量" Style="{StaticResource RowTitle}"/>
-                                    <Border x:Name="ChannelDailyBox" Height="110" Background="Transparent" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 模型分布 -->
-                            <Border Style="{StaticResource GroupCard}" Padding="0">
-                                <StackPanel>
-                                    <TextBlock Text="这个套餐里各模型的用量" Style="{StaticResource RowTitle}" Margin="16,14,16,4"/>
-                                    <StackPanel x:Name="ChannelModelPanel"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 逐日明细(模型 × 天 的矩阵) -->
-                            <Border Style="{StaticResource GroupCard}" Padding="0">
-                                <StackPanel>
-                                    <TextBlock Text="逐日明细" Style="{StaticResource RowTitle}" Margin="16,14,16,4"/>
-                                    <TextBlock x:Name="ChannelDailyTableHint" Style="{StaticResource RowSub}" Margin="16,0,16,6"/>
-                                    <StackPanel x:Name="ChannelDailyTablePanel"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 归属信息(provider id / 时间范围 / 用量仓库说明) -->
-                            <Border Style="{StaticResource GroupCard}">
-                                <StackPanel Margin="0,12">
-                                    <TextBlock Text="归属信息" Style="{StaticResource RowTitle}"/>
-                                    <TextBlock x:Name="ChannelMetaLine" Style="{StaticResource RowHint}" Margin="0,5,0,0"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
 
                         <!-- 可选:Command Code 浏览器会话明细(默认关,有 AV 误判风险) -->
                         <Border Style="{StaticResource GroupCard}">
@@ -453,9 +393,9 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="浏览器会话明细(交叉核对,不影响数字)" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Text="浏览器会话明细(账号级,覆盖所有设备/key)" Style="{StaticResource RowTitle}"/>
                                         <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="读本机浏览器(Edge/Chrome)的登录 cookie,抓 Command Code 只有登录态才开放的逐模型缓存明细,与本机库的记录做交叉核对。注意:本机库本来就覆盖了同样的用量,所以打开它不会让统计数字更准——它只是多一层旁证。默认关:读 cookie 可能被安全软件误判(同类工具曾被 AV 当作 infostealer);且浏览器运行时其 cookie 库是排他锁定的,通常要完全退出浏览器才读得到。"/>
+                                                   Text="读本机浏览器(Edge/Chrome)的 commandcode.ai 登录 cookie,调官方的逐模型明细接口——那是账号级的,覆盖其他电脑/其他 key 的用量,本机记录库看不到它们。用于「用量窗口 → GOAT 套餐页」的官方逐模型榜。默认关:读 cookie 可能被安全软件误判(同类工具曾被 AV 当作 infostealer);且浏览器运行时其 cookie 库是排他锁定的,浏览器开着时常读不到,关掉浏览器再刷新多半能读到。"/>
                                     </StackPanel>
                                     <CheckBox x:Name="BrowserSessionBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"

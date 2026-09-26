@@ -1,7 +1,7 @@
 <Window x:Class="PulseWin.SpendWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Pulse 用量统计" Width="580" Height="760" MinWidth="460" MinHeight="320"
+        Title="Pulse 用量" Width="640" Height="780" MinWidth="480" MinHeight="320"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
         Background="#F5F5F7" Foreground="#1D1D1F"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
@@ -31,7 +31,7 @@
             </Setter>
         </Style>
 
-        <!-- 区间选择:上游分段控件样式(浅灰轨道、选中蓝块白字) -->
+        <!-- 区间/视图切换:上游分段控件样式(浅灰轨道、选中蓝块白字) -->
         <Style x:Key="SpanToggle" TargetType="RadioButton">
             <Setter Property="Foreground" Value="#1D1D1F"/>
             <Setter Property="Padding" Value="12,5"/>
@@ -108,15 +108,29 @@
     </Window.Resources>
 
     <DockPanel>
-        <!-- 顶部:区间 / 刷新 / 价目表来源 -->
+        <!-- 顶部:视图 tab / 区间 / 刷新与导出 / 价目表来源 -->
         <Border DockPanel.Dock="Top" Background="White" Padding="20,12" BorderBrush="#E3E3E6" BorderThickness="0,0,0,1">
             <StackPanel>
+                <WrapPanel x:Name="TabRow" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="SpanToday" Style="{StaticResource SpanToggle}" Content="今天" GroupName="Span" Tag="Today"/>
                     <RadioButton x:Name="SpanWeek" Style="{StaticResource SpanToggle}" Content="近 7 天" GroupName="Span" Tag="Week"/>
                     <RadioButton x:Name="SpanMonth" Style="{StaticResource SpanToggle}" Content="近 30 天" GroupName="Span" Tag="Month"/>
+                    <RadioButton x:Name="SpanCustom" Style="{StaticResource SpanToggle}" Content="自定义" GroupName="Span" Tag="Custom"
+                                 Checked="SpanCustom_Checked" Unchecked="SpanCustom_Unchecked"/>
                     <RadioButton x:Name="SpanAll" Style="{StaticResource SpanToggle}" Content="全部" GroupName="Span" Tag="All"/>
                     <Button x:Name="RefreshButton" Style="{StaticResource DarkButton}" Content="重新读取" Click="Refresh_Click"/>
+                    <Button x:Name="ExportButton" Style="{StaticResource DarkButton}" Content="导出" Click="Export_Click"
+                            Margin="4,0,0,0"/>
+                </StackPanel>
+                <!-- 自定义区间(选"自定义"才展开) -->
+                <StackPanel x:Name="CustomRangePanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,8,0,0">
+                    <TextBlock Text="从" Style="{StaticResource Dim}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <DatePicker x:Name="CustomFrom" Width="130"/>
+                    <TextBlock Text="到" Style="{StaticResource Dim}" VerticalAlignment="Center" Margin="8,0,6,0"/>
+                    <DatePicker x:Name="CustomTo" Width="130"/>
+                    <Button x:Name="CustomApply" Style="{StaticResource DarkButton}" Content="应用" Click="CustomApply_Click"
+                            Margin="8,0,0,0" Padding="16,3"/>
                 </StackPanel>
                 <TextBlock x:Name="PriceSourceText" Style="{StaticResource Dim}" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
@@ -125,62 +139,198 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0">
             <StackPanel Margin="20,16,20,20">
 
-                <!-- 总计 -->
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="TotalTokens" FontSize="32" FontWeight="Bold" VerticalAlignment="Bottom"/>
-                            <TextBlock Text="tokens" FontSize="12" Foreground="#86868B" Margin="7,0,0,8"/>
-                            <TextBlock x:Name="TotalCost" FontSize="32" FontWeight="Bold" Margin="26,0,0,0" VerticalAlignment="Bottom"/>
+                <!-- 下钻面包屑(点柱图/热图某天后出现) -->
+                <DockPanel x:Name="DayFilterRow" Visibility="Collapsed" Margin="0,0,0,12">
+                    <Button x:Name="DayFilterBack" DockPanel.Dock="Left" Style="{StaticResource DarkButton}"
+                            Content="← 返回" Click="DayFilterBack_Click" Padding="10,3"/>
+                    <TextBlock x:Name="DayFilterText" Margin="10,0,0,0" VerticalAlignment="Center"
+                               FontSize="12.5" FontWeight="SemiBold"/>
+                </DockPanel>
+
+                <!-- ============ 总览视图 ============ -->
+                <StackPanel x:Name="OverviewPanel">
+
+                    <!-- 订阅额度:每个订阅一行,回答"还剩多少、什么时候重置" -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="订阅额度" Style="{StaticResource SectionTitle}"/>
+                            <StackPanel x:Name="QuotaPanel"/>
+                            <TextBlock x:Name="QuotaHint" Style="{StaticResource Dim}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
-                        <TextBlock x:Name="CostNote" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                        <TextBlock x:Name="TallyLine" Style="{StaticResource Dim}" Margin="0,9,0,0" TextWrapping="Wrap"/>
-                        <TextBlock x:Name="ScopeLine" Style="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <!-- 活动热图:不受区间选择影响,永远画仓库/源库覆盖到的全部日子 -->
-                <TextBlock Text="活动热图" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}" Padding="14,12,14,8">
-                    <StackPanel>
-                        <Canvas x:Name="HeatCanvas" Height="118" ClipToBounds="True"/>
-                        <TextBlock x:Name="HeatHint" Style="{StaticResource Dim}" Margin="0,6,0,0"/>
-                    </StackPanel>
-                </Border>
+                    <!-- 总计 -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="TotalTokens" FontSize="32" FontWeight="Bold" VerticalAlignment="Bottom"/>
+                                <TextBlock Text="tokens" FontSize="12" Foreground="#86868B" Margin="7,0,0,8"/>
+                                <TextBlock x:Name="TotalCost" FontSize="32" FontWeight="Bold" Margin="26,0,0,0" VerticalAlignment="Bottom"/>
+                            </StackPanel>
+                            <TextBlock x:Name="DeltaLine" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="CostNote" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="TallyLine" Style="{StaticResource Dim}" Margin="0,9,0,0" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="ScopeLine" Style="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- 每日柱状图 -->
-                <TextBlock Text="每日用量" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}" Padding="14,12,14,8">
-                    <StackPanel>
-                        <Canvas x:Name="ChartCanvas" Height="132" ClipToBounds="True"/>
-                        <TextBlock x:Name="ChartHint" Style="{StaticResource Dim}" Margin="0,6,0,0"/>
-                    </StackPanel>
-                </Border>
+                    <!-- 活动热图:不受区间选择影响,永远画仓库/源库覆盖到的全部日子 -->
+                    <TextBlock Text="活动热图" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}" Padding="14,12,14,8">
+                        <StackPanel>
+                            <Canvas x:Name="HeatCanvas" Height="118" ClipToBounds="True"/>
+                            <TextBlock x:Name="HeatHint" Style="{StaticResource Dim}" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- 模型 -->
-                <TextBlock Text="模型" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}">
-                    <ItemsControl x:Name="ModelList" ItemTemplate="{StaticResource RowTemplate}"/>
-                </Border>
-                <TextBlock x:Name="ModelHint" Style="{StaticResource Dim}" Margin="0,-6,0,14" TextWrapping="Wrap"/>
+                    <!-- 每日柱状图 -->
+                    <TextBlock Text="每日用量" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}" Padding="14,12,14,8">
+                        <StackPanel>
+                            <Canvas x:Name="ChartCanvas" Height="132" ClipToBounds="True"/>
+                            <TextBlock x:Name="ChartHint" Style="{StaticResource Dim}" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- 来源 -->
-                <TextBlock Text="来源" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}">
-                    <ItemsControl x:Name="AgentList" ItemTemplate="{StaticResource RowTemplate}"/>
-                </Border>
+                    <!-- 模型 -->
+                    <TextBlock Text="模型" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}">
+                        <ItemsControl x:Name="ModelList" ItemTemplate="{StaticResource RowTemplate}"/>
+                    </Border>
+                    <TextBlock x:Name="ModelHint" Style="{StaticResource Dim}" Margin="0,-6,0,14" TextWrapping="Wrap"/>
 
-                <!-- 项目 -->
-                <TextBlock Text="项目" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}">
-                    <ItemsControl x:Name="ProjectList" ItemTemplate="{StaticResource RowTemplate}"/>
-                </Border>
+                    <!-- 来源 -->
+                    <TextBlock Text="来源" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}">
+                        <ItemsControl x:Name="AgentList" ItemTemplate="{StaticResource RowTemplate}"/>
+                    </Border>
 
-                <!-- 最近会话 -->
-                <TextBlock Text="最近会话" Style="{StaticResource SectionTitle}"/>
-                <Border Style="{StaticResource Card}">
-                    <ItemsControl x:Name="SessionList" ItemTemplate="{StaticResource RowTemplate}"/>
-                </Border>
+                    <!-- 项目 -->
+                    <TextBlock Text="项目" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}">
+                        <ItemsControl x:Name="ProjectList" ItemTemplate="{StaticResource RowTemplate}"/>
+                    </Border>
+
+                    <!-- 最近会话 -->
+                    <TextBlock Text="最近会话" Style="{StaticResource SectionTitle}"/>
+                    <Border Style="{StaticResource Card}">
+                        <ItemsControl x:Name="SessionList" ItemTemplate="{StaticResource RowTemplate}"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- ============ 单套餐视图 ============ -->
+                <StackPanel x:Name="ChannelPanel" Visibility="Collapsed">
+
+                    <!-- 概要与 KPI -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock x:Name="ChannelTitle" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="ChannelSubtitle" Style="{StaticResource Dim}" Margin="0,3,0,0"/>
+                            <UniformGrid x:Name="ChannelKpiGrid" Columns="3" Margin="0,12,0,2"/>
+                            <Border Background="#ECECEF" Height="1" Margin="0,10,0,10"/>
+                            <TextBlock Text="Token 构成" Style="{StaticResource SectionTitle}" Margin="1,0,0,0"/>
+                            <UniformGrid x:Name="ChannelTokenGrid" Columns="3" Margin="0,4,0,2"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 这个套餐的订阅额度(有配额快照的渠道才有内容) -->
+                    <Border x:Name="ChannelQuotaCard" Style="{StaticResource Card}" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="订阅额度" Style="{StaticResource SectionTitle}"/>
+                            <StackPanel x:Name="ChannelQuotaPanel"/>
+                            <TextBlock x:Name="ChannelQuotaHint" Style="{StaticResource Dim}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 账号计量对照(GOAT 等有官方接口的渠道):官方账期读数 vs 本机记录,
+                         差值 = 其他设备/命令行直接使用的量(本机看不到它的明细) -->
+                    <Border x:Name="AccountMeterCard" Style="{StaticResource Card}" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="账号计量对照" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="AccountMeterHint" Style="{StaticResource Dim}" Margin="0,-2,0,8" TextWrapping="Wrap"/>
+                            <UniformGrid x:Name="AccountMeterGrid" Columns="3" Margin="0,0,0,2"/>
+                            <Border Background="#ECECEF" Height="1" Margin="0,10,0,10"/>
+                            <Grid Margin="0,0,0,6">
+                                <TextBlock Text="官方逐模型明细(账号级,覆盖所有设备/key)" Style="{StaticResource SectionTitle}" Margin="0"/>
+                            </Grid>
+                            <TextBlock x:Name="AccountModelHint" Style="{StaticResource Dim}" Margin="0,-4,0,8" TextWrapping="Wrap"/>
+                            <ItemsControl x:Name="AccountModelList" ItemTemplate="{StaticResource RowTemplate}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 今日逐小时 -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="今日逐小时" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="ChannelTodayHint" Style="{StaticResource Dim}" Margin="0,-2,0,8"/>
+                            <Border x:Name="ChannelHourBox" Height="110" Background="Transparent"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 时段分布(峰/谷拆分;只有 GOAT 这种"峰值加价"的套餐显示) -->
+                    <Border x:Name="ChannelPeakCard" Style="{StaticResource Card}" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="时段分布" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="ChannelPeakHint" Style="{StaticResource Dim}" Margin="0,-2,0,8" TextWrapping="Wrap"/>
+                            <UniformGrid x:Name="ChannelPeakGrid" Columns="3" Margin="0,0,0,8"/>
+                            <Border x:Name="ChannelRangeHourBox" Height="110" Background="Transparent" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 性能与行为 -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="性能与行为" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="ChannelPerfHint" Style="{StaticResource Dim}" Margin="0,-2,0,8" TextWrapping="Wrap"/>
+                            <UniformGrid x:Name="ChannelPerfGrid" Columns="3" Margin="0,0,0,2"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 每日用量 -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="每日用量" Style="{StaticResource SectionTitle}"/>
+                            <Border x:Name="ChannelDailyBox" Height="110" Background="Transparent" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 模型分布(可按 token / 金额排序) -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="这个套餐里各模型的用量" Style="{StaticResource SectionTitle}" Margin="0"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <RadioButton x:Name="ModelSortTokens" Style="{StaticResource SpanToggle}" Content="按 token"
+                                                 GroupName="ModelSort" Padding="8,3" FontSize="11"
+                                                 Checked="ModelSort_Checked"/>
+                                    <RadioButton x:Name="ModelSortCost" Style="{StaticResource SpanToggle}" Content="按金额"
+                                                 GroupName="ModelSort" Padding="8,3" FontSize="11" Margin="0"
+                                                 Checked="ModelSort_Checked"/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel x:Name="ChannelModelPanel"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 逐日明细(模型 × 天) -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="逐日明细" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="ChannelDailyTableHint" Style="{StaticResource Dim}" Margin="0,-2,0,6"/>
+                            <StackPanel x:Name="ChannelDailyTablePanel"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 归属信息 -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="归属信息" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="ChannelMetaLine" Style="{StaticResource Dim}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock x:Name="ChannelStatusLine" Style="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                </StackPanel>
 
                 <TextBlock x:Name="Footnote" Style="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
             </StackPanel>

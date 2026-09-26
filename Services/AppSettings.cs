@@ -133,6 +133,12 @@ public sealed class AppSettings
     public string? ProxyAddress { get; set; }
 
     /// <summary>
+    /// BigModel 包月的月预算(人民币)。BigModel 没有配额接口、只有包月费,填了它,
+    /// 用量窗口的额度条才显示"本月估算 / 预算"进度与月底预测。空 = 只显示本月估算。
+    /// </summary>
+    public double? BigModelMonthlyBudgetCny { get; set; }
+
+    /// <summary>
     /// 每个来源自定义环色(#RRGGBB)。空 = 按用量着色(绿→红)。
     /// 环色**默认按用量**,这是刻意的:环的颜色表示"离上限还有多远",
     /// 不是"这是哪个产品"(产品由环心图标表示)。想固定成品牌色是可选行为。
@@ -229,6 +235,7 @@ public sealed class AppSettings
         UseBrowserSessionForModelDetail = clean.UseBrowserSessionForModelDetail;
         ProxyMode = clean.ProxyMode;
         ProxyAddress = clean.ProxyAddress;
+        BigModelMonthlyBudgetCny = clean.BigModelMonthlyBudgetCny;
         SourceTints = clean.SourceTints;
         try
         {
@@ -265,6 +272,10 @@ public sealed class AppSettings
         UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
         ProxyMode = Math.Clamp(ProxyMode, 0, 2),
         ProxyAddress = string.IsNullOrWhiteSpace(ProxyAddress) ? null : ProxyAddress.Trim(),
+        // 有限的、正数才算数,否则当作"没设"(与 DeepSeekBudget 同一条规则)
+        BigModelMonthlyBudgetCny = BigModelMonthlyBudgetCny is { } b && double.IsFinite(b) && b > 0
+            ? b
+            : null,
         SourceTints = NormalizeTints(),
     };
 
@@ -370,6 +381,7 @@ public sealed class AppSettings
         UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
         ProxyMode = ProxyMode,
         ProxyAddress = ProxyAddress,
+        BigModelMonthlyBudgetCny = BigModelMonthlyBudgetCny,
         SourceTints = new Dictionary<string, string>(SourceTints),
     };
 }

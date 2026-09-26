@@ -100,6 +100,12 @@ public sealed class ChannelUsage
     /// </summary>
     public IReadOnlyList<HourBucket> TodayHourly { get; init; } = [];
 
+    /// <summary>
+    /// **整个区间**的 24 小时聚合（不只今天）。"时段分布"（峰/谷拆分）用它——
+    /// 只看今天的 24 小时回答不了"这周峰值时段用了多少"。
+    /// </summary>
+    public IReadOnlyList<RangeHourBucket> RangeHourly { get; init; } = [];
+
     /// <summary>该渠道用过的模型（按 token 降序）。</summary>
     public IReadOnlyList<ChannelModelRow> Models { get; init; } = [];
 
@@ -125,6 +131,9 @@ public sealed record HourBucket(int Hour, long Input, long Output, long CacheRea
 {
     public long Tokens => Input + Output + CacheRead + CacheWrite;
 }
+
+/// <summary>区间级的一小时聚合（含金额）。时段分布（峰/谷拆分）用。</summary>
+public sealed record RangeHourBucket(int Hour, long Tokens, double Cost, long Requests);
 
 /// <summary>渠道页里的一行模型。</summary>
 public sealed record ChannelModelRow(
@@ -229,6 +238,7 @@ public static class ChannelUsageIndex
         private readonly HashSet<string> _providerIds = new(StringComparer.Ordinal);
         private readonly Dictionary<DateOnly, DayAgg> _daily = new();
         private readonly Dictionary<int, HourAgg> _today = new();
+        private readonly Dictionary<int, RangeHourAgg> _rangeHours = new();
         private readonly Dictionary<string, ModelAgg> _models = new(StringComparer.Ordinal);
 
         private TokenTally _tally;
@@ -322,6 +332,11 @@ public static class ChannelUsageIndex
         /// </summary>
         public void AddHour(SpendEntry e)
         {
+            // 区间 24 小时(峰谷拆分用):任何小时行都收,不限今天
+            if (!_rangeHours.TryGetValue(e.Timestamp.Hour, out var rangeAgg))
+                _rangeHours[e.Timestamp.Hour] = rangeAgg = new RangeHourAgg();
+            rangeAgg.Add(e);
+
             if (e.Day != _todayDay) return;   // 今日图只看今天
             if (!_today.TryGetValue(e.Timestamp.Hour, out var h)) _today[e.Timestamp.Hour] = h = new HourAgg();
             h.Add(e);
@@ -347,6 +362,14 @@ public static class ChannelUsageIndex
             {
                 var v = _today.TryGetValue(h, out var x) ? x : HourAgg.Empty;
                 hours.Add(new HourBucket(h, v.Input, v.Output, v.CacheRead, v.CacheWrite, v.Requests));
+            }
+
+            // 区间 24 小时（峰谷拆分）
+            var rangeHours = new List<RangeHourBucket>(24);
+            for (int h = 0; h < 24; h++)
+            {
+                var v = _rangeHours.TryGetValue(h, out var x) ? x : null;
+                rangeHours.Add(new RangeHourBucket(h, v?.Tokens ?? 0, v?.Cost ?? 0, v?.Requests ?? 0));
             }
 
             var models = _models
@@ -395,6 +418,7 @@ public static class ChannelUsageIndex
                 LastUsed = _last,
                 Daily = daily.Select(x => (x.Item1, x.Item2, x.Item3, x.Item4, x.Item5, x.Item6, x.Item7, x.Item8)).ToList(),
                 TodayHourly = hours,
+                RangeHourly = rangeHours,
                 Models = models,
             };
         }
@@ -420,6 +444,19 @@ public static class ChannelUsageIndex
             {
                 Input += e.Tally.Input; Output += e.Tally.Output;
                 CacheRead += e.Tally.CacheRead; CacheWrite += e.Tally.CacheWrite;
+                Requests += e.Requests;
+            }
+        }
+
+        /// <summary>区间级小时桶:多一个金额(峰谷拆分要回答"峰时段花了多少")。</summary>
+        private sealed class RangeHourAgg
+        {
+            public long Tokens, Requests;
+            public double Cost;
+            public void Add(SpendEntry e)
+            {
+                Tokens += e.TotalTokens;
+                Cost += e.Cost.Total;
                 Requests += e.Requests;
             }
         }
