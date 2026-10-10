@@ -1,1 +1,280 @@
-dXNpbmcgU3lzdGVtLkdsb2JhbGl6YXRpb247CnVzaW5nIFN5c3RlbS5JTzsKdXNpbmcgU3lzdGVtLlNlY3VyaXR5LkNyeXB0b2dyYXBoeTsKdXNpbmcgU3lzdGVtLlRleHQ7CnVzaW5nIFN5c3RlbS5UZXh0Lkpzb247CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyDmnKzmnLrmtY/op4jlmaggY29va2llIOeahCoq5YWx55So6K+75Y+W5ZmoKiooQ29tbWFuZCBDb2RlIOS4jiBPcGVuQ29kZSDkuKTmnaHmtY/op4jlmajkvJror53pgJrpgZPpg73nlKjlroMp44CCCi8vLwovLy8g5pSv5oyBIEVkZ2UgLyBDaHJvbWUoQ2hyb21pdW0g57O7OmNvb2tpZSDlgLwgQUVTLUdDTSDliqDlr4Ys5a+G6ZKl5ZyoIHByb2ZpbGUg55qECi8vLyA8Yz5Mb2NhbCBTdGF0ZTwvYz4g6YeM57uPIERQQVBJIOS/neaKpCnjgILmtY/op4jlmajov5DooYzml7YgY29va2llIOW6k+iiq+eLrOWNoOmUgeKAlOKAlOivu+WPluWJjQovLy8g5aSN5Yi25LiA5Lu95YaN5byA44CC5oyJ56uZ54K55YWz6ZSu5a2X57yT5a2Y5ou85aW955qEIENvb2tpZSDlpLQoMTAg5YiG6ZKfKSzpgb/lhY3mr4/mrKHpg73op6Plr4bjgIIKLy8vCi8vLyAqKuivu+S4jeWIsOaYr+W4uOaAgeiAjOmdnumUmeivryoqOuayoeeZu+W9lei/h+OAgXByb2ZpbGUg57uT5p6E5Y+Y5LqG44CB6Kej5a+G5aSx6LSl6YO95a6J6Z2Z6L+U5ZueIG51bGwsCi8vLyDosIPnlKjmlrnoh6rlt7HlhZzlupXjgILmlbTmnaHpgJrpgZPmnInooqvlronlhajova/ku7blkK/lj5HlvI/or6/liKTnmoTliY3ovabkuYvpibQoQ29kZXhCYXItV2luKSwKLy8vIOaJgOS7peWug+W/hemhu+a0u+WcqOOAjOeUqOaIt+aYvuW8j+aJk+W8gOeahOW8gOWFs+OAjeS5i+S4iyzov5nph4zkuI3lgZrku7vkvZXlvIDlhbPliKTmlq3jgIIKLy8vIDwvc3VtbWFyeT4KaW50ZXJuYWwgc3RhdGljIGNsYXNzIEJyb3dzZXJDb29raWVTdG9yZQp7CiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBEaWN0aW9uYXJ5PHN0cmluZywgKHN0cmluZyBIZWFkZXIsIERhdGVUaW1lT2Zmc2V0IEF0KT4gQ2FjaGUgPSBuZXcoU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBEaWN0aW9uYXJ5PHN0cmluZywgRHBhcGlTZWNyZXRTdG9yZT4gTWFudWFsU3RvcmVzID0gbmV3KFN0cmluZ0NvbXBhcmVyLk9yZGluYWwpOwogICAgcHJpdmF0ZSBzdGF0aWMgQXBwRGF0YVBhdGhzPyBfcGF0aHM7CgogICAgLy8vIDxzdW1tYXJ5PuS4iuasoeWksei0peWOn+WboCjnlYzpnaLmmL7npLrnlKgpO+aIkOWKn+WQjua4heepuuOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgc3RyaW5nPyBMYXN0RXJyb3IgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PuS4iuS4gOasoeaIkOWKn+ivu+WIsOeahOadpea6kCjnvJPlrZggLyDmiYvliqjnspjotLQgLyBFZGdlIC8gQ2hyb21lKSzor4rmlq3kuI7nlYzpnaLnlKjjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHN0cmluZz8gTGFzdFNvdXJjZSB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0KCiAgICAvLy8gPHN1bW1hcnk+5pWw5o2u55uu5b2VKOaJi+WKqOeymOi0tOeahCBjb29raWUg55SoIERQQVBJIOWtmOi/meWEvynjgILlvJXmk47mnoTpgKDml7YgQXR0YWNo44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyB2b2lkIEF0dGFjaChBcHBEYXRhUGF0aHMgcGF0aHMpID0+IF9wYXRocyA9IHBhdGhzOwoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDmi7zlh7ogaG9zdCDljIXlkKsgPHBhcmFtcmVmIG5hbWU9Imhvc3RLZXl3b3JkIi8+IOeahOermeeCueeahCBDb29raWUg5aS044CCCiAgICAvLy8g6K+75LiN5Yiw6L+U5ZueIG51bGwo5Y6f5Zug6KeBIDxzZWUgY3JlZj0iTGFzdEVycm9yIi8+KeOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgc3RyaW5nPyBHZXRDb29raWVIZWFkZXIoc3RyaW5nIGhvc3RLZXl3b3JkLCBib29sIGZvcmNlUmVmcmVzaCkKICAgIHsKICAgICAgICAvLyAqKuaIkOWKn+ivu+WIsOWwseS4gOebtOWcqCoq44CC5rWP6KeI5ZmoIGNvb2tpZSDmnKzouqvmnInmlYjmnJ/ku6XlpKnorqEs6ICMIumHjeaWsOS7jua1j+iniOWZqOW6k+ivuyIKICAgICAgICAvLyDmnInkuKrnoazpl6jmp5s65rWP6KeI5Zmo5byA552A5pe26YKj5Liq5bqT5piv5o6S5LuW6ZSB5a6a55qELOagueacrOivu+S4jeWIsOOAguaJgOS7pei/memHjOS4jeaMieWIhumSnwogICAgICAgIC8vIOi/h+acn+KAlOKAlOWQpuWImeeUqOaIt+avjyAxMCDliIbpkp/lsLHlvpflhbPkuIDmrKHmtY/op4jlmajjgILlj6rmnInmnI3liqHnq6/liKTnmbvlvZXmgIHov4fmnJ8KICAgICAgICAvLyAoPHNlZSBjcmVmPSJJbnZhbGlkYXRlIi8+KeaXtuaJjemHjeaWsOWOu+ivu+OAggogICAgICAgIGlmICghZm9yY2VSZWZyZXNoICYmIENhY2hlLlRyeUdldFZhbHVlKGhvc3RLZXl3b3JkLCBvdXQgdmFyIGhpdCkpCiAgICAgICAgewogICAgICAgICAgICBMYXN0U291cmNlID0gIue8k+WtmCI7CiAgICAgICAgICAgIHJldHVybiBoaXQuSGVhZGVyOwogICAgICAgIH0KCiAgICAgICAgLy8g5omL5Yqo57KY6LS055qE5LyY5YWIOuWug+aYr+eUqOaIt+aYvuW8j+e7meeahCzkuI3lj5fmtY/op4jlmajmlofku7bplIHlvbHlk40KICAgICAgICBpZiAoTWFudWFsU3RvcmUoaG9zdEtleXdvcmQpPy5SZWFkKCkgaXMgeyBMZW5ndGg6ID4gMCB9IG1hbnVhbCkKICAgICAgICB7CiAgICAgICAgICAgIENhY2hlW2hvc3RLZXl3b3JkXSA9IChtYW51YWwsIERhdGVUaW1lT2Zmc2V0Lk5vdyk7CiAgICAgICAgICAgIExhc3RTb3VyY2UgPSAi5omL5Yqo57KY6LS0IjsKICAgICAgICAgICAgTGFzdEVycm9yID0gbnVsbDsKICAgICAgICAgICAgcmV0dXJuIG1hbnVhbDsKICAgICAgICB9CgogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgYm9vbCBibG9ja2VkID0gZmFsc2U7CiAgICAgICAgICAgIGZvcmVhY2ggKHZhciAobmFtZSwgcm9vdCkgaW4gQnJvd3NlclJvb3RzKCkpCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIGlmICghRGlyZWN0b3J5LkV4aXN0cyhyb290KSkgY29udGludWU7CiAgICAgICAgICAgICAgICBmb3JlYWNoICh2YXIgcHJvZmlsZSBpbiBQcm9maWxlcyhyb290KSkKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICBzdHJpbmcgY29va2llRGIgPSBQYXRoLkNvbWJpbmUocHJvZmlsZSwgIk5ldHdvcmsiLCAiQ29va2llcyIpOwogICAgICAgICAgICAgICAgICAgIGlmICghRmlsZS5FeGlzdHMoY29va2llRGIpKSBjb250aW51ZTsKICAgICAgICAgICAgICAgICAgICB2YXIgaGVhZGVyID0gUmVhZENvb2tpZXNGcm9tKG5hbWUsIHJvb3QsIGNvb2tpZURiLCBob3N0S2V5d29yZCwgb3V0IGJvb2wgbG9ja2VkKTsKICAgICAgICAgICAgICAgICAgICBibG9ja2VkIHw9IGxvY2tlZDsKICAgICAgICAgICAgICAgICAgICBpZiAoIXN0cmluZy5Jc051bGxPckVtcHR5KGhlYWRlcikpCiAgICAgICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgICAgICBDYWNoZVtob3N0S2V5d29yZF0gPSAoaGVhZGVyLCBEYXRlVGltZU9mZnNldC5Ob3cpOwogICAgICAgICAgICAgICAgICAgICAgICBMYXN0U291cmNlID0gbmFtZTsKICAgICAgICAgICAgICAgICAgICAgICAgTGFzdEVycm9yID0gbnVsbDsKICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIGhlYWRlcjsKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8g5Lik56eN5oOF5Ya16KaB5YiG5riFKDIwMjYtMTAtMTAg5pu05q2jKToi5bqT6KKr5rWP6KeI5Zmo5Y2g55SoIuWPquaYr+ihqOixoSznnJ/mraPor7vkuI3liLDmlbDmja7nmoQKICAgICAgICAgICAgLy8g5Y6f5Zug5pivIEVkZ2UvQ2hyb21lIDEyNysg55qEIGNvb2tpZSDlt7LnlLEgQXBwLUJvdW5kIOWKoOWvhuS/neaKpCznrKzkuInmlrnov5vnqIvop6PkuI3lvIDjgIIKICAgICAgICAgICAgLy8g5LuO5YmN5oqK5Lik6ICF5ZCI5bm25oiQ5LiA5Y+lIuayoeaJvuWIsOeZu+W9lSBjb29raWUiLOS8muaKiuS6uuW8leWOu+WPjeWkjeWFs+a1j+iniOWZqOKAlOKAlOayoeeUqOOAggogICAgICAgICAgICBMYXN0RXJyb3IgPSBibG9ja2VkCiAgICAgICAgICAgICAgICA/ICQie2hvc3RLZXl3b3JkfSDnmoQgY29va2llIOW6k+iiq+a1j+iniOWZqOWNoOeUqCzov5nmrKHor7vkuI3liLAo5YWz5o6J5rWP6KeI5Zmo5ZCO5Lya6Ieq5Yqo6YeN6K+VKeOAgiIKICAgICAgICAgICAgICAgICAgICArICLkvYYqKuWNs+S+v+ivu+WIsOS5n+ino+S4jeW8gCoqOkVkZ2UvQ2hyb21lIDEyNysg55qEIGNvb2tpZSDnlLEgQXBwLUJvdW5kIOWKoOWvhuS/neaKpOOAgiIKICAgICAgICAgICAgICAgICAgICArICLor7flnKjorr7nva7pobXngrnjgIznmbvlvZUgb3BlbmNvZGUuYWnjgI0s5oiW5omL5Yqo57KY6LS05Lya6K+dIGNvb2tpZeOAgiIKICAgICAgICAgICAgICAgIDogJCJ7aG9zdEtleXdvcmR9IOeahCBjb29raWUg55SxIEFwcC1Cb3VuZCDliqDlr4bkv53miqQoRWRnZS9DaHJvbWUgMTI3Kyks56ys5LiJ5pa556iL5bqP6Kej5LiN5byA44CCIgogICAgICAgICAgICAgICAgICAgICsgIuivt+WcqOiuvue9rumhteeCueOAjOeZu+W9lSBvcGVuY29kZS5haeOAjSzmiJbmiYvliqjnspjotLTkvJror50gY29va2ll44CCIjsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIExhc3RFcnJvciA9ICLor7vlj5bmtY/op4jlmaggY29va2llIOWksei0pToiICsgZXguTWVzc2FnZTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PueZu+W9leaAgeiiq+WIpOi/h+acn+aXtuiwg+eUqOaWuea4hee8k+WtmCzkuIvmrKHlvLrliLbph43op6PmtY/op4jlmajlupPjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgSW52YWxpZGF0ZShzdHJpbmcgaG9zdEtleXdvcmQpID0+IENhY2hlLlJlbW92ZShob3N0S2V5d29yZCk7CgogICAgLy8vIDxzdW1tYXJ5PuS/neWtmOeUqOaIt+aJi+WKqOeymOi0tOeahCBDb29raWUg5aS0KERQQVBJIOWKoOWvhuiQveebmCzkuI4gQVBJIEtleSDlkIzkuIDkv53miqTlvLrluqYp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyB2b2lkIFNhdmVNYW51YWwoc3RyaW5nIGhvc3RLZXl3b3JkLCBzdHJpbmcgY29va2llSGVhZGVyKQogICAgewogICAgICAgIE1hbnVhbFN0b3JlKGhvc3RLZXl3b3JkKT8uV3JpdGUoTm9ybWFsaXplKGNvb2tpZUhlYWRlcikpOwogICAgICAgIENhY2hlLlJlbW92ZShob3N0S2V5d29yZCk7CiAgICAgICAgTGFzdEVycm9yID0gbnVsbDsKICAgIH0KCiAgICBwdWJsaWMgc3RhdGljIHZvaWQgQ2xlYXJNYW51YWwoc3RyaW5nIGhvc3RLZXl3b3JkKQogICAgewogICAgICAgIE1hbnVhbFN0b3JlKGhvc3RLZXl3b3JkKT8uQ2xlYXIoKTsKICAgICAgICBDYWNoZS5SZW1vdmUoaG9zdEtleXdvcmQpOwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT7mmK/lkKblt7Lnu4/mnInmiYvliqjnspjotLTnmoQgY29va2llKOiuvue9rumhteaYvuekuueKtuaAgeeUqCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIGJvb2wgSGFzTWFudWFsKHN0cmluZyBob3N0S2V5d29yZCkgPT4gTWFudWFsU3RvcmUoaG9zdEtleXdvcmQpPy5SZWFkKCkgaXMgeyBMZW5ndGg6ID4gMCB9OwoKICAgIHByaXZhdGUgc3RhdGljIERwYXBpU2VjcmV0U3RvcmU/IE1hbnVhbFN0b3JlKHN0cmluZyBob3N0S2V5d29yZCkKICAgIHsKICAgICAgICBpZiAoX3BhdGhzIGlzIG51bGwpIHJldHVybiBudWxsOwogICAgICAgIGlmIChNYW51YWxTdG9yZXMuVHJ5R2V0VmFsdWUoaG9zdEtleXdvcmQsIG91dCB2YXIgZXhpc3RpbmcpKSByZXR1cm4gZXhpc3Rpbmc7CiAgICAgICAgdmFyIHN0b3JlID0gbmV3IERwYXBpU2VjcmV0U3RvcmUoCiAgICAgICAgICAgIF9wYXRocywKICAgICAgICAgICAgUGF0aC5Db21iaW5lKF9wYXRocy5Sb290RGlyZWN0b3J5LCAkImJyb3dzZXItY29va2llLXtob3N0S2V5d29yZH0uYmluIiksCiAgICAgICAgICAgIHB1cnBvc2U6ICJicm93c2VyLWNvb2tpZS0iICsgaG9zdEtleXdvcmQpOwogICAgICAgIE1hbnVhbFN0b3Jlc1tob3N0S2V5d29yZF0gPSBzdG9yZTsKICAgICAgICByZXR1cm4gc3RvcmU7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOinhOiMg+WMlueUqOaIt+eymOi0tOeahOWGheWuueOAguS4ieenjeWGmeazlemDveaUtijkuI4gR29HYXVnZSDnmoQgYnVpbGRfY29va2llX2hlYWRlciDlkIzmrL4pOgogICAgLy8vIOWujOaVtCBDb29raWUg5Liy44CB5bimIDxjPkNvb2tpZTo8L2M+IOWJjee8gOeahOS4suOAgeWFieeng+eng+S4gOS4quWAvOOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIHN0cmluZyBOb3JtYWxpemUoc3RyaW5nIHJhdykKICAgIHsKICAgICAgICBzdHJpbmcgdGV4dCA9IHJhdy5UcmltKCk7CiAgICAgICAgaWYgKHRleHQuU3RhcnRzV2l0aCgiY29va2llOiIsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbElnbm9yZUNhc2UpKQogICAgICAgICAgICB0ZXh0ID0gdGV4dFs3Li5dLlRyaW0oKTsKICAgICAgICAvLyDlj6rmnInljZXkuKrlgLwo5rKh5pyJIG5hbWU9KeaXtuihpeS4iuS8muivnSBjb29raWUg5ZCNCiAgICAgICAgaWYgKHRleHQuTGVuZ3RoID4gMCAmJiAhdGV4dC5Db250YWlucygnPScpKSB0ZXh0ID0gIl9fSG9zdC1jb25zb2xlX3Nlc3Npb249IiArIHRleHQ7CiAgICAgICAgcmV0dXJuIHRleHQ7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgSUVudW1lcmFibGU8KHN0cmluZyBOYW1lLCBzdHJpbmcgUm9vdCk+IEJyb3dzZXJSb290cygpCiAgICB7CiAgICAgICAgc3RyaW5nIGxvY2FsID0gRW52aXJvbm1lbnQuR2V0Rm9sZGVyUGF0aChFbnZpcm9ubWVudC5TcGVjaWFsRm9sZGVyLkxvY2FsQXBwbGljYXRpb25EYXRhKTsKICAgICAgICB5aWVsZCByZXR1cm4gKCJFZGdlIiwgUGF0aC5Db21iaW5lKGxvY2FsLCAiTWljcm9zb2Z0IiwgIkVkZ2UiLCAiVXNlciBEYXRhIikpOwogICAgICAgIHlpZWxkIHJldHVybiAoIkNocm9tZSIsIFBhdGguQ29tYmluZShsb2NhbCwgIkdvb2dsZSIsICJDaHJvbWUiLCAiVXNlciBEYXRhIikpOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIElFbnVtZXJhYmxlPHN0cmluZz4gUHJvZmlsZXMoc3RyaW5nIHJvb3QpCiAgICB7CiAgICAgICAgeWllbGQgcmV0dXJuIFBhdGguQ29tYmluZShyb290LCAiRGVmYXVsdCIpOwogICAgICAgIGZvciAoaW50IGkgPSAxOyBpIDw9IDY7IGkrKykgeWllbGQgcmV0dXJuIFBhdGguQ29tYmluZShyb290LCAkIlByb2ZpbGUge2l9Iik7CiAgICAgICAgLy8g5paw54mIIENocm9taXVtIOaKiumDqOWIhiBwcm9maWxlIOaUvui/memHjAogICAgICAgIHN0cmluZyBndWVzdCA9IFBhdGguQ29tYmluZShyb290LCAiR3Vlc3QgUHJvZmlsZSIpOwogICAgICAgIGlmIChEaXJlY3RvcnkuRXhpc3RzKGd1ZXN0KSkgeWllbGQgcmV0dXJuIGd1ZXN0OwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHN0cmluZz8gUmVhZENvb2tpZXNGcm9tKAogICAgICAgIHN0cmluZyBicm93c2VyLCBzdHJpbmcgcm9vdCwgc3RyaW5nIGNvb2tpZURiLCBzdHJpbmcgaG9zdEtleXdvcmQsIG91dCBib29sIGxvY2tlZCkKICAgIHsKICAgICAgICBsb2NrZWQgPSBmYWxzZTsKICAgICAgICAvLyDmtY/op4jlmajlnKjot5Hml7YgY29va2llIOW6k+iiq+eLrOWNoOmUgeKAlOKAlOWFiOWkjeWItuS4gOS7veWGjeivuyjkuI4gZ29hdC1nYXVnZSDlkIzkuIDmgJ3ot68pCiAgICAgICAgc3RyaW5nIHRlbXAgPSBQYXRoLkNvbWJpbmUoUGF0aC5HZXRUZW1wUGF0aCgpLCAkInB1bHNld2luLWNvb2tpZXMte0Vudmlyb25tZW50LlByb2Nlc3NJZH0te2Jyb3dzZXJ9LmRiIik7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBGaWxlLkNvcHkoY29va2llRGIsIHRlbXAsIG92ZXJ3cml0ZTogdHJ1ZSk7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChJT0V4Y2VwdGlvbikKICAgICAgICB7CiAgICAgICAgICAgIGxvY2tlZCA9IHRydWU7ICAgLy8g6KKr5Y2g55SoOui/meS4gOasoei3s+i/hyzosIPnlKjmlrnmja7mraTnu5nlh7rmm7Tlh4bnoa7nmoTljp/lm6AKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQoKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIHVzaW5nIHZhciBjb25uID0gbmV3IE1pY3Jvc29mdC5EYXRhLlNxbGl0ZS5TcWxpdGVDb25uZWN0aW9uKAogICAgICAgICAgICAgICAgbmV3IE1pY3Jvc29mdC5EYXRhLlNxbGl0ZS5TcWxpdGVDb25uZWN0aW9uU3RyaW5nQnVpbGRlcgogICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgIERhdGFTb3VyY2UgPSB0ZW1wLAogICAgICAgICAgICAgICAgICAgIE1vZGUgPSBNaWNyb3NvZnQuRGF0YS5TcWxpdGUuU3FsaXRlT3Blbk1vZGUuUmVhZE9ubHksCiAgICAgICAgICAgICAgICAgICAgUG9vbGluZyA9IGZhbHNlLAogICAgICAgICAgICAgICAgfS5Ub1N0cmluZygpKTsKICAgICAgICAgICAgY29ubi5PcGVuKCk7CiAgICAgICAgICAgIHVzaW5nIHZhciBjbWQgPSBjb25uLkNyZWF0ZUNvbW1hbmQoKTsKICAgICAgICAgICAgY21kLkNvbW1hbmRUZXh0ID0gIlNFTEVDVCBuYW1lLCB2YWx1ZSwgZW5jcnlwdGVkX3ZhbHVlLCBob3N0X2tleSBGUk9NIGNvb2tpZXMgIgogICAgICAgICAgICAgICAgKyAiV0hFUkUgaG9zdF9rZXkgTElLRSAnJSIgKyBob3N0S2V5d29yZCArICIlJyI7CiAgICAgICAgICAgIHVzaW5nIHZhciByZWFkZXIgPSBjbWQuRXhlY3V0ZVJlYWRlcigpOwogICAgICAgICAgICB2YXIgcGFpcnMgPSBuZXcgTGlzdDxzdHJpbmc+KCk7CiAgICAgICAgICAgIHdoaWxlIChyZWFkZXIuUmVhZCgpKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBzdHJpbmcgbmFtZSA9IHJlYWRlci5HZXRTdHJpbmcoMCk7CiAgICAgICAgICAgICAgICBzdHJpbmcgaG9zdCA9IHJlYWRlci5HZXRTdHJpbmcoMyk7CiAgICAgICAgICAgICAgICBpZiAoIWhvc3QuQ29udGFpbnMoaG9zdEtleXdvcmQsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbElnbm9yZUNhc2UpKSBjb250aW51ZTsKICAgICAgICAgICAgICAgIHN0cmluZyB2YWx1ZSA9IHJlYWRlci5Jc0RCTnVsbCgxKSA/ICIiIDogcmVhZGVyLkdldFN0cmluZygxKTsKICAgICAgICAgICAgICAgIGlmICh2YWx1ZS5MZW5ndGggPT0gMCAmJiAhcmVhZGVyLklzREJOdWxsKDIpKQogICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgIGJ5dGVbXSBlbmNyeXB0ZWQgPSAoYnl0ZVtdKXJlYWRlci5HZXRWYWx1ZSgyKTsKICAgICAgICAgICAgICAgICAgICB2YWx1ZSA9IERlY3J5cHRDb29raWUoYnJvd3Nlciwgcm9vdCwgZW5jcnlwdGVkKSA/PyAiIjsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGlmICh2YWx1ZS5MZW5ndGggPiAwKSBwYWlycy5BZGQoJCJ7bmFtZX09e3ZhbHVlfSIpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIHJldHVybiBwYWlycy5Db3VudCA+IDAgPyBzdHJpbmcuSm9pbigiOyAiLCBwYWlycykgOiBudWxsOwogICAgICAgIH0KICAgICAgICBmaW5hbGx5CiAgICAgICAgewogICAgICAgICAgICB0cnkgeyBGaWxlLkRlbGV0ZSh0ZW1wKTsgfSBjYXRjaCB7IC8qIOa4heeQhuWksei0peaXoOaJgOiwkyAqLyB9CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDop6Plr4YgQ2hyb21pdW0g55qEIGNvb2tpZSDlgLzjgILkuInnp43moLzlvI/vvJoKICAgIC8vLyB2MTAvdjExID0gQUVTLTI1Ni1HQ03vvIzlr4bpkqUgPSBEUEFQSShMb2NhbCBTdGF0ZSDph4znmoQgZW5jcnlwdGVkX2tleSnvvJsKICAgIC8vLyDogIHniYggPSDnm7TmjqUgRFBBUEko5YC85YmN57yAIDB4MDEwMDAwMDAp44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nPyBEZWNyeXB0Q29va2llKHN0cmluZyBicm93c2VyLCBzdHJpbmcgcm9vdCwgYnl0ZVtdIGVuY3J5cHRlZCkKICAgIHsKICAgICAgICBpZiAoZW5jcnlwdGVkLkxlbmd0aCA8IDQpIHJldHVybiBudWxsOwoKICAgICAgICAvLyDogIHmoLzlvI/vvJrmlbTkvZPlsLHmmK8gRFBBUEkgYmxvYgogICAgICAgIGlmIChlbmNyeXB0ZWRbMF0gPT0gMHgwMSAmJiBlbmNyeXB0ZWRbMV0gPT0gMHgwMCAmJiBlbmNyeXB0ZWRbMl0gPT0gMHgwMCAmJiBlbmNyeXB0ZWRbM10gPT0gMHgwMCkKICAgICAgICB7CiAgICAgICAgICAgIHRyeQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICB2YXIgcGxhaW4gPSBQcm90ZWN0ZWREYXRhLlVucHJvdGVjdChlbmNyeXB0ZWQsIG51bGwsIERhdGFQcm90ZWN0aW9uU2NvcGUuQ3VycmVudFVzZXIpOwogICAgICAgICAgICAgICAgcmV0dXJuIEVuY29kaW5nLlVURjguR2V0U3RyaW5nKHBsYWluKTsKICAgICAgICAgICAgfQogICAgICAgICAgICBjYXRjaCB7IHJldHVybiBudWxsOyB9CiAgICAgICAgfQoKICAgICAgICAvLyDmlrDmoLzlvI/vvJp2MTAvdjExICsgMTIg5a2X6IqCIG5vbmNlICsg5a+G5paHICsgMTYg5a2X6IqCIHRhZwogICAgICAgIHN0cmluZyBwcmVmaXggPSBFbmNvZGluZy5BU0NJSS5HZXRTdHJpbmcoZW5jcnlwdGVkLCAwLCAzKTsKICAgICAgICBpZiAocHJlZml4IGlzIG5vdCAoInYxMCIgb3IgInYxMSIpKSByZXR1cm4gbnVsbDsKCiAgICAgICAgYnl0ZVtdPyBrZXkgPSBHZXRCcm93c2VyS2V5KGJyb3dzZXIsIHJvb3QpOwogICAgICAgIGlmIChrZXkgaXMgbnVsbCkgcmV0dXJuIG51bGw7CiAgICAgICAgaWYgKGVuY3J5cHRlZC5MZW5ndGggPCAzICsgMTIgKyAxNikgcmV0dXJuIG51bGw7CgogICAgICAgIGludCBub25jZUxlbiA9IDEyLCB0YWdMZW4gPSAxNjsKICAgICAgICB2YXIgbm9uY2UgPSBlbmNyeXB0ZWQuQXNTcGFuKDMsIG5vbmNlTGVuKS5Ub0FycmF5KCk7CiAgICAgICAgdmFyIGNpcGhlciA9IGVuY3J5cHRlZC5Bc1NwYW4oMyArIG5vbmNlTGVuLCBlbmNyeXB0ZWQuTGVuZ3RoIC0gMyAtIG5vbmNlTGVuIC0gdGFnTGVuKS5Ub0FycmF5KCk7CiAgICAgICAgdmFyIHRhZyA9IGVuY3J5cHRlZC5Bc1NwYW4oZW5jcnlwdGVkLkxlbmd0aCAtIHRhZ0xlbiwgdGFnTGVuKS5Ub0FycmF5KCk7CiAgICAgICAgdmFyIGRlY3J5cHRlZCA9IG5ldyBieXRlW2NpcGhlci5MZW5ndGhdOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgdXNpbmcgdmFyIGFlcyA9IG5ldyBBZXNHY20oa2V5LCB0YWdMZW4pOwogICAgICAgICAgICBhZXMuRGVjcnlwdChub25jZSwgY2lwaGVyLCB0YWcsIGRlY3J5cHRlZCk7CiAgICAgICAgICAgIHJldHVybiBFbmNvZGluZy5VVEY4LkdldFN0cmluZyhkZWNyeXB0ZWQpOwogICAgICAgIH0KICAgICAgICBjYXRjaAogICAgICAgIHsKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIGJ5dGVbXT8gR2V0QnJvd3NlcktleShzdHJpbmcgYnJvd3Nlciwgc3RyaW5nIHJvb3QpCiAgICB7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBzdHJpbmcgbG9jYWxTdGF0ZSA9IFBhdGguQ29tYmluZShyb290LCAiTG9jYWwgU3RhdGUiKTsKICAgICAgICAgICAgaWYgKCFGaWxlLkV4aXN0cyhsb2NhbFN0YXRlKSkgcmV0dXJuIG51bGw7CiAgICAgICAgICAgIHVzaW5nIHZhciBkb2MgPSBKc29uRG9jdW1lbnQuUGFyc2UoRmlsZS5SZWFkQWxsVGV4dChsb2NhbFN0YXRlKSk7CiAgICAgICAgICAgIGlmICghZG9jLlJvb3RFbGVtZW50LlRyeUdldFByb3BlcnR5KCJvc19jcnlwdCIsIG91dCB2YXIgb3NDcnlwdCkKICAgICAgICAgICAgICAgIHx8ICFvc0NyeXB0LlRyeUdldFByb3BlcnR5KCJlbmNyeXB0ZWRfa2V5Iiwgb3V0IHZhciBlbmNLZXkpCiAgICAgICAgICAgICAgICB8fCBlbmNLZXkuVmFsdWVLaW5kICE9IEpzb25WYWx1ZUtpbmQuU3RyaW5nKQogICAgICAgICAgICAgICAgcmV0dXJuIG51bGw7CgogICAgICAgICAgICBieXRlW10gYmxvYiA9IENvbnZlcnQuRnJvbUJhc2U2NFN0cmluZyhlbmNLZXkuR2V0U3RyaW5nKCkhKTsKICAgICAgICAgICAgLy8g5YmNIDUg5a2X6IqC5pivICJEUEFQSSIg5qCH6K6wCiAgICAgICAgICAgIGlmIChibG9iLkxlbmd0aCA8PSA1KSByZXR1cm4gbnVsbDsKICAgICAgICAgICAgdmFyIGRwYXBpID0gYmxvYi5Bc1NwYW4oNSkuVG9BcnJheSgpOwogICAgICAgICAgICByZXR1cm4gUHJvdGVjdGVkRGF0YS5VbnByb3RlY3QoZHBhcGksIG51bGwsIERhdGFQcm90ZWN0aW9uU2NvcGUuQ3VycmVudFVzZXIpOwogICAgICAgIH0KICAgICAgICBjYXRjaAogICAgICAgIHsKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgfQp9Cg==
+using System.Globalization;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>
+/// 本机浏览器 cookie 的**共用读取器**(Command Code 与 OpenCode 两条浏览器会话通道都用它)。
+///
+/// 支持 Edge / Chrome(Chromium 系:cookie 值 AES-GCM 加密,密钥在 profile 的
+/// <c>Local State</c> 里经 DPAPI 保护)。浏览器运行时 cookie 库被独占锁——读取前
+/// 复制一份再开。按站点关键字缓存拼好的 Cookie 头(10 分钟),避免每次都解密。
+///
+/// **读不到是常态而非错误**:没登录过、profile 结构变了、解密失败都安静返回 null,
+/// 调用方自己兜底。整条通道有被安全软件启发式误判的前车之鉴(CodexBar-Win),
+/// 所以它必须活在「用户显式打开的开关」之下,这里不做任何开关判断。
+/// </summary>
+internal static class BrowserCookieStore
+{
+    private static readonly Dictionary<string, (string Header, DateTimeOffset At)> Cache = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, DpapiSecretStore> ManualStores = new(StringComparer.Ordinal);
+    private static AppDataPaths? _paths;
+
+    /// <summary>上次失败原因(界面显示用);成功后清空。</summary>
+    public static string? LastError { get; private set; }
+
+    /// <summary>上一次成功读到的来源(缓存 / 手动粘贴 / Edge / Chrome),诊断与界面用。</summary>
+    public static string? LastSource { get; private set; }
+
+    /// <summary>数据目录(手动粘贴的 cookie 用 DPAPI 存这儿)。引擎构造时 Attach。</summary>
+    public static void Attach(AppDataPaths paths) => _paths = paths;
+
+    /// <summary>
+    /// 拼出 host 包含 <paramref name="hostKeyword"/> 的站点的 Cookie 头。
+    /// 读不到返回 null(原因见 <see cref="LastError"/>)。
+    /// </summary>
+    public static string? GetCookieHeader(string hostKeyword, bool forceRefresh)
+    {
+        // **成功读到就一直在**。浏览器 cookie 本身有效期以天计,而"重新从浏览器库读"
+        // 有个硬门槛:浏览器开着时那个库是排他锁定的,根本读不到。所以这里不按分钟
+        // 过期——否则用户每 10 分钟就得关一次浏览器。只有服务端判登录态过期
+        // (<see cref="Invalidate"/>)时才重新去读。
+        if (!forceRefresh && Cache.TryGetValue(hostKeyword, out var hit))
+        {
+            LastSource = "缓存";
+            return hit.Header;
+        }
+
+        // 手动粘贴的优先:它是用户显式给的,不受浏览器文件锁影响
+        if (ManualStore(hostKeyword)?.Read() is { Length: > 0 } manual)
+        {
+            Cache[hostKeyword] = (manual, DateTimeOffset.Now);
+            LastSource = "手动粘贴";
+            LastError = null;
+            return manual;
+        }
+
+        try
+        {
+            bool blocked = false;
+            foreach (var (name, root) in BrowserRoots())
+            {
+                if (!Directory.Exists(root)) continue;
+                foreach (var profile in Profiles(root))
+                {
+                    string cookieDb = Path.Combine(profile, "Network", "Cookies");
+                    if (!File.Exists(cookieDb)) continue;
+                    var header = ReadCookiesFrom(name, root, cookieDb, hostKeyword, out bool locked);
+                    blocked |= locked;
+                    if (!string.IsNullOrEmpty(header))
+                    {
+                        Cache[hostKeyword] = (header, DateTimeOffset.Now);
+                        LastSource = name;
+                        LastError = null;
+                        return header;
+                    }
+                }
+            }
+            // 两种情况要分清(2026-10-10 更正):"库被浏览器占用"只是表象,真正读不到数据的
+            // 原因是 Edge/Chrome 127+ 的 cookie 已由 App-Bound 加密保护,第三方进程解不开。
+            // 从前把两者合并成一句"没找到登录 cookie",会把人引去反复关浏览器——没用。
+            LastError = blocked
+                ? $"{hostKeyword} 的 cookie 库被浏览器占用,这次读不到(关掉浏览器后会自动重试)。"
+                    + "但**即便读到也解不开**:Edge/Chrome 127+ 的 cookie 由 App-Bound 加密保护。"
+                    + "请在设置页点「登录 opencode.ai」,或手动粘贴会话 cookie。"
+                : $"{hostKeyword} 的 cookie 由 App-Bound 加密保护(Edge/Chrome 127+),第三方程序解不开。"
+                    + "请在设置页点「登录 opencode.ai」,或手动粘贴会话 cookie。";
+        }
+        catch (Exception ex)
+        {
+            LastError = "读取浏览器 cookie 失败:" + ex.Message;
+        }
+        return null;
+    }
+
+    /// <summary>登录态被判过期时调用方清缓存,下次强制重解浏览器库。</summary>
+    public static void Invalidate(string hostKeyword) => Cache.Remove(hostKeyword);
+
+    /// <summary>保存用户手动粘贴的 Cookie 头(DPAPI 加密落盘,与 API Key 同一保护强度)。</summary>
+    public static void SaveManual(string hostKeyword, string cookieHeader)
+    {
+        ManualStore(hostKeyword)?.Write(Normalize(cookieHeader));
+        Cache.Remove(hostKeyword);
+        LastError = null;
+    }
+
+    public static void ClearManual(string hostKeyword)
+    {
+        ManualStore(hostKeyword)?.Clear();
+        Cache.Remove(hostKeyword);
+    }
+
+    /// <summary>是否已经有手动粘贴的 cookie(设置页显示状态用)。</summary>
+    public static bool HasManual(string hostKeyword) => ManualStore(hostKeyword)?.Read() is { Length: > 0 };
+
+    private static DpapiSecretStore? ManualStore(string hostKeyword)
+    {
+        if (_paths is null) return null;
+        if (ManualStores.TryGetValue(hostKeyword, out var existing)) return existing;
+        var store = new DpapiSecretStore(
+            _paths,
+            Path.Combine(_paths.RootDirectory, $"browser-cookie-{hostKeyword}.bin"),
+            purpose: "browser-cookie-" + hostKeyword);
+        ManualStores[hostKeyword] = store;
+        return store;
+    }
+
+    /// <summary>
+    /// 规范化用户粘贴的内容。三种写法都收(与 GoGauge 的 build_cookie_header 同款):
+    /// 完整 Cookie 串、带 <c>Cookie:</c> 前缀的串、光秃秃一个值。
+    /// </summary>
+    private static string Normalize(string raw)
+    {
+        string text = raw.Trim();
+        if (text.StartsWith("cookie:", StringComparison.OrdinalIgnoreCase))
+            text = text[7..].Trim();
+        // 只有单个值(没有 name=)时补上会话 cookie 名
+        if (text.Length > 0 && !text.Contains('=')) text = "__Host-console_session=" + text;
+        return text;
+    }
+
+    private static IEnumerable<(string Name, string Root)> BrowserRoots()
+    {
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        yield return ("Edge", Path.Combine(local, "Microsoft", "Edge", "User Data"));
+        yield return ("Chrome", Path.Combine(local, "Google", "Chrome", "User Data"));
+    }
+
+    private static IEnumerable<string> Profiles(string root)
+    {
+        yield return Path.Combine(root, "Default");
+        for (int i = 1; i <= 6; i++) yield return Path.Combine(root, $"Profile {i}");
+        // 新版 Chromium 把部分 profile 放这里
+        string guest = Path.Combine(root, "Guest Profile");
+        if (Directory.Exists(guest)) yield return guest;
+    }
+
+    private static string? ReadCookiesFrom(
+        string browser, string root, string cookieDb, string hostKeyword, out bool locked)
+    {
+        locked = false;
+        // 浏览器在跑时 cookie 库被独占锁——先复制一份再读(与 goat-gauge 同一思路)
+        string temp = Path.Combine(Path.GetTempPath(), $"pulsewin-cookies-{Environment.ProcessId}-{browser}.db");
+        try
+        {
+            File.Copy(cookieDb, temp, overwrite: true);
+        }
+        catch (IOException)
+        {
+            locked = true;   // 被占用:这一次跳过,调用方据此给出更准确的原因
+            return null;
+        }
+
+        try
+        {
+            using var conn = new Microsoft.Data.Sqlite.SqliteConnection(
+                new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                {
+                    DataSource = temp,
+                    Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly,
+                    Pooling = false,
+                }.ToString());
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT name, value, encrypted_value, host_key FROM cookies "
+                + "WHERE host_key LIKE '%" + hostKeyword + "%'";
+            using var reader = cmd.ExecuteReader();
+            var pairs = new List<string>();
+            while (reader.Read())
+            {
+                string name = reader.GetString(0);
+                string host = reader.GetString(3);
+                if (!host.Contains(hostKeyword, StringComparison.OrdinalIgnoreCase)) continue;
+                string value = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                if (value.Length == 0 && !reader.IsDBNull(2))
+                {
+                    byte[] encrypted = (byte[])reader.GetValue(2);
+                    value = DecryptCookie(browser, root, encrypted) ?? "";
+                }
+                if (value.Length > 0) pairs.Add($"{name}={value}");
+            }
+            return pairs.Count > 0 ? string.Join("; ", pairs) : null;
+        }
+        finally
+        {
+            try { File.Delete(temp); } catch { /* 清理失败无所谓 */ }
+        }
+    }
+
+    /// <summary>
+    /// 解密 Chromium 的 cookie 值。三种格式：
+    /// v10/v11 = AES-256-GCM，密钥 = DPAPI(Local State 里的 encrypted_key)；
+    /// 老版 = 直接 DPAPI(值前缀 0x01000000)。
+    /// </summary>
+    private static string? DecryptCookie(string browser, string root, byte[] encrypted)
+    {
+        if (encrypted.Length < 4) return null;
+
+        // 老格式：整体就是 DPAPI blob
+        if (encrypted[0] == 0x01 && encrypted[1] == 0x00 && encrypted[2] == 0x00 && encrypted[3] == 0x00)
+        {
+            try
+            {
+                var plain = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser);
+                return Encoding.UTF8.GetString(plain);
+            }
+            catch { return null; }
+        }
+
+        // 新格式：v10/v11 + 12 字节 nonce + 密文 + 16 字节 tag
+        string prefix = Encoding.ASCII.GetString(encrypted, 0, 3);
+        if (prefix is not ("v10" or "v11")) return null;
+
+        byte[]? key = GetBrowserKey(browser, root);
+        if (key is null) return null;
+        if (encrypted.Length < 3 + 12 + 16) return null;
+
+        int nonceLen = 12, tagLen = 16;
+        var nonce = encrypted.AsSpan(3, nonceLen).ToArray();
+        var cipher = encrypted.AsSpan(3 + nonceLen, encrypted.Length - 3 - nonceLen - tagLen).ToArray();
+        var tag = encrypted.AsSpan(encrypted.Length - tagLen, tagLen).ToArray();
+        var decrypted = new byte[cipher.Length];
+        try
+        {
+            using var aes = new AesGcm(key, tagLen);
+            aes.Decrypt(nonce, cipher, tag, decrypted);
+            return Encoding.UTF8.GetString(decrypted);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static byte[]? GetBrowserKey(string browser, string root)
+    {
+        try
+        {
+            string localState = Path.Combine(root, "Local State");
+            if (!File.Exists(localState)) return null;
+            using var doc = JsonDocument.Parse(File.ReadAllText(localState));
+            if (!doc.RootElement.TryGetProperty("os_crypt", out var osCrypt)
+                || !osCrypt.TryGetProperty("encrypted_key", out var encKey)
+                || encKey.ValueKind != JsonValueKind.String)
+                return null;
+
+            byte[] blob = Convert.FromBase64String(encKey.GetString()!);
+            // 前 5 字节是 "DPAPI" 标记
+            if (blob.Length <= 5) return null;
+            var dpapi = blob.AsSpan(5).ToArray();
+            return ProtectedData.Unprotect(dpapi, null, DataProtectionScope.CurrentUser);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}

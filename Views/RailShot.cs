@@ -1,1 +1,169 @@
-dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uV2luZG93czsKdXNpbmcgU3lzdGVtLldpbmRvd3MuTWVkaWE7CnVzaW5nIFN5c3RlbS5XaW5kb3dzLk1lZGlhLkltYWdpbmc7CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyByYWlsIOS4u+eVjOmdoueahOemu+Wxj+WHuuWbvig8Yz4tLXJhaWwtc2hvdDwvYz4p44CC55So5ZCI5oiQ5pWw5o2u5riy5p+TIuepuumXsua6kOWPqueUu+WkluWciOOAgQovLy8g5q2j5Zyo5L2/55So55qE5rqQ5omN5Yqg5YaF5ZyIIueahOWunumZheaViOaenOKAlOKAlOeOr+aYr+iHque7mOeahCzpmaTkuobnnIvlm77msqHmnInliKvnmoTmoLjlr7nlip7ms5UsCi8vLyDogIzpnaDnnJ/kurogaG92ZXIv562J5pWw5o2u5Y+I5oWi5Y+I5LiN5Y+v5aSN546w44CCCi8vLwovLy8g5Lqn54mp5ZyoIDxjPkRhdGFccmFpbC1zaG90XDwvYz7jgIIKLy8vIDwvc3VtbWFyeT4KaW50ZXJuYWwgc3RhdGljIGNsYXNzIFJhaWxTaG90CnsKICAgIHB1YmxpYyBzdGF0aWMgdm9pZCBSdW4oKQogICAgewogICAgICAgIHN0cmluZyBkaXIgPSBQYXRoLkNvbWJpbmUoU25hcHNob3RTb3VyY2UuRGF0YURpcmVjdG9yeSwgInJhaWwtc2hvdCIpOwogICAgICAgIERpcmVjdG9yeS5DcmVhdGVEaXJlY3RvcnkoZGlyKTsKCiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBSZW5kZXIoQ2FzZSgpLCBQYXRoLkNvbWJpbmUoZGlyLCAicmFpbC5wbmciKSk7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChFeGNlcHRpb24gZXgpCiAgICAgICAgewogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCJyYWlsIOWHuuWbvuWksei0pSIsIGV4KTsKICAgICAgICB9CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5Puecn+WunuW/q+eFp+WHuuWbvig8Yz4tLXJhaWwtcmVhbDwvYz4pOuS4jeazqOWFpSzotbAgTG9hZEFsbCDnmoTnnJ/lrp7liqDovb3ot6/lvoTjgIIKICAgIC8vLyDmraPluLjlkK/liqjml7borr7nva7kuI7or4rmlq3nlLEgVXNhZ2VFbmdpbmUg5p6E6YCg5pe25oyC5o6lO+i/meadoeiviuaWreS4jeaehOmAoOW8leaTjizopoHoh6rlt7HmjILjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgUnVuUmVhbCgpCiAgICB7CiAgICAgICAgdmFyIHBhdGhzID0gbmV3IEFwcERhdGFQYXRocygpOwogICAgICAgIERpYWdub3N0aWNzLkF0dGFjaChwYXRocyk7CiAgICAgICAgQXBwU2V0dGluZ3MuQXR0YWNoKHBhdGhzKTsKCiAgICAgICAgc3RyaW5nIGRpciA9IFBhdGguQ29tYmluZShTbmFwc2hvdFNvdXJjZS5EYXRhRGlyZWN0b3J5LCAicmFpbC1zaG90Iik7CiAgICAgICAgRGlyZWN0b3J5LkNyZWF0ZURpcmVjdG9yeShkaXIpOwoKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIFJlbmRlcihudWxsLCBQYXRoLkNvbWJpbmUoZGlyLCAicmFpbC1yZWFsLnBuZyIpKTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoInJhaWwg55yf5a6e5pWw5o2u5Ye65Zu+5aSx6LSlIiwgZXgpOwogICAgICAgIH0KICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5LiJ56eN5rqQ5ZCE5pGG5LiA5LiqLOaKiuWFs+mUruaDheW9oumDveimhuebluWIsDoKICAgIC8vLyAgwrcgR09BVDrmqKHmi58i5q2j5Zyo6KKr54OnIijlhoXlnIjlh7rnjrA7NSDlsI/ml7bnlKjmjokgMzIlKSsg5oC76aKd5bqmIDg2JSjnuqIpCiAgICAvLy8gIMK3IE9wZW5Db2RlIEdvOjUg5bCP5pe256qX5Y+j5pivIDAg5LiU5LiN5rS76LeDKOWPqueUu+WkluWciCzov5nmmK/pu5jorqTor6XmnInnmoTmlbTmtIHmoLflrZApCiAgICAvLy8gIMK3IERlZXBTZWVrOuS9memineWeiyzmnKzmnaXlsLHlj6rmnInkuIDlnIgKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBMaXN0PFN1YkRhdGE+IENhc2UoKSA9PgogICAgWwogICAgICAgIG5ldyBTdWJEYXRhCiAgICAgICAgewogICAgICAgICAgICBLZXkgPSAiZ29hdCIsIE5hbWUgPSAiR09BVCIsIEFjY291bnRMYWJlbCA9ICJQYW5EZW5nODE2IiwKICAgICAgICAgICAgUGVyaW9kVG9rZW5zID0gM181OTRfNzAwXzAwMCwKICAgICAgICAgICAgUG9vbHMgPQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBuZXcgUG9vbERhdGEgeyBMYWJlbCA9ICI15bCP5pe2IiwgUG9vbEtpbmQgPSAiRml2ZUhvdXIiLCBVbml0ID0gImNyIiwKICAgICAgICAgICAgICAgICAgICBVc2VkID0gNC41LCBDYXAgPSAxNCwgSXNBdmFpbGFibGUgPSB0cnVlLAogICAgICAgICAgICAgICAgICAgIFJlc2V0QXQgPSBEYXRlVGltZU9mZnNldC5VdGNOb3cuQWRkSG91cnMoMykgfSwKICAgICAgICAgICAgICAgIG5ldyBQb29sRGF0YSB7IExhYmVsID0gIuacrOWRqCIsIFBvb2xLaW5kID0gIldlZWtseSIsIFVuaXQgPSAiY3IiLAogICAgICAgICAgICAgICAgICAgIFVzZWQgPSAyMCwgQ2FwID0gMzUsIElzQXZhaWxhYmxlID0gdHJ1ZSwKICAgICAgICAgICAgICAgICAgICBSZXNldEF0ID0gRGF0ZVRpbWVPZmZzZXQuVXRjTm93LkFkZERheXMoMikgfSwKICAgICAgICAgICAgICAgIG5ldyBQb29sRGF0YSB7IExhYmVsID0gIuaAu+mineW6piIsIFBvb2xLaW5kID0gIk1vbnRobHkiLCBVbml0ID0gImNyIiwKICAgICAgICAgICAgICAgICAgICBVc2VkID0gNjAuMywgQ2FwID0gNzAsIElzQXZhaWxhYmxlID0gdHJ1ZSwKICAgICAgICAgICAgICAgICAgICBSZXNldEF0ID0gRGF0ZVRpbWVPZmZzZXQuVXRjTm93LkFkZERheXMoMykgfSwKICAgICAgICAgICAgfSwKICAgICAgICB9LAogICAgICAgIG5ldyBTdWJEYXRhCiAgICAgICAgewogICAgICAgICAgICAvLyA1IOWwj+aXtueql+WPoyA9IDA65YaF5ZyIKirkuI3or6Xlh7rnjrAqKizlj6rnlLvmgLvpop3luqblpJbnjq/jgIIKICAgICAgICAgICAgLy8g6L+Z5p2h5rqQ55qE5rGg55SoKirnvZHpobXlj6PlvoQqKihVbml0PSUs5bm25bimIG1ldGVycyDnmoTlvq7nvo7liIbph5Hpop0p4oCU4oCU5Y2h54mH6KGMMwogICAgICAgICAgICAvLyDlm6DmraTotbAiJDYuMzggLyAkNjAi6YKj5p2h5YiG5pSvLOWHuuWbvuiDveS4gOW5tuaguOWvueWug+OAggogICAgICAgICAgICAvLyBQZXJpb2RUb2tlbnMg5Lmf54Wn55yf5a6e5oOF5b2i57uZ5LiKKOWumOaWuSAzMCDlpKnnqpflj6MpOuWNoeeJh+WktOmDqOS6juaYr+i1sAogICAgICAgICAgICAvLyAiNS435Lq/IMK3IOacrOaciOW3sueUqCBUb2tlbiLpgqPmnaHliIbmlK8s5LiOIEdPQVQg5Y2h54mH5ZCM5LiA6K+75rOV44CCCiAgICAgICAgICAgIEtleSA9ICJvcGVuY29kZSIsIE5hbWUgPSAiR08iLCBBY2NvdW50TGFiZWwgPSAiUGFuRGVuZyIsCiAgICAgICAgICAgIFBlcmlvZFRva2VucyA9IDU3MF8wMDBfMDAwLAogICAgICAgICAgICBQb29scyA9CiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIG5ldyBQb29sRGF0YSB7IExhYmVsID0gIjXlsI/ml7YiLCBQb29sS2luZCA9ICJGaXZlSG91ciIsIFVuaXQgPSAiJSIsCiAgICAgICAgICAgICAgICAgICAgVXNlZCA9IDAsIENhcCA9IDEwMCwgSXNBdmFpbGFibGUgPSB0cnVlLAogICAgICAgICAgICAgICAgICAgIFJlc2V0QXQgPSBEYXRlVGltZU9mZnNldC5VdGNOb3cuQWRkSG91cnMoNSkgfSwKICAgICAgICAgICAgICAgIG5ldyBQb29sRGF0YSB7IExhYmVsID0gIuacrOWRqCIsIFBvb2xLaW5kID0gIldlZWtseSIsIFVuaXQgPSAiJSIsCiAgICAgICAgICAgICAgICAgICAgVXNlZCA9IDguNSwgQ2FwID0gMTAwLCBJc0F2YWlsYWJsZSA9IHRydWUsCiAgICAgICAgICAgICAgICAgICAgUmVhZGluZ0Zyb20gPSAi572R6aG15o6n5Yi25Y+wIiwgVXNlZEFtb3VudCA9IDIuNTUsIExpbWl0QW1vdW50ID0gMzAsCiAgICAgICAgICAgICAgICAgICAgUmVzZXRBdCA9IERhdGVUaW1lT2Zmc2V0LlV0Y05vdy5BZGREYXlzKDMpIH0sCiAgICAgICAgICAgICAgICBuZXcgUG9vbERhdGEgeyBMYWJlbCA9ICLmnKzmnIgiLCBQb29sS2luZCA9ICJNb250aGx5IiwgVW5pdCA9ICIlIiwKICAgICAgICAgICAgICAgICAgICBVc2VkID0gMTAuNjMsIENhcCA9IDEwMCwgSXNBdmFpbGFibGUgPSB0cnVlLAogICAgICAgICAgICAgICAgICAgIFJlYWRpbmdGcm9tID0gIue9kemhteaOp+WItuWPsCIsIFVzZWRBbW91bnQgPSA2LjM4LCBMaW1pdEFtb3VudCA9IDYwLAogICAgICAgICAgICAgICAgICAgIFJlc2V0QXQgPSBEYXRlVGltZU9mZnNldC5VdGNOb3cuQWRkRGF5cygxOSkgfSwKICAgICAgICAgICAgfSwKICAgICAgICB9LAogICAgICAgIG5ldyBTdWJEYXRhCiAgICAgICAgewogICAgICAgICAgICAvLyDpmYTliqDotKblj7coZ28yKTrmnKrorqLpmIUgPSDlj6rmnInmnIjmsaDjgIHml6Dor7vmlbAg4oCU4oCUIOS4gOS4queBsOeOr+WNoOS9jSwKICAgICAgICAgICAgLy8gIui0puWPt+WtmOWcqCzlj6rmmK/ov5jmsqHpop3luqYi44CCCiAgICAgICAgICAgIEtleSA9ICJvcGVuY29kZToyIiwgTmFtZSA9ICJHT8K3Z28yIiwgQWNjb3VudExhYmVsID0gImdvMiIsCiAgICAgICAgICAgIFBvb2xzID0KICAgICAgICAgICAgewogICAgICAgICAgICAgICAgbmV3IFBvb2xEYXRhIHsgTGFiZWwgPSAi5oC76aKd5bqmIiwgUG9vbEtpbmQgPSAiTW9udGhseSIsIFVuaXQgPSAiJSIsCiAgICAgICAgICAgICAgICAgICAgSXNBdmFpbGFibGUgPSBmYWxzZSwgTm90ZSA9ICLmnKrorqLpmIXmiJbml6DmnYPor7vlj5Y75byA6YCa6K6i6ZiF5ZCO6Ieq5Yqo5byA5aeL5pi+56S6IiB9LAogICAgICAgICAgICB9LAogICAgICAgIH0sCiAgICAgICAgbmV3IFN1YkRhdGEKICAgICAgICB7CiAgICAgICAgICAgIEtleSA9ICJkZWVwc2VlayIsIE5hbWUgPSAiRGVlcFNlZWsiLCBBY2NvdW50TGFiZWwgPSAiUGFuRGVuZyIsCiAgICAgICAgICAgIFBvb2xzID0KICAgICAgICAgICAgewogICAgICAgICAgICAgICAgbmV3IFBvb2xEYXRhIHsgTGFiZWwgPSAi5L2Z6aKdIiwgUG9vbEtpbmQgPSAiQmFsYW5jZSIsIFVuaXQgPSAiJCIsCiAgICAgICAgICAgICAgICAgICAgSXNBdmFpbGFibGUgPSB0cnVlLCBBbW91bnQgPSAxMi4zNCwgVXNlZCA9IDcuNjYsIENhcCA9IDIwLjAsCiAgICAgICAgICAgICAgICAgICAgRXN0aW1hdGVGcm9tID0gIuiHquS4iuasoeWFheWAvCIgfSwKICAgICAgICAgICAgfSwKICAgICAgICB9LAogICAgXTsKCiAgICAvLy8gPHBhcmFtIG5hbWU9InN1YnMiPuWQiOaIkOaVsOaNrjtudWxsID0g5LiN5rOo5YWlLOeUqCA8c2VlIGNyZWY9IlNuYXBzaG90U291cmNlLkxvYWRBbGwiLz4g55qE55yf5a6e5pWw5o2u44CCPC9wYXJhbT4KICAgIHByaXZhdGUgc3RhdGljIHZvaWQgUmVuZGVyKExpc3Q8U3ViRGF0YT4/IHN1YnMsIHN0cmluZyBwYXRoKQogICAgewogICAgICAgIHZhciB3aW5kb3cgPSBuZXcgTWFpbldpbmRvdygpOwogICAgICAgIHdpbmRvdy5TaG93KCk7CiAgICAgICAgaWYgKHN1YnMgaXMgbm90IG51bGwpCiAgICAgICAgewogICAgICAgICAgICAvLyAqKuW/hemhu+WcqCBTaG93IOS5i+WQjuazqOWFpSoqOk9uU291cmNlSW5pdGlhbGl6ZWQoU2hvdyDop6blj5Ep6YeM5LyaIFJlbG9hZERhdGEoKSwKICAgICAgICAgICAgLy8g5LuO5b+r54Wn5Yqg6L2955yf5a6e5pWw5o2uLOaKiuWFiOWJjeazqOWFpeeahOWQiOaIkOaVsOaNruimhuebluaOiSjnrKzkuIDniYjlsLHmoL3lnKjov5k6CiAgICAgICAgICAgIC8vIOWHuuWbvuWPquWJqeS4gOS4qua6kCzlm6DkuLrpgqPkuKrnm67lvZXkuIvmsqHmnInlv6vnhafjgIHpgIDlm57kuobljaDkvY3mlbDmja4p44CCCiAgICAgICAgICAgIHdpbmRvdy5JbmplY3RGb3JTaG90KHN1YnMpOwogICAgICAgICAgICAvLyDlhoXlnIjnmoTliKTlrprmmK8i5q2j5Zyo6KKr54OnIuiAjOS4jeaYryLnqpflj6PmnInnlKjph48iKHYxLjE2LjEg6LW3KSzlh7rlm77opoHlsZXnpLoKICAgICAgICAgICAgLy8gR09BVCDlj4znjq/lsLHlvpfmmI7noa7lkYror4nlroMgR09BVCDmraPlnKjooqvng6c75pS55Yqo57uY5Yi25ZCO5by65Yi26YeN55S75LiA5bin44CCCiAgICAgICAgICAgIHdpbmRvdy5Gb3JjZUJ1cm5pbmcuQWRkKCJnb2F0Iik7CiAgICAgICAgICAgIHdpbmRvdy5JbnZhbGlkYXRlVmlzdWFsKCk7CiAgICAgICAgfQogICAgICAgIHdpbmRvdy5EaXNwYXRjaGVyLkludm9rZSgoKSA9PiB7IH0sIFN5c3RlbS5XaW5kb3dzLlRocmVhZGluZy5EaXNwYXRjaGVyUHJpb3JpdHkuTG9hZGVkKTsKICAgICAgICB3aW5kb3cuVXBkYXRlTGF5b3V0KCk7CgogICAgICAgIGRvdWJsZSB3ID0gd2luZG93LkFjdHVhbFdpZHRoLCBoID0gd2luZG93LkFjdHVhbEhlaWdodDsKICAgICAgICAvLyAyIOWAjea4suafkzpyYWlsIOWPquaciSB+NzVkaXUg5a69LDEg5YCN5Zu+5LiK55yL5LiN5riF56uv6YOo55WZ55m95LiO546v5pyJ5rKh5pyJ6KKr6KOBLAogICAgICAgIC8vIOS5n+ayoeazleWIpOaWrSLlhoXlnIjor6XkuI3or6Xlh7rnjrAi6L+Z56eN57uG6IqC44CCCiAgICAgICAgdmFyIGJtcCA9IG5ldyBSZW5kZXJUYXJnZXRCaXRtYXAoCiAgICAgICAgICAgIChpbnQpTWF0aC5DZWlsaW5nKHcgKiAyKSwgKGludClNYXRoLkNlaWxpbmcoaCAqIDIpLCAxOTIsIDE5MiwgUGl4ZWxGb3JtYXRzLlBiZ3JhMzIpOwogICAgICAgIGJtcC5SZW5kZXIod2luZG93KTsKCiAgICAgICAgLy8g5rex54Gw5bqVLOWlveeci+a4hem7keiJsueOu+eSgyByYWlsIOeahOi+ueeVjAogICAgICAgIHZhciBiZyA9IG5ldyBSZW5kZXJUYXJnZXRCaXRtYXAoCiAgICAgICAgICAgIChpbnQpTWF0aC5DZWlsaW5nKHcgKiAyKSwgKGludClNYXRoLkNlaWxpbmcoaCAqIDIpLCAxOTIsIDE5MiwgUGl4ZWxGb3JtYXRzLlBiZ3JhMzIpOwogICAgICAgIHZhciBidiA9IG5ldyBEcmF3aW5nVmlzdWFsKCk7CiAgICAgICAgdXNpbmcgKHZhciBkYyA9IGJ2LlJlbmRlck9wZW4oKSkKICAgICAgICB7CiAgICAgICAgICAgIGRjLkRyYXdSZWN0YW5nbGUobmV3IFNvbGlkQ29sb3JCcnVzaChDb2xvci5Gcm9tUmdiKDB4NEEsIDB4NEEsIDB4NTIpKSwgbnVsbCwgbmV3IFJlY3QoMCwgMCwgdywgaCkpOwogICAgICAgICAgICBkYy5EcmF3SW1hZ2UoYm1wLCBuZXcgUmVjdCgwLCAwLCB3LCBoKSk7CiAgICAgICAgfQogICAgICAgIGJnLlJlbmRlcihidik7CgogICAgICAgIHZhciBlbmNvZGVyID0gbmV3IFBuZ0JpdG1hcEVuY29kZXIoKTsKICAgICAgICBlbmNvZGVyLkZyYW1lcy5BZGQoQml0bWFwRnJhbWUuQ3JlYXRlKGJnKSk7CiAgICAgICAgdXNpbmcgdmFyIGZzID0gRmlsZS5DcmVhdGUocGF0aCk7CiAgICAgICAgZW5jb2Rlci5TYXZlKGZzKTsKICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQicmFpbCDlt7Llh7rlm74ge3BhdGh9ICh7dzowfXh7aDowfSkiKTsKICAgICAgICB3aW5kb3cuQ2xvc2UoKTsKICAgIH0KfQo=
+using System.IO;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace PulseWin;
+
+/// <summary>
+/// rail 主界面的离屏出图(<c>--rail-shot</c>)。用合成数据渲染"空闲源只画外圈、
+/// 正在使用的源才加内圈"的实际效果——环是自绘的,除了看图没有别的核对办法,
+/// 而靠真人 hover/等数据又慢又不可复现。
+///
+/// 产物在 <c>Data\rail-shot\</c>。
+/// </summary>
+internal static class RailShot
+{
+    public static void Run()
+    {
+        string dir = Path.Combine(SnapshotSource.DataDirectory, "rail-shot");
+        Directory.CreateDirectory(dir);
+
+        try
+        {
+            Render(Case(), Path.Combine(dir, "rail.png"));
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("rail 出图失败", ex);
+        }
+    }
+
+    /// <summary>真实快照出图(<c>--rail-real</c>):不注入,走 LoadAll 的真实加载路径。
+    /// 正常启动时设置与诊断由 UsageEngine 构造时挂接;这条诊断不构造引擎,要自己挂。</summary>
+    public static void RunReal()
+    {
+        var paths = new AppDataPaths();
+        Diagnostics.Attach(paths);
+        AppSettings.Attach(paths);
+
+        string dir = Path.Combine(SnapshotSource.DataDirectory, "rail-shot");
+        Directory.CreateDirectory(dir);
+
+        try
+        {
+            Render(null, Path.Combine(dir, "rail-real.png"));
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("rail 真实数据出图失败", ex);
+        }
+    }
+
+    /// <summary>
+    /// 三种源各摆一个,把关键情形都覆盖到:
+    ///  · GOAT:模拟"正在被烧"(内圈出现;5 小时用掉 32%)+ 总额度 86%(红)
+    ///  · OpenCode Go:5 小时窗口是 0 且不活跃(只画外圈,这是默认该有的整洁样子)
+    ///  · DeepSeek:余额型,本来就只有一圈
+    /// </summary>
+    private static List<SubData> Case() =>
+    [
+        new SubData
+        {
+            Key = "goat", Name = "GOAT", AccountLabel = "PanDeng816",
+            PeriodTokens = 3_594_700_000,
+            Pools =
+            {
+                new PoolData { Label = "5小时", PoolKind = "FiveHour", Unit = "cr",
+                    Used = 4.5, Cap = 14, IsAvailable = true,
+                    ResetAt = DateTimeOffset.UtcNow.AddHours(3) },
+                new PoolData { Label = "本周", PoolKind = "Weekly", Unit = "cr",
+                    Used = 20, Cap = 35, IsAvailable = true,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(2) },
+                new PoolData { Label = "总额度", PoolKind = "Monthly", Unit = "cr",
+                    Used = 60.3, Cap = 70, IsAvailable = true,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(3) },
+            },
+        },
+        new SubData
+        {
+            // 5 小时窗口 = 0:内圈**不该出现**,只画总额度外环。
+            // 这条源的池用**网页口径**(Unit=%,并带 meters 的微美分金额)——卡片行3
+            // 因此走"$6.38 / $60"那条分支,出图能一并核对它。
+            // PeriodTokens 也照真实情形给上(官方 30 天窗口):卡片头部于是走
+            // "5.7亿 · 本月已用 Token"那条分支,与 GOAT 卡片同一读法。
+            Key = "opencode", Name = "GO", AccountLabel = "PanDeng",
+            PeriodTokens = 570_000_000,
+            Pools =
+            {
+                new PoolData { Label = "5小时", PoolKind = "FiveHour", Unit = "%",
+                    Used = 0, Cap = 100, IsAvailable = true,
+                    ResetAt = DateTimeOffset.UtcNow.AddHours(5) },
+                new PoolData { Label = "本周", PoolKind = "Weekly", Unit = "%",
+                    Used = 8.5, Cap = 100, IsAvailable = true,
+                    ReadingFrom = "网页控制台", UsedAmount = 2.55, LimitAmount = 30,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(3) },
+                new PoolData { Label = "本月", PoolKind = "Monthly", Unit = "%",
+                    Used = 10.63, Cap = 100, IsAvailable = true,
+                    ReadingFrom = "网页控制台", UsedAmount = 6.38, LimitAmount = 60,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(19) },
+            },
+        },
+        new SubData
+        {
+            // 附加账号(go2):未订阅 = 只有月池、无读数 —— 一个灰环占位,
+            // "账号存在,只是还没额度"。
+            Key = "opencode:2", Name = "GO·go2", AccountLabel = "go2",
+            Pools =
+            {
+                new PoolData { Label = "总额度", PoolKind = "Monthly", Unit = "%",
+                    IsAvailable = false, Note = "未订阅或无权读取;开通订阅后自动开始显示" },
+            },
+        },
+        new SubData
+        {
+            Key = "deepseek", Name = "DeepSeek", AccountLabel = "PanDeng",
+            Pools =
+            {
+                new PoolData { Label = "余额", PoolKind = "Balance", Unit = "$",
+                    IsAvailable = true, Amount = 12.34, Used = 7.66, Cap = 20.0,
+                    EstimateFrom = "自上次充值" },
+            },
+        },
+    ];
+
+    /// <param name="subs">合成数据;null = 不注入,用 <see cref="SnapshotSource.LoadAll"/> 的真实数据。</param>
+    private static void Render(List<SubData>? subs, string path)
+    {
+        var window = new MainWindow();
+        window.Show();
+        if (subs is not null)
+        {
+            // **必须在 Show 之后注入**:OnSourceInitialized(Show 触发)里会 ReloadData(),
+            // 从快照加载真实数据,把先前注入的合成数据覆盖掉(第一版就栽在这:
+            // 出图只剩一个源,因为那个目录下没有快照、退回了占位数据)。
+            window.InjectForShot(subs);
+            // 内圈的判定是"正在被烧"而不是"窗口有用量"(v1.16.1 起),出图要展示
+            // GOAT 双环就得明确告诉它 GOAT 正在被烧;改动绘制后强制重画一帧。
+            window.ForceBurning.Add("goat");
+            window.InvalidateVisual();
+        }
+        window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
+        window.UpdateLayout();
+
+        double w = window.ActualWidth, h = window.ActualHeight;
+        // 2 倍渲染:rail 只有 ~75diu 宽,1 倍图上看不清端部留白与环有没有被裁,
+        // 也没法判断"内圈该不该出现"这种细节。
+        var bmp = new RenderTargetBitmap(
+            (int)Math.Ceiling(w * 2), (int)Math.Ceiling(h * 2), 192, 192, PixelFormats.Pbgra32);
+        bmp.Render(window);
+
+        // 深灰底,好看清黑色玻璃 rail 的边界
+        var bg = new RenderTargetBitmap(
+            (int)Math.Ceiling(w * 2), (int)Math.Ceiling(h * 2), 192, 192, PixelFormats.Pbgra32);
+        var bv = new DrawingVisual();
+        using (var dc = bv.RenderOpen())
+        {
+            dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x4A, 0x4A, 0x52)), null, new Rect(0, 0, w, h));
+            dc.DrawImage(bmp, new Rect(0, 0, w, h));
+        }
+        bg.Render(bv);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bg));
+        using var fs = File.Create(path);
+        encoder.Save(fs);
+        Diagnostics.Note($"rail 已出图 {path} ({w:0}x{h:0})");
+        window.Close();
+    }
+}

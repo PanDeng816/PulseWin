@@ -1,1 +1,214 @@
-dXNpbmcgU3lzdGVtLkdsb2JhbGl6YXRpb247CnVzaW5nIFN5c3RlbS5JTzsKdXNpbmcgU3lzdGVtLlRleHQuSnNvbjsKCm5hbWVzcGFjZSBQdWxzZVdpbjsKCi8vLyA8c3VtbWFyeT4KLy8vIERTSChEZWVwU2VlayBIYXJuZXNzKeatpOWIu+aYr+S4jeaYr+ato+WcqOi3keS4gOi9ruOAggovLy8KLy8vICoq6K+755qE5piv5a6D55qE5Lya6K+d5oqV5b2xKios5LiN5piv5Lya6K+d5q2j5paHOjxjPn5cLmRzaFxzdG9yYWdlc1xzZXNzaW9uX3Byb2pjYWNoZVxzZXNzaW9uc1wqLmpzb248L2M+44CCCi8vLyDmr4/kuKrkvJror53kuIDku70qKuaYjuaWhyoq5bCPIEpTT04o57qmIDIwIEtCKSzph4zpnaIgPGM+cmVjb3JkLnJvd3MudHVybkJvdW5kYXJ5LnZhbC5vcGVuVHVyblN0YXJ0U2VxPC9jPgovLy8g6Z2e56m6ID0g5pyJ5LiA6L2u6L+Y5rKh57uT5p2fLDxjPnJlY29yZC5yb3dzLnNlc3Npb25TdGF0cy52YWwub3BlblN0ZXA8L2M+IOe7meWHuuW9k+WJjei/meS4gOatpeeahAovLy8g5byA5aeL5pe25Yi744CCKirkuLrku4DkuYjkuI3or7vkvJror53mraPmlocqKig8Yz5zZXNzaW9uLnY0Lmpzb25sLnpzdGQ8L2M+KTrpgqPmmK8genN0ZCDljovnvKnnmoTkuovku7bmtYEsCi8vLyDliKTmlq0i5Zyo5LiN5Zyo6LeRIuimgeaKiuaVtOS7veino+WOi+S4gOmBjSjljZXkuKrkvJror53kuIrnmb7mr6vnp5IpLOiAjOi/meS4quaYr+eOsOaIkOeahOaKleW9seOAgei/mOaYr+aYjuaWh+eahOOAggovLy8KLy8vICoq5Li65LuA5LmI5LiN55yL5paH5Lu25L+u5pS55pe26Ze0Kio65LiOIFpDb2RlIOmCo+i+ueWQjOS4gOS4queQhueUseKAlOKAlCLmnIDov5EgTiDnp5LmnInlhpnlhaUi5Lik5Liq5pa55ZCR6YO95Lya6ZSZ44CCCi8vLyDov5nph4znlKggbXRpbWUg5Y+q5YGaKirlhZzlupUqKjrmipXlvbHph4znmoQgPGM+c3RhcnRUaW1lPC9jPiDmiY3mmK8i6L+Z5LiA5q2l5LuA5LmI5pe25YCZ5byA5aeL55qEIuOAggovLy8KLy8vICoq5pe26Ze06Zeo6ZmQ5b+F6aG76KaB5pyJKio65byC5bi46YCA5Ye65Lya55WZ5LiL5LiA5Liq5rC46L+c5LiN6Zet5ZCI55qEIG9wZW5UdXJuKERTSCDph43lkK/kuI3kvJrlm57lpLTooaUpLAovLy8g5rKh5pyJ6Zeo6ZmQ55qE6K+d6YKj5Liq5Lya6K+d5Lya5rC46L+c5pi+56S65oiQIuWcqOi3kSLjgILmiYDku6Xlj5YgPGM+bWF4KG9wZW5TdGVwLnN0YXJ0VGltZSwg5paH5Lu25pe26Ze0KTwvYz4sCi8vLyDotoXov4cgPHNlZSBjcmVmPSJUb29sR3JhY2UiLz4g5bCx5b2T5a6D5bey57uP5q275LqG4oCU4oCU6L+Z5Liq5a696ZmQ57uZ55qE5pivIuetieW3peWFtyIo6LeR6ZW/5p6E5bu644CBCi8vLyDplb/lkb3ku6TmnJ/pl7Tml6LmsqHmnInmlrDkuovku7bjgIFzdGFydFRpbWUg5Lmf5LiN5YaN5YmN6L+bKeOAggovLy8gPC9zdW1tYXJ5PgpwdWJsaWMgc2VhbGVkIGNsYXNzIERzaEFjdGl2aXR5CnsKICAgIC8vLyA8c3VtbWFyeT7nrYnlt6Xlhbcv562J5qih5Z6L55qE5a696ZmQ44CC5LiA6L2u6YeM5pyA6ZW/55qE6Z2Z6buY5bCx5piv5bel5YW35omn6KGM5pyf6Ze044CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgVGltZVNwYW4gVG9vbEdyYWNlID0gVGltZVNwYW4uRnJvbU1pbnV0ZXMoNSk7CgogICAgLy8vIDxzdW1tYXJ5PuWPquino+aekOacgOi/keacieWGmeWFpeeahOaKleW9seaWh+S7tjrmraPlnKjot5HnmoTkvJror53kuIDlrprlnKjlhbbkuK0s6ICB55qE5rKh5b+F6KaB55yL44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgVGltZVNwYW4gRnJlc2hXaW5kb3cgPSBUaW1lU3Bhbi5Gcm9tTWludXRlcygxMCk7CgogICAgLy8vIDxzdW1tYXJ5PuS4gOasoeacgOWkmueci+WHoOS4quWAmemAiSjmnIDmlrDnmoTlh6DkuKop44CC5aSa5byA5bm26KGM5Lya6K+d5Lmf5aSf44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBjb25zdCBpbnQgTWF4Q2FuZGlkYXRlcyA9IDQ7CgogICAgcHJpdmF0ZSByZWFkb25seSBzdHJpbmcgX2RpcmVjdG9yeTsKICAgIHByaXZhdGUgc3RyaW5nPyBfbGFzdEVycm9yVGV4dDsKCiAgICBwdWJsaWMgRHNoQWN0aXZpdHkoc3RyaW5nPyBwcm9qZWN0aW9uRGlyZWN0b3J5ID0gbnVsbCkKICAgIHsKICAgICAgICBfZGlyZWN0b3J5ID0gcHJvamVjdGlvbkRpcmVjdG9yeSA/PyBQYXRoLkNvbWJpbmUoCiAgICAgICAgICAgIEVudmlyb25tZW50LkdldEZvbGRlclBhdGgoRW52aXJvbm1lbnQuU3BlY2lhbEZvbGRlci5Vc2VyUHJvZmlsZSksCiAgICAgICAgICAgICIuZHNoIiwgInN0b3JhZ2VzIiwgInNlc3Npb25fcHJvamNhY2hlIiwgInNlc3Npb25zIik7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PkRTSCDmmK/lkKbmraPlnKjot5HkuIDova7jgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBJc1dvcmtpbmcgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOato+WcqOi3keeahOS8muivneacgOWQjueUqOeahOmAmumBk++8iERTSCDot6/nlLHlkI3vvIzlpoIgPGM+b3BlbmNvZGUtZ288L2M+44CBPGM+Y29tbWFuZGNvZGUtZ29hdDwvYz7vvInjgIIKICAgIC8vLyDmnaXoh6rmipXlvbHnmoQgPGM+bW9kZWxTZWxlY3Rpb24ubGFzdFVzZWQucHJvdmlkZXI8L2M+4oCU4oCU5Lya6K+d57qnIuacgOWQjuS9v+eUqCLvvIzkuI3mmK/lm57lkIjnuqfvvJsKICAgIC8vLyDkvJror53kuK3pgJTmjaLpgJrpgZPmmK/nvZXop4Hmk43kvZzvvIzlr7ki5q2j5Zyo54On5ZOq5Liq5rGgIueahOWIpOWumui2s+Wkn+WHhuOAguaYoOWwhOWIsCByYWlsIOa6kOeUqAogICAgLy8vIDxjPkNoYW5uZWxSZWdpc3RyeS5Tb3VyY2VLZXlPZjwvYz7jgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgSVJlYWRPbmx5U2V0PHN0cmluZz4gQWN0aXZlUHJvdmlkZXJzIHsgZ2V0OyBwcml2YXRlIHNldDsgfSA9CiAgICAgICAgbmV3IEhhc2hTZXQ8c3RyaW5nPihTdHJpbmdDb21wYXJlci5PcmRpbmFsKTsKCiAgICAvLy8gPHN1bW1hcnk+6K+755qE5oqV5b2x55uu5b2VKOiviuaWreimgeaYvuekuuWHuuadpSnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RyaW5nIFByb2plY3Rpb25EaXJlY3RvcnkgPT4gX2RpcmVjdG9yeTsKCiAgICAvLy8gPHN1bW1hcnk+5LiK5LiA5qyh6K+75Y+W5aSx6LSl55qE5Y6f5ZugKOiviuaWreeUqCks5oiQ5Yqf5pe25Li6IG51bGzjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RyaW5nPyBMYXN0RXJyb3IgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PuaKleW9semHjCLlm57lkIjov5jlvIDnnYAi55qE5Lya6K+d5pWwKOiviuaWreeUqDvlkKvlt7LooqvliKTlrprkuLrmrbvmjonnmoQp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIGludCBPcGVuVHVybnMgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5Puato+WcqOi3keeahOmCo+S4quS8muivnSBpZCjor4rmlq3nlKgpLOepuumXsuaXtuS4uiBudWxs44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZz8gQWN0aXZlU2Vzc2lvbiB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0KCiAgICAvLy8gPHN1bW1hcnk+5pys6L2u5Yik5a6a55So55qE5pe26Ze05Z+65YeGKOiviuaWreeUqDrkuIDnnLznnIvlh7rmmK/kuI3mmK/ljaHlnKjpl6jpmZDkuIop44CCPC9zdW1tYXJ5PgogICAgcHVibGljIERhdGVUaW1lT2Zmc2V0PyBMYXN0U2lnbmFsQXQgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgcHJpdmF0ZSBzZWFsZWQgcmVjb3JkIFNlc3Npb25TdGF0ZShib29sIE9wZW5UdXJuLCBEYXRlVGltZU9mZnNldD8gU3RlcFN0YXJ0LCBzdHJpbmc/IFByb3ZpZGVyKTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g6K+75LiA5qyh5oqV5b2x5bm26YeN566X54q25oCB44CC55Sx5Li75b6q546v5oyJ56eS6LCD55So4oCU4oCU5rKh5Yqo6Z2Z5pe25byA6ZSA5Y+q5piv5p6a5Li+5LiA5qyh55uu5b2V44CCCiAgICAvLy8g6L+U5Zue54q25oCB5piv5ZCm5Y+R55Sf5LqG5Y+Y5YyWKOeVjOmdouaNruatpOWGs+WumuimgeS4jeimgemHjeeUuynigJTigJQi5Zyo6LeRIueahOe/u+i9rOS4jgogICAgLy8vICLlnKjng6flk6rkupvpgJrpgZMi55qE6ZuG5ZCI5Y+Y5YyW6YO9566X44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHVibGljIGJvb2wgUG9sbCgpCiAgICB7CiAgICAgICAgYm9vbCBiZWZvcmUgPSBJc1dvcmtpbmc7CiAgICAgICAgdmFyIGJlZm9yZVByb3ZpZGVycyA9IEFjdGl2ZVByb3ZpZGVyczsKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIERhdGVUaW1lT2Zmc2V0IG5vdyA9IERhdGVUaW1lT2Zmc2V0LlV0Y05vdzsKICAgICAgICAgICAgRGF0ZVRpbWVPZmZzZXQgbmV3ZXN0ID0gRGF0ZVRpbWVPZmZzZXQuTWluVmFsdWU7CiAgICAgICAgICAgIGJvb2wgd29ya2luZyA9IGZhbHNlOwogICAgICAgICAgICBpbnQgb3BlbiA9IDA7CiAgICAgICAgICAgIHN0cmluZz8gYWN0aXZlID0gbnVsbDsKICAgICAgICAgICAgdmFyIHByb3ZpZGVycyA9IG5ldyBIYXNoU2V0PHN0cmluZz4oU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CgogICAgICAgICAgICBmb3JlYWNoICh2YXIgKHBhdGgsIHdyaXR0ZW4pIGluIFJlY2VudFByb2plY3Rpb25zKG5vdykpCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIGlmICghVHJ5UmVhZFN0YXRlKHBhdGgsIG91dCB2YXIgc3RhdGUpIHx8ICFzdGF0ZS5PcGVuVHVybikgY29udGludWU7CiAgICAgICAgICAgICAgICBvcGVuKys7CiAgICAgICAgICAgICAgICAvLyDpl6jpmZDnmoTml7bpl7Tln7rlh4Y6KipvcGVuU3RlcCDnmoTlvIDlp4vml7bliLvkvJjlhYgqKuKAlOKAlOWug+aJjeaYryLov5nkuIDmraXku4DkuYjml7blgJnliqjnmoQi44CCCiAgICAgICAgICAgICAgICAvLyDkuI3og73lj5bkuKTogIXovoPmlrDnmoQ6RFNIIOWQjuWPsOS8muaMgee7reWGmeaKleW9sSxtdGltZSDmsLjov5zmlrDpspws5Y+WIG1heCDkvJrorqnlvILluLgKICAgICAgICAgICAgICAgIC8vIOmAgOWHuueVmeS4i+eahOWDteWwuOWbnuWQiOawuOi/nOa0u+WcqOWuvemZkOacn+WGhSjlrp7mtYs65YO15bC45oqV5b2xIDMwKyDlsI/ml7blkI7ku43lnKjooqvlhpkp44CCCiAgICAgICAgICAgICAgICAvLyDlj6rmnInmipXlvbHov5jmsqHlhpkgc2Vzc2lvblN0YXRzKOato+W4uOi3keWKqOS4reaAu+aciSnmiY3pgIDlm57mlofku7bml7bpl7TlhZzlupXjgIIKICAgICAgICAgICAgICAgIERhdGVUaW1lT2Zmc2V0IHJlZmVyZW5jZSA9IHN0YXRlLlN0ZXBTdGFydCA/PyB3cml0dGVuOwogICAgICAgICAgICAgICAgaWYgKG5vdyAtIHJlZmVyZW5jZSA+IFRvb2xHcmFjZSkgY29udGludWU7ICAgICAgLy8g5YO15bC45Zue5ZCIOuW9k+Wug+W3sue7j+atu+S6hgogICAgICAgICAgICAgICAgd29ya2luZyA9IHRydWU7CiAgICAgICAgICAgICAgICBpZiAoc3RhdGUuUHJvdmlkZXIgaXMgeyBMZW5ndGg6ID4gMCB9IHApIHByb3ZpZGVycy5BZGQocCk7CiAgICAgICAgICAgICAgICBpZiAocmVmZXJlbmNlID4gbmV3ZXN0KSBuZXdlc3QgPSByZWZlcmVuY2U7CiAgICAgICAgICAgICAgICBhY3RpdmUgPz89IFBhdGguR2V0RmlsZU5hbWVXaXRob3V0RXh0ZW5zaW9uKHBhdGgpOwogICAgICAgICAgICB9CgogICAgICAgICAgICBPcGVuVHVybnMgPSBvcGVuOwogICAgICAgICAgICBBY3RpdmVTZXNzaW9uID0gd29ya2luZyA/IGFjdGl2ZSA6IG51bGw7CiAgICAgICAgICAgIExhc3RTaWduYWxBdCA9IHdvcmtpbmcgPyBuZXdlc3QgOiBudWxsOwogICAgICAgICAgICBJc1dvcmtpbmcgPSB3b3JraW5nOwogICAgICAgICAgICBBY3RpdmVQcm92aWRlcnMgPSBwcm92aWRlcnM7CiAgICAgICAgICAgIExhc3RFcnJvciA9IG51bGw7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChFeGNlcHRpb24gZXgpCiAgICAgICAgewogICAgICAgICAgICAvLyDor7vkuI3kuobkuI3or6XlvbHlk43mta7nqpc65b2T5L2cIuS4jeWcqOW3peS9nCIs5bm25Y+q5Zyo6ZSZ6K+v5YaF5a655Y+Y5YyW5pe26K6w5LiA5p2hCiAgICAgICAgICAgIExhc3RFcnJvciA9IGV4Lk1lc3NhZ2U7CiAgICAgICAgICAgIGlmIChfbGFzdEVycm9yVGV4dCAhPSBleC5NZXNzYWdlKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBfbGFzdEVycm9yVGV4dCA9IGV4Lk1lc3NhZ2U7CiAgICAgICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCLor7vlj5YgRFNIIOa0u+WKqOaKleW9seWksei0pSIsIGV4KTsKICAgICAgICAgICAgfQogICAgICAgICAgICBJc1dvcmtpbmcgPSBmYWxzZTsKICAgICAgICAgICAgQWN0aXZlUHJvdmlkZXJzID0gbmV3IEhhc2hTZXQ8c3RyaW5nPihTdHJpbmdDb21wYXJlci5PcmRpbmFsKTsKICAgICAgICB9CgogICAgICAgIGJvb2wgY2hhbmdlZCA9IGJlZm9yZSAhPSBJc1dvcmtpbmcKICAgICAgICAgICAgfHwgIVNhbWVTZXQoYmVmb3JlUHJvdmlkZXJzLCBBY3RpdmVQcm92aWRlcnMpOwogICAgICAgIGlmIChiZWZvcmUgIT0gSXNXb3JraW5nKQogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQiRFNIIOa0u+WKqOeKtuaAgTogeyhJc1dvcmtpbmcKICAgICAgICAgICAgICAgID8gJCLlvIDlp4vlt6XkvZwo5Lya6K+dIHtBY3RpdmVTZXNzaW9ufSzpgJrpgZMgW3tzdHJpbmcuSm9pbigiLCAiLCBBY3RpdmVQcm92aWRlcnMpfV0pIgogICAgICAgICAgICAgICAgOiAi56m66ZeyIil9Iik7CiAgICAgICAgcmV0dXJuIGNoYW5nZWQ7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgYm9vbCBTYW1lU2V0KElSZWFkT25seVNldDxzdHJpbmc+IGEsIElSZWFkT25seVNldDxzdHJpbmc+IGIpID0+CiAgICAgICAgYS5Db3VudCA9PSBiLkNvdW50ICYmIGEuQWxsKGIuQ29udGFpbnMpOwoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDmnIDov5Hlhpnov4fnmoTmipXlvbHmlofku7Ys5paw55qE5Zyo5YmN44CC55So55uu5b2V5p6a5Li+5LiA5qyh5ou/5YWoKOWQq+aXtumXtOaIsyks5LiN6YCQ5LiqIHN0YXQg5Lik6YGN44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBMaXN0PChzdHJpbmcgUGF0aCwgRGF0ZVRpbWVPZmZzZXQgV3JpdHRlbik+IFJlY2VudFByb2plY3Rpb25zKERhdGVUaW1lT2Zmc2V0IG5vdykKICAgIHsKICAgICAgICB2YXIgYWxsID0gbmV3IExpc3Q8KHN0cmluZyBQYXRoLCBEYXRlVGltZU9mZnNldCBXcml0dGVuKT4oKTsKICAgICAgICBpZiAoIURpcmVjdG9yeS5FeGlzdHMoX2RpcmVjdG9yeSkpIHJldHVybiBhbGw7CgogICAgICAgIGZvcmVhY2ggKHN0cmluZyBwYXRoIGluIERpcmVjdG9yeS5FbnVtZXJhdGVGaWxlcyhfZGlyZWN0b3J5LCAiKi5qc29uIikpCiAgICAgICAgewogICAgICAgICAgICBEYXRlVGltZSB3cml0dGVuID0gRmlsZS5HZXRMYXN0V3JpdGVUaW1lVXRjKHBhdGgpOwogICAgICAgICAgICB2YXIgc3RhbXAgPSBuZXcgRGF0ZVRpbWVPZmZzZXQod3JpdHRlbiwgVGltZVNwYW4uWmVybyk7CiAgICAgICAgICAgIGlmIChub3cgLSBzdGFtcCA+IEZyZXNoV2luZG93KSBjb250aW51ZTsKICAgICAgICAgICAgYWxsLkFkZCgocGF0aCwgc3RhbXApKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGFsbC5PcmRlckJ5RGVzY2VuZGluZyh4ID0+IHguV3JpdHRlbikuVGFrZShNYXhDYW5kaWRhdGVzKS5Ub0xpc3QoKTsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBib29sIFRyeVJlYWRTdGF0ZShzdHJpbmcgcGF0aCwgb3V0IFNlc3Npb25TdGF0ZSBzdGF0ZSkKICAgIHsKICAgICAgICBzdGF0ZSA9IG5ldyBTZXNzaW9uU3RhdGUoZmFsc2UsIG51bGwsIG51bGwpOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgdXNpbmcgdmFyIHN0cmVhbSA9IG5ldyBGaWxlU3RyZWFtKHBhdGgsIEZpbGVNb2RlLk9wZW4sIEZpbGVBY2Nlc3MuUmVhZCwKICAgICAgICAgICAgICAgIEZpbGVTaGFyZS5SZWFkV3JpdGUgfCBGaWxlU2hhcmUuRGVsZXRlKTsKICAgICAgICAgICAgdXNpbmcgdmFyIGRvYyA9IEpzb25Eb2N1bWVudC5QYXJzZShzdHJlYW0pOwogICAgICAgICAgICBpZiAoIWRvYy5Sb290RWxlbWVudC5UcnlHZXRQcm9wZXJ0eSgicmVjb3JkIiwgb3V0IHZhciByZWNvcmQpKSByZXR1cm4gZmFsc2U7CiAgICAgICAgICAgIGlmICghcmVjb3JkLlRyeUdldFByb3BlcnR5KCJyb3dzIiwgb3V0IHZhciByb3dzKSkgcmV0dXJuIGZhbHNlOwoKICAgICAgICAgICAgYm9vbCBvcGVuVHVybiA9IGZhbHNlOwogICAgICAgICAgICBpZiAocm93cy5UcnlHZXRQcm9wZXJ0eSgidHVybkJvdW5kYXJ5Iiwgb3V0IHZhciBib3VuZGFyeSkKICAgICAgICAgICAgICAgICYmIGJvdW5kYXJ5LlRyeUdldFByb3BlcnR5KCJ2YWwiLCBvdXQgdmFyIGJvdW5kYXJ5VmFsdWUpCiAgICAgICAgICAgICAgICAmJiBib3VuZGFyeVZhbHVlLlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk9iamVjdAogICAgICAgICAgICAgICAgJiYgYm91bmRhcnlWYWx1ZS5UcnlHZXRQcm9wZXJ0eSgib3BlblR1cm5TdGFydFNlcSIsIG91dCB2YXIgc2VxKSkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgb3BlblR1cm4gPSBzZXEuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuTnVtYmVyOwogICAgICAgICAgICB9CgogICAgICAgICAgICBEYXRlVGltZU9mZnNldD8gc3RlcFN0YXJ0ID0gbnVsbDsKICAgICAgICAgICAgaWYgKHJvd3MuVHJ5R2V0UHJvcGVydHkoInNlc3Npb25TdGF0cyIsIG91dCB2YXIgc3RhdHMpCiAgICAgICAgICAgICAgICAmJiBzdGF0cy5UcnlHZXRQcm9wZXJ0eSgidmFsIiwgb3V0IHZhciBzdGF0c1ZhbHVlKQogICAgICAgICAgICAgICAgJiYgc3RhdHNWYWx1ZS5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5PYmplY3QKICAgICAgICAgICAgICAgICYmIHN0YXRzVmFsdWUuVHJ5R2V0UHJvcGVydHkoIm9wZW5TdGVwIiwgb3V0IHZhciBvcGVuU3RlcCkKICAgICAgICAgICAgICAgICYmIG9wZW5TdGVwLlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk9iamVjdAogICAgICAgICAgICAgICAgJiYgb3BlblN0ZXAuVHJ5R2V0UHJvcGVydHkoInN0YXJ0VGltZSIsIG91dCB2YXIgc3RhcnRUaW1lKQogICAgICAgICAgICAgICAgJiYgc3RhcnRUaW1lLlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk51bWJlcgogICAgICAgICAgICAgICAgJiYgc3RhcnRUaW1lLlRyeUdldEludDY0KG91dCBsb25nIG1zKSAmJiBtcyA+IDApCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIHN0ZXBTdGFydCA9IERhdGVUaW1lT2Zmc2V0LkZyb21Vbml4VGltZU1pbGxpc2Vjb25kcyhtcyk7CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIC8vIOi/meS4gOi9rueDp+WTquadoemAmumBkzrmipXlvbHmiooi5Lya6K+d5pyA5ZCO5L2/55So55qEIHByb3ZpZGVyL21vZGVsIuiusOWcqAogICAgICAgICAgICAvLyBtb2RlbFNlbGVjdGlvbi5sYXN0VXNlZCDkuIso6Lev55Sx5ZCNLOWmgiBvcGVuY29kZS1nbyAvIGNvbW1hbmRjb2RlLWdvYXQpCiAgICAgICAgICAgIHN0cmluZz8gcHJvdmlkZXIgPSBudWxsOwogICAgICAgICAgICBpZiAocm93cy5UcnlHZXRQcm9wZXJ0eSgibW9kZWxTZWxlY3Rpb24iLCBvdXQgdmFyIHNlbGVjdGlvbikKICAgICAgICAgICAgICAgICYmIHNlbGVjdGlvbi5UcnlHZXRQcm9wZXJ0eSgidmFsIiwgb3V0IHZhciBzZWxWYWwpCiAgICAgICAgICAgICAgICAmJiBzZWxWYWwuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuT2JqZWN0CiAgICAgICAgICAgICAgICAmJiBzZWxWYWwuVHJ5R2V0UHJvcGVydHkoImxhc3RVc2VkIiwgb3V0IHZhciBsYXN0VXNlZCkKICAgICAgICAgICAgICAgICYmIGxhc3RVc2VkLlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk9iamVjdAogICAgICAgICAgICAgICAgJiYgbGFzdFVzZWQuVHJ5R2V0UHJvcGVydHkoInByb3ZpZGVyIiwgb3V0IHZhciBwcm92KQogICAgICAgICAgICAgICAgJiYgcHJvdi5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5TdHJpbmcpCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIHByb3ZpZGVyID0gcHJvdi5HZXRTdHJpbmcoKTsKICAgICAgICAgICAgfQoKICAgICAgICAgICAgc3RhdGUgPSBuZXcgU2Vzc2lvblN0YXRlKG9wZW5UdXJuLCBzdGVwU3RhcnQsIHByb3ZpZGVyKTsKICAgICAgICAgICAgcmV0dXJuIHRydWU7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChFeGNlcHRpb24pCiAgICAgICAgewogICAgICAgICAgICAvLyDljYrlhpnlroznmoTmipXlvbE65b2T5a6D5LiN5a2Y5ZyoLOS4i+S4gOi9ruWGjeivuwogICAgICAgICAgICByZXR1cm4gZmFsc2U7CiAgICAgICAgfQogICAgfQp9Cg==
+using System.Globalization;
+using System.IO;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>
+/// DSH(DeepSeek Harness)此刻是不是正在跑一轮。
+///
+/// **读的是它的会话投影**,不是会话正文:<c>~\.dsh\storages\session_projcache\sessions\*.json</c>。
+/// 每个会话一份**明文**小 JSON(约 20 KB),里面 <c>record.rows.turnBoundary.val.openTurnStartSeq</c>
+/// 非空 = 有一轮还没结束,<c>record.rows.sessionStats.val.openStep</c> 给出当前这一步的
+/// 开始时刻。**为什么不读会话正文**(<c>session.v4.jsonl.zstd</c>):那是 zstd 压缩的事件流,
+/// 判断"在不在跑"要把整份解压一遍(单个会话上百毫秒),而这个是现成的投影、还是明文的。
+///
+/// **为什么不看文件修改时间**:与 ZCode 那边同一个理由——"最近 N 秒有写入"两个方向都会错。
+/// 这里用 mtime 只做**兜底**:投影里的 <c>startTime</c> 才是"这一步什么时候开始的"。
+///
+/// **时间门限必须要有**:异常退出会留下一个永远不闭合的 openTurn(DSH 重启不会回头补),
+/// 没有门限的话那个会话会永远显示成"在跑"。所以取 <c>max(openStep.startTime, 文件时间)</c>,
+/// 超过 <see cref="ToolGrace"/> 就当它已经死了——这个宽限给的是"等工具"(跑长构建、
+/// 长命令期间既没有新事件、startTime 也不再前进)。
+/// </summary>
+public sealed class DshActivity
+{
+    /// <summary>等工具/等模型的宽限。一轮里最长的静默就是工具执行期间。</summary>
+    private static readonly TimeSpan ToolGrace = TimeSpan.FromMinutes(5);
+
+    /// <summary>只解析最近有写入的投影文件:正在跑的会话一定在其中,老的没必要看。</summary>
+    private static readonly TimeSpan FreshWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>一次最多看几个候选(最新的几个)。多开并行会话也够。</summary>
+    private const int MaxCandidates = 4;
+
+    private readonly string _directory;
+    private string? _lastErrorText;
+
+    public DshActivity(string? projectionDirectory = null)
+    {
+        _directory = projectionDirectory ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".dsh", "storages", "session_projcache", "sessions");
+    }
+
+    /// <summary>DSH 是否正在跑一轮。</summary>
+    public bool IsWorking { get; private set; }
+
+    /// <summary>
+    /// 正在跑的会话最后用的通道（DSH 路由名，如 <c>opencode-go</c>、<c>commandcode-goat</c>）。
+    /// 来自投影的 <c>modelSelection.lastUsed.provider</c>——会话级"最后使用"，不是回合级；
+    /// 会话中途换通道是罕见操作，对"正在烧哪个池"的判定足够准。映射到 rail 源用
+    /// <c>ChannelRegistry.SourceKeyOf</c>。
+    /// </summary>
+    public IReadOnlySet<string> ActiveProviders { get; private set; } =
+        new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>读的投影目录(诊断要显示出来)。</summary>
+    public string ProjectionDirectory => _directory;
+
+    /// <summary>上一次读取失败的原因(诊断用),成功时为 null。</summary>
+    public string? LastError { get; private set; }
+
+    /// <summary>投影里"回合还开着"的会话数(诊断用;含已被判定为死掉的)。</summary>
+    public int OpenTurns { get; private set; }
+
+    /// <summary>正在跑的那个会话 id(诊断用),空闲时为 null。</summary>
+    public string? ActiveSession { get; private set; }
+
+    /// <summary>本轮判定用的时间基准(诊断用:一眼看出是不是卡在门限上)。</summary>
+    public DateTimeOffset? LastSignalAt { get; private set; }
+
+    private sealed record SessionState(bool OpenTurn, DateTimeOffset? StepStart, string? Provider);
+
+    /// <summary>
+    /// 读一次投影并重算状态。由主循环按秒调用——没动静时开销只是枚举一次目录。
+    /// 返回状态是否发生了变化(界面据此决定要不要重画)——"在跑"的翻转与
+    /// "在烧哪些通道"的集合变化都算。
+    /// </summary>
+    public bool Poll()
+    {
+        bool before = IsWorking;
+        var beforeProviders = ActiveProviders;
+        try
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            DateTimeOffset newest = DateTimeOffset.MinValue;
+            bool working = false;
+            int open = 0;
+            string? active = null;
+            var providers = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var (path, written) in RecentProjections(now))
+            {
+                if (!TryReadState(path, out var state) || !state.OpenTurn) continue;
+                open++;
+                // 门限的时间基准:**openStep 的开始时刻优先**——它才是"这一步什么时候动的"。
+                // 不能取两者较新的:DSH 后台会持续写投影,mtime 永远新鲜,取 max 会让异常
+                // 退出留下的僵尸回合永远活在宽限期内(实测:僵尸投影 30+ 小时后仍在被写)。
+                // 只有投影还没写 sessionStats(正常跑动中总有)才退回文件时间兜底。
+                DateTimeOffset reference = state.StepStart ?? written;
+                if (now - reference > ToolGrace) continue;      // 僵尸回合:当它已经死了
+                working = true;
+                if (state.Provider is { Length: > 0 } p) providers.Add(p);
+                if (reference > newest) newest = reference;
+                active ??= Path.GetFileNameWithoutExtension(path);
+            }
+
+            OpenTurns = open;
+            ActiveSession = working ? active : null;
+            LastSignalAt = working ? newest : null;
+            IsWorking = working;
+            ActiveProviders = providers;
+            LastError = null;
+        }
+        catch (Exception ex)
+        {
+            // 读不了不该影响浮窗:当作"不在工作",并只在错误内容变化时记一条
+            LastError = ex.Message;
+            if (_lastErrorText != ex.Message)
+            {
+                _lastErrorText = ex.Message;
+                Diagnostics.Note("读取 DSH 活动投影失败", ex);
+            }
+            IsWorking = false;
+            ActiveProviders = new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        bool changed = before != IsWorking
+            || !SameSet(beforeProviders, ActiveProviders);
+        if (before != IsWorking)
+            Diagnostics.Note($"DSH 活动状态: {(IsWorking
+                ? $"开始工作(会话 {ActiveSession},通道 [{string.Join(", ", ActiveProviders)}])"
+                : "空闲")}");
+        return changed;
+    }
+
+    private static bool SameSet(IReadOnlySet<string> a, IReadOnlySet<string> b) =>
+        a.Count == b.Count && a.All(b.Contains);
+
+    /// <summary>
+    /// 最近写过的投影文件,新的在前。用目录枚举一次拿全(含时间戳),不逐个 stat 两遍。
+    /// </summary>
+    private List<(string Path, DateTimeOffset Written)> RecentProjections(DateTimeOffset now)
+    {
+        var all = new List<(string Path, DateTimeOffset Written)>();
+        if (!Directory.Exists(_directory)) return all;
+
+        foreach (string path in Directory.EnumerateFiles(_directory, "*.json"))
+        {
+            DateTime written = File.GetLastWriteTimeUtc(path);
+            var stamp = new DateTimeOffset(written, TimeSpan.Zero);
+            if (now - stamp > FreshWindow) continue;
+            all.Add((path, stamp));
+        }
+        return all.OrderByDescending(x => x.Written).Take(MaxCandidates).ToList();
+    }
+
+    private static bool TryReadState(string path, out SessionState state)
+    {
+        state = new SessionState(false, null, null);
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            using var doc = JsonDocument.Parse(stream);
+            if (!doc.RootElement.TryGetProperty("record", out var record)) return false;
+            if (!record.TryGetProperty("rows", out var rows)) return false;
+
+            bool openTurn = false;
+            if (rows.TryGetProperty("turnBoundary", out var boundary)
+                && boundary.TryGetProperty("val", out var boundaryValue)
+                && boundaryValue.ValueKind == JsonValueKind.Object
+                && boundaryValue.TryGetProperty("openTurnStartSeq", out var seq))
+            {
+                openTurn = seq.ValueKind == JsonValueKind.Number;
+            }
+
+            DateTimeOffset? stepStart = null;
+            if (rows.TryGetProperty("sessionStats", out var stats)
+                && stats.TryGetProperty("val", out var statsValue)
+                && statsValue.ValueKind == JsonValueKind.Object
+                && statsValue.TryGetProperty("openStep", out var openStep)
+                && openStep.ValueKind == JsonValueKind.Object
+                && openStep.TryGetProperty("startTime", out var startTime)
+                && startTime.ValueKind == JsonValueKind.Number
+                && startTime.TryGetInt64(out long ms) && ms > 0)
+            {
+                stepStart = DateTimeOffset.FromUnixTimeMilliseconds(ms);
+            }
+
+            // 这一轮烧哪条通道:投影把"会话最后使用的 provider/model"记在
+            // modelSelection.lastUsed 下(路由名,如 opencode-go / commandcode-goat)
+            string? provider = null;
+            if (rows.TryGetProperty("modelSelection", out var selection)
+                && selection.TryGetProperty("val", out var selVal)
+                && selVal.ValueKind == JsonValueKind.Object
+                && selVal.TryGetProperty("lastUsed", out var lastUsed)
+                && lastUsed.ValueKind == JsonValueKind.Object
+                && lastUsed.TryGetProperty("provider", out var prov)
+                && prov.ValueKind == JsonValueKind.String)
+            {
+                provider = prov.GetString();
+            }
+
+            state = new SessionState(openTurn, stepStart, provider);
+            return true;
+        }
+        catch (Exception)
+        {
+            // 半写完的投影:当它不存在,下一轮再读
+            return false;
+        }
+    }
+}

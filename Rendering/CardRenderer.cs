@@ -1,1 +1,363 @@
-dXNpbmcgU3lzdGVtLkdsb2JhbGl6YXRpb247CnVzaW5nIFN5c3RlbS5MaW5xOwp1c2luZyBTeXN0ZW0uV2luZG93czsKdXNpbmcgU3lzdGVtLldpbmRvd3MuTWVkaWE7CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyDor6bmg4XljaHnqpfluIPlsYA66KeE5YiZ5ZyG6KeS5pa55qGGKOaXoOaMh+mSiCks6LS0IHJhaWwg5LiA5L6n5pS+572u44CCCi8vLwovLy8g6auY5bqmKirkuI3lj6bnq4vluLjph48qKizogIzmmK/nm7TmjqXlkJEgPHNlZSBjcmVmPSJDYXJkUmVuZGVyZXIiLz4g6KaB5a6e6ZmF5q2l6L+b4oCU4oCUCi8vLyDku47liY3kuKTlpZfmlbDlkITlhpnkuIDku70s57uT5p6c5bCx5pivIuWNoeeJh+avlOWGheWuueefrijoo4HlrZcpIuaIliLlupXpg6jnlZnkuIDlpKflnZfnqboiLAovLy8g5q+P5qyh6LCD6KGM6Led6YO96KaB5Lq65bel5a+56b2Q5Lik5Liq5paH5Lu244CC6KeBIHYxLjEwLjEg55qE57Sn5YeR5YyW44CCCi8vLyA8L3N1bW1hcnk+CnB1YmxpYyBzdGF0aWMgY2xhc3MgQ2FyZExheW91dAp7CiAgICBwdWJsaWMgY29uc3QgZG91YmxlIE1hcmdpbiA9IDEyOwogICAgcHVibGljIHN0YXRpYyByZWFkb25seSBkb3VibGUgR2FwVG9SYWlsID0gQ2FyZC5Ib3Jpem9udGFsR2FwOwoKICAgIC8vLyA8c3VtbWFyeT7otKbmiLfljaHnmoTnqpcv5YaF5a655qGG44CC6auY5bqm5oyJ5YaF5a655Yqo5oCB6K6h566XLOmYsuatouaWh+Wtl+a6ouWHui/nlZnlpKfniYfnqbrjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIChTaXplIHdpbiwgUmVjdCBib2R5KSBTdWJDYXJkKGludCBwb29sQ291bnQsIGJvb2wgc2hvd1N0YWxlLCBib29sIHNob3dDaGFydCkKICAgIHsKICAgICAgICBkb3VibGUgdyA9IENhcmQuV2lkdGg7CiAgICAgICAgZG91YmxlIGggPSBDYXJkUmVuZGVyZXIuSGVhZGVyQmxvY2sKICAgICAgICAgICAgKyBDYXJkUmVuZGVyZXIuUm93UGl0Y2ggKiBwb29sQ291bnQKICAgICAgICAgICAgKyBDYXJkUmVuZGVyZXIuVGFpbEJsb2NrCiAgICAgICAgICAgICsgKHNob3dTdGFsZSA/IENhcmRSZW5kZXJlci5TdGFsZUJsb2NrIDogMCkKICAgICAgICAgICAgKyAoc2hvd0NoYXJ0ID8gQ2FyZFJlbmRlcmVyLkNoYXJ0QmxvY2sgOiAwKTsKICAgICAgICBkb3VibGUgbSA9IE1hcmdpbjsKICAgICAgICByZXR1cm4gKG5ldyBTaXplKHcgKyBtICogMiwgaCArIG0gKiAyKSwgbmV3IFJlY3QobSwgbSwgdywgaCkpOwogICAgfQp9CgovLy8gPHN1bW1hcnk+Ci8vLyDor6bmg4XljaHlhoXlrrnnu5jliLbjgILku44gPHNlZSBjcmVmPSJDYXJkV2luZG93Ii8+IOaKveWHuuadpeaYr+S4uuS6huiDvSoq56a75bGP5riy5p+TKio6Ci8vLyDljaHniYfnmoTmjpLniYjop4TliJko5paH5a2X5Lya5LiN5Lya6KKr5Y+z57yY5YiH44CB5bqV6YOo5Lya5LiN5Lya5rqi5Ye6KeW/hemhu+WcqOWDj+e0oOS4iuaguOWvuSwKLy8vIOiAjOS4jeaYr+etieeUqOaItyBob3ZlciDml7bmiY3lj5HnjrDigJTigJTor4rmlq3lvIDlhbMgPGM+LS1jYXJkLXNob3Q8L2M+IOWwseaYr+i1sOi/meadoei3r+W+hOWHuuWbvuOAggovLy8KLy8vIOS4i+mdoumCo+e7hCA8Yz4qQmxvY2s8L2M+LzxjPlJvd1BpdGNoPC9jPiDmmK8qKue7mOWItuatpei/m+acrOi6qyoqLOW4g+WxgOmrmOW6puebtOaOpeW8leeUqOWug+S7rCwKLy8vIOaJgOS7peaUuemXtOi3neS4jeS8muWHuueOsCLnlLvpnaLmlLnkuobjgIHljaHniYfpq5jluqbmsqHmlLki55qE6ZSZ5L2N44CCCi8vLyA8L3N1bW1hcnk+CnB1YmxpYyBzdGF0aWMgY2xhc3MgQ2FyZFJlbmRlcmVyCnsKICAgIC8vIOKAlOKAlCDlhbPplK7nq5bnm7Tpl7Tot50o5Y2V5L2NIG1hYyBwdCzkuI7nu5jliLbku6PnoIHph4znlKjnmoTlkIzkuIDmibnlgLwpIOKAlOKAlAogICAgcHJpdmF0ZSBjb25zdCBkb3VibGUgUm93R2FwQWZ0ZXJMYWJlbCA9IDM7ICAgICAvLyDmsaDlkI3ooYwg4oaSIOi/m+W6puadoQogICAgcHJpdmF0ZSBjb25zdCBkb3VibGUgUm93R2FwQWZ0ZXJCYXIgPSAzOyAgICAgICAvLyDov5vluqbmnaEg4oaSIOaYjue7huihjAogICAgcHJpdmF0ZSBjb25zdCBkb3VibGUgUm93R2FwQWZ0ZXJEZXRhaWwgPSA3OyAgICAvLyDmmI7nu4booYwg4oaSIOS4i+S4gOihjAogICAgcHJpdmF0ZSBjb25zdCBkb3VibGUgQ2hhcnRHYXBBZnRlclRpdGxlID0gNzsKICAgIHByaXZhdGUgY29uc3QgZG91YmxlIENoYXJ0R2FwQWZ0ZXJQbG90ID0gNjsKCiAgICAvLy8gPHN1bW1hcnk+5aS06YOo5Yy66auY5bqmOumhtumDqOeVmeeZvSArIOWbvuaghyArIOS4jummluihjOeahOeVmeeZvSjljbPpppbooYznm7jlr7kgYm9keSDpobbnmoTlgY/np7sp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyByZWFkb25seSBkb3VibGUgSGVhZGVyQmxvY2sgPSBQdC5QKDE4KSAtIDIgKyBQdC5QKDE4KSArIFB0LlAoMTgpOwoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDkuIDooYznmoTlrp7pmYXnu5jliLbmraXov5vjgILnlKjkuI7nu5jliLblkIzmrL7nmoQgRm9ybWF0dGVkVGV4dCDph4/lh7rmnaUs6ICM5LiN5piv5ouN5LiA5Liq5pW05pWw4oCU4oCUCiAgICAvLy8g5Lit5paH6KGM6auY5piv5a2X5L2T55u45YWz55qE5rWu54K55YC8LOaJi+WGmeeahOaVtOaVsOi/n+aXqeS4jueUu+mdoumUmeW8gOOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgcmVhZG9ubHkgZG91YmxlIFJvd1BpdGNoID0gTWVhc3VyZVJvd1BpdGNoKCk7CgogICAgLy8vIDxzdW1tYXJ5Puacq+ihjOS5i+WQjuWIsCBib2R5IOW6leeahOeVmeeZvSjkuI7pobbpg6jnlZnnmb3nm7jnp7A6UGFkIOWHj+WOu+ihjOWwvuiHquW4pueahOmXtOmalCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHJlYWRvbmx5IGRvdWJsZSBUYWlsQmxvY2sgPSBQdC5QKDE4KSAtIFB0LlAoUm93R2FwQWZ0ZXJEZXRhaWwpOwoKICAgIC8vLyA8c3VtbWFyeT7mlbDmja7pmYjml6fmj5DnpLrljaDnmoTpq5jluqYo5LiO5LiK5LiA5Z2X55qE6Ze06ZqUICsg5LiA6KGM5paH5a2XKeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgcmVhZG9ubHkgZG91YmxlIFN0YWxlQmxvY2sgPSBQdC5QKDIpICsgTWVhc3VyZUxpbmUoUHQuUCgxMC41KSk7CgogICAgLy8vIDxzdW1tYXJ5PiLku4rml6XmtojogJci5Yy65Z2XKOagh+mimCArIOafseWbviArIOiEmuazqCnnmoTpq5jluqbjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHJlYWRvbmx5IGRvdWJsZSBDaGFydEJsb2NrID0gUHQuUCgxMi41ICsgQ2hhcnRHYXBBZnRlclRpdGxlKQogICAgICAgICsgUHQuUCgyNikgKyBQdC5QKENoYXJ0R2FwQWZ0ZXJQbG90KSArIE1lYXN1cmVMaW5lKFB0LlAoMTAuNSkpOwoKICAgIHByaXZhdGUgc3RhdGljIGRvdWJsZSBNZWFzdXJlUm93UGl0Y2goKQogICAgewogICAgICAgIGRvdWJsZSBsYWJlbCA9IE1lYXN1cmVMaW5lKFB0LlAoMTIuNSkpOwogICAgICAgIGRvdWJsZSBkZXRhaWwgPSBNZWFzdXJlTGluZShQdC5QKDEwLjUpKTsKICAgICAgICByZXR1cm4gbGFiZWwgKyBQdC5QKFJvd0dhcEFmdGVyTGFiZWwpICsgQ2FyZC5Qcm9ncmVzc0JhckhlaWdodCArIFB0LlAoUm93R2FwQWZ0ZXJCYXIpCiAgICAgICAgICAgICsgZGV0YWlsICsgUHQuUChSb3dHYXBBZnRlckRldGFpbCk7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PumHj+S4gOihjOS4reaWh+aWh+acrOeahOmrmOW6pijmnIDlnY/mg4XlhrXmjInlhajkuK3mloflj5Ys6Iux5paH5Y+q5Lya5pu055+uKeOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIGRvdWJsZSBNZWFzdXJlTGluZShkb3VibGUgc2l6ZSkgPT4KICAgICAgICBUZXh0KCLmnKzlkajmmI7nu4YiLCBzaXplLCBGb250V2VpZ2h0cy5Ob3JtYWwsIEJydXNoZXMuQmxhY2ssIDk2KS5IZWlnaHQ7CgogICAgcHVibGljIHN0YXRpYyB2b2lkIERyYXcoRHJhd2luZ0NvbnRleHQgZGMsIFN1YkRhdGEgc3ViLCBSZWN0IGJvZHksIGJvb2wgc2hvd1N0YWxlLAogICAgICAgIGRvdWJsZSBkcGksIERhdGVUaW1lT2Zmc2V0IG5vdykKICAgIHsKICAgICAgICBkb3VibGUgciA9IENhcmQuQ29ybmVyUmFkaXVzOwogICAgICAgIGRjLkRyYXdSb3VuZGVkUmVjdGFuZ2xlKFNvbGlkKFBhbmVsUGFsZXR0ZS5TdXJmYWNlKSwgbnVsbCwgYm9keSwgciwgcik7CgogICAgICAgIGRvdWJsZSB4ID0gYm9keS5YLCB5ID0gYm9keS5ZOwogICAgICAgIGRvdWJsZSB3ID0gYm9keS5XaWR0aDsKICAgICAgICBkb3VibGUgcGFkID0gQ2FyZC5QYWRkaW5nOwogICAgICAgIGRvdWJsZSBweCA9IHggKyBwYWQ7CiAgICAgICAgZG91YmxlIGNvbnRlbnRXID0gdyAtIHBhZCAqIDI7CgogICAgICAgIC8vIOe7hOWktDrlm77moIcgKyDlkI3np7AgKyDotKbmiLfmoIfor4YKICAgICAgICBkb3VibGUgaWNvbkJveCA9IFB0LlAoMTgpOwogICAgICAgIGRvdWJsZSBweSA9IHkgKyBwYWQgLSAyOwogICAgICAgIERyYXdMb2dvKGRjLCBzdWIsIG5ldyBSZWN0KHB4LCBweSwgaWNvbkJveCwgaWNvbkJveCkpOwogICAgICAgIHZhciBuYW1lRnQgPSBUZXh0KHN1Yi5OYW1lLCBQdC5QKDE1KSwgRm9udFdlaWdodHMuU2VtaUJvbGQsIFNvbGlkKFBhbmVsUGFsZXR0ZS5QcmltYXJ5KSwgZHBpKTsKICAgICAgICBkYy5EcmF3VGV4dChuYW1lRnQsIG5ldyBQb2ludChweCArIGljb25Cb3ggKyBQdC5QKDcpLCBweSArIChpY29uQm94IC0gbmFtZUZ0LkhlaWdodCkgLyAyKSk7CiAgICAgICAgdmFyIGFjY3RGdCA9IFRleHQoc3ViLkFjY291bnRMYWJlbCwgUHQuUCgxMSksIEZvbnRXZWlnaHRzLk5vcm1hbCwgU29saWQoUGFuZWxQYWxldHRlLkRpbSksIGRwaSk7CiAgICAgICAgZGMuRHJhd1RleHQoYWNjdEZ0LCBuZXcgUG9pbnQocHggKyBpY29uQm94ICsgUHQuUCg3KSwgcHkgKyAoaWNvbkJveCAtIG5hbWVGdC5IZWlnaHQpIC8gMiArIG5hbWVGdC5IZWlnaHQgKyAxKSk7CgogICAgICAgIERyYXdIZWFkZXJSZWFkb3V0KGRjLCBzdWIsIG5ldyBQb2ludChweCwgcHkpLCBjb250ZW50VywgZHBpKTsKCiAgICAgICAgLy8g5LiJ5rGg6KGMCiAgICAgICAgZG91YmxlIHJvd1kgPSB5ICsgSGVhZGVyQmxvY2s7CiAgICAgICAgZm9yZWFjaCAodmFyIHBvb2wgaW4gc3ViLlBvb2xzKQogICAgICAgICAgICByb3dZID0gRHJhd1Bvb2xSb3coZGMsIHN1YiwgcG9vbCwgbmV3IFBvaW50KHB4LCByb3dZKSwgY29udGVudFcsIGRwaSwgbm93KTsKCiAgICAgICAgLy8g5L2Z6aKd5Z6L5pWw5o2u5rqQ5YaN55S75LiA5bygIuS7iuaXpea2iOiAlyIo5pWw5o2u5p2l6Ieq5pys56iL5bqP6Ieq5bex55qE5oyJ5bCP5pe26YeH5qC3KQogICAgICAgIGRvdWJsZSBjdXJzb3JZID0gcm93WTsKICAgICAgICBpZiAoc3ViLkhvdXJseVNwZW5kIGlzIHsgfSBob3VybHkpCiAgICAgICAgewogICAgICAgICAgICB2YXIgYmFsYW5jZVBvb2wgPSBzdWIuUG9vbHMuRmlyc3RPckRlZmF1bHQocCA9PiBwLlBvb2xLaW5kID09ICJCYWxhbmNlIik7CiAgICAgICAgICAgIGN1cnNvclkgPSBEcmF3U3BlbmRDaGFydChkYywgaG91cmx5LCBiYWxhbmNlUG9vbCwgbmV3IFBvaW50KHB4LCBjdXJzb3JZKSwgY29udGVudFcsIGRwaSk7CiAgICAgICAgfQoKICAgICAgICAvLyDmlbDmja7pmYjml6fmj5DnpLo6572R57uc5pat5LqG5Lul5ZCO55WM6Z2i54Wn5pen5pi+56S65pyA5ZCO5LiA5qyh5oiQ5Yqf5pWw5o2uLOWmguaenOS4jeagh+aYjgogICAgICAgIC8vIOeUqOaIt+S8muS7peS4uueci+WIsOeahOaYr+acgOaWsOWAvOOAggogICAgICAgIGlmIChzaG93U3RhbGUgJiYgc3ViLkZldGNoZWRBdCBpcyB7IH0gZmV0Y2hlZCkKICAgICAgICB7CiAgICAgICAgICAgIHZhciBhZ2UgPSBub3cgLSBmZXRjaGVkOwogICAgICAgICAgICBzdHJpbmcgdGV4dCA9IGFnZS5Ub3RhbE1pbnV0ZXMgPCA2MAogICAgICAgICAgICAgICAgPyAkIuaVsOaNriB7KGludClNYXRoLk1heChhZ2UuVG90YWxNaW51dGVzLCAxKX0g5YiG6ZKf5YmNIgogICAgICAgICAgICAgICAgOiAkIuaVsOaNriB7YWdlLlRvdGFsSG91cnM6MC4jfSDlsI/ml7bliY0iOwogICAgICAgICAgICB2YXIgc3RhbGVGdCA9IFRleHQoIuKaoCAiICsgdGV4dCArICIgwrcg5pyq6IO95Yi35pawIiwgUHQuUCgxMC41KSwgRm9udFdlaWdodHMuTm9ybWFsLAogICAgICAgICAgICAgICAgU29saWQoVXNhZ2VUaW50LkFsYXJtKSwgZHBpKTsKICAgICAgICAgICAgZGMuRHJhd1RleHQoc3RhbGVGdCwgbmV3IFBvaW50KHB4LCBjdXJzb3JZICsgUHQuUCgyKSkpOwogICAgICAgIH0KICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5aS06YOo5Y+z5L6n6K+75pWw44CC5pyJIHRva2VuIOaVsOaNrueahOa6kChHT0FU44CBT3BlbkNvZGUgR28p5pi+56S6IlguWOS6vyDCtyDmnKzmnIjlt7LnlKggVG9rZW4iOwogICAgLy8vIOaXoCB0b2tlbiDnmoTmupDlm57pgIDmmL7npLrmnIjluqbnlKjph4/nmb7liIbmr5Q75L2Z6aKd5Z6LKERlZXBTZWVrKeebtOaOpeaYvuekuuS9memineOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIHZvaWQgRHJhd0hlYWRlclJlYWRvdXQoRHJhd2luZ0NvbnRleHQgZGMsIFN1YkRhdGEgc3ViLCBQb2ludCBwLCBkb3VibGUgY29udGVudFcsIGRvdWJsZSBkcGkpCiAgICB7CiAgICAgICAgaWYgKHN1Yi5QZXJpb2RUb2tlbnMgaXMgeyB9IHRva2VucykKICAgICAgICB7CiAgICAgICAgICAgIHZhciB0b2tlbkZ0ID0gVGV4dChGb3JtYXRUb2tlbnModG9rZW5zKSwgUHQuUCgxNyksIEZvbnRXZWlnaHRzLkJvbGQsCiAgICAgICAgICAgICAgICBTb2xpZChQYW5lbFBhbGV0dGUuUHJpbWFyeSksIGRwaSk7CiAgICAgICAgICAgIGRjLkRyYXdUZXh0KHRva2VuRnQsIG5ldyBQb2ludChwLlggKyBjb250ZW50VyAtIHRva2VuRnQuV2lkdGgsIHAuWSAtIDEpKTsKICAgICAgICAgICAgdmFyIGxhYmVsRnQgPSBUZXh0KCLmnKzmnIjlt7LnlKggVG9rZW4iLCBQdC5QKDEwLjUpLCBGb250V2VpZ2h0cy5Ob3JtYWwsCiAgICAgICAgICAgICAgICBTb2xpZChQYW5lbFBhbGV0dGUuRGltKSwgZHBpKTsKICAgICAgICAgICAgZGMuRHJhd1RleHQobGFiZWxGdCwgbmV3IFBvaW50KHAuWCArIGNvbnRlbnRXIC0gbGFiZWxGdC5XaWR0aCwgcC5ZIC0gMSArIHRva2VuRnQuSGVpZ2h0ICsgUHQuUCgxKSkpOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChzdWIuUG9vbHMuRmlyc3RPckRlZmF1bHQocGwgPT4gcGwuUG9vbEtpbmQgPT0gIk1vbnRobHkiKSBpcyB7IElzQXZhaWxhYmxlOiB0cnVlIH0gbW9udGhQb29sKQogICAgICAgIHsKICAgICAgICAgICAgLy8g5aS06YOo5Y+q5oql55m+5YiG5q+ULOS4jeaKpemHkemineOAgumHkemineimgeWFiOS5mCIxIGNyZWRpdCDlgLzlpJrlsJHnvo7lhYMiKOaooeWei+eahCBtb250aGx5CiAgICAgICAgICAgIC8vIGFsbG93YW5jZSks6ICM6YKj5Liq5pWw5a6Y5pa56ZqP5pe25Lya6LCD44CB5o2i5Liq5qih5Z6L5Lmf5Lya5Y+Y4oCU4oCU5YaZ5Zyo6L+Z6YeM562J5LqO5oqK5pyN5Yqh56uvCiAgICAgICAgICAgIC8vIOWOn+WAvOaNouaIkOS4gOS4quS8mumjmOeahOaOqOeul+WAvOOAgue7neWvuemHj+aUvuWcqOS4i+mdoueahOaxoOihjOmHjCzku6UgY3JlZGl0cyjmnI3liqHnq6/ljp/lgLwp5ZGI546w44CCCiAgICAgICAgICAgIENvbG9yIG10ID0gVXNhZ2VUaW50LkZvcihtb250aFBvb2wuRnJhY3Rpb24sIG1vbnRoUG9vbC5Jc1NwZW50KTsKICAgICAgICAgICAgdmFyIHVzZWRGdCA9IFRleHQobW9udGhQb29sLlBlcmNlbnRUZXh0LCBQdC5QKDE3KSwgRm9udFdlaWdodHMuQm9sZCwgU29saWQobXQpLCBkcGkpOwogICAgICAgICAgICBkYy5EcmF3VGV4dCh1c2VkRnQsIG5ldyBQb2ludChwLlggKyBjb250ZW50VyAtIHVzZWRGdC5XaWR0aCwgcC5ZIC0gMSkpOwogICAgICAgICAgICB2YXIgbGFiZWxGdCA9IFRleHQoIuacrOaciOmineW6puW3sueUqCIsIFB0LlAoMTAuNSksIEZvbnRXZWlnaHRzLk5vcm1hbCwgU29saWQoUGFuZWxQYWxldHRlLkRpbSksIGRwaSk7CiAgICAgICAgICAgIGRjLkRyYXdUZXh0KGxhYmVsRnQsIG5ldyBQb2ludChwLlggKyBjb250ZW50VyAtIGxhYmVsRnQuV2lkdGgsIHAuWSAtIDEgKyB1c2VkRnQuSGVpZ2h0ICsgUHQuUCgxKSkpOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChzdWIuUG9vbHMuRmlyc3RPckRlZmF1bHQocGwgPT4gcGwuUG9vbEtpbmQgPT0gIkJhbGFuY2UiKSBpcyB7IElzQXZhaWxhYmxlOiB0cnVlIH0gYmFsYW5jZVBvb2wpCiAgICAgICAgewogICAgICAgICAgICAvLyDkvZnpop3lnos65Y+z6L655bCx5piv6ZKx5pys6Lqr44CC5a6D5rKh5pyJIuW3sueUqC/mgLvpop0i5Y+v5YaZLOiAjOmSseWwseaYr+i/meS4gOaxoOeahOWFqOmDqOivu+aVsOOAggogICAgICAgICAgICBDb2xvciBidCA9IFVzYWdlVGludC5Gb3IoYmFsYW5jZVBvb2wuRnJhY3Rpb24sIGJhbGFuY2VQb29sLklzU3BlbnQpOwogICAgICAgICAgICB2YXIgYW1vdW50RnQgPSBUZXh0KE1vbmV5LkV4YWN0KGJhbGFuY2VQb29sLkFtb3VudCwgYmFsYW5jZVBvb2wuVW5pdCksIFB0LlAoMTcpLAogICAgICAgICAgICAgICAgRm9udFdlaWdodHMuQm9sZCwgU29saWQoYnQpLCBkcGkpOwogICAgICAgICAgICBkYy5EcmF3VGV4dChhbW91bnRGdCwgbmV3IFBvaW50KHAuWCArIGNvbnRlbnRXIC0gYW1vdW50RnQuV2lkdGgsIHAuWSAtIDEpKTsKICAgICAgICAgICAgdmFyIGJhc2lzRnQgPSBUZXh0KGJhbGFuY2VQb29sLkVzdGltYXRlRnJvbSA/PyAi5b2T5YmN5L2Z6aKdIiwgUHQuUCgxMC41KSwKICAgICAgICAgICAgICAgIEZvbnRXZWlnaHRzLk5vcm1hbCwgU29saWQoUGFuZWxQYWxldHRlLkRpbSksIGRwaSk7CiAgICAgICAgICAgIGRjLkRyYXdUZXh0KGJhc2lzRnQsIG5ldyBQb2ludChwLlggKyBjb250ZW50VyAtIGJhc2lzRnQuV2lkdGgsIHAuWSAtIDEgKyBhbW91bnRGdC5IZWlnaHQgKyBQdC5QKDEpKSk7CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDku4rml6Xmr4/lsI/ml7bnmoTmtojogJfmn7Hnirblm77jgIIKICAgIC8vLwogICAgLy8vIOaVsOaNruadpeiHquacrOeoi+W6j+WvueS9memineeahOaMieWwj+aXtumHh+agtywqKuayoeaciei/kOihjOeahOmCo+S6m+Wwj+aXtuaYr+epuueahCoq4oCU4oCU5omA5LulCiAgICAvLy8g5Zu+5LiK55WZ5LiA5p2h5p6B57uG55qE5reh57q/6KGo56S6IuayoemHh+agtyIs6ICM5LiN5piv55S75oiQIDA65a6B5Y+v57y65LiA5qC55p+x5a2QLOS5n+S4jeiDveaKigogICAgLy8vICLmsqHnnIvop4Ei6K+05oiQIuayoeiKsemSsSLjgILov5Tlm57lgLwgPSDkuIvkuIDlnZflhoXlrrnlupTku47ov5nph4zlvIDlp4vnmoQgeSg8c2VlIGNyZWY9IkNoYXJ0QmxvY2siLz4p44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgZG91YmxlIERyYXdTcGVuZENoYXJ0KERyYXdpbmdDb250ZXh0IGRjLCBkb3VibGVbXSBzcGVuZCwgUG9vbERhdGE/IHBvb2wsCiAgICAgICAgUG9pbnQgcCwgZG91YmxlIHdpZHRoLCBkb3VibGUgZHBpKQogICAgewogICAgICAgIHN0cmluZyB1bml0ID0gcG9vbD8uVW5pdCA/PyAiJCI7CiAgICAgICAgZG91YmxlIHRvdGFsID0gc3BlbmQuU3VtKCk7CgogICAgICAgIHZhciB0aXRsZUZ0ID0gVGV4dCgi5LuK5pel5raI6ICXIiwgUHQuUCgxMi41KSwgRm9udFdlaWdodHMuTWVkaXVtLCBTb2xpZChQYW5lbFBhbGV0dGUuUHJpbWFyeSksIGRwaSk7CiAgICAgICAgZGMuRHJhd1RleHQodGl0bGVGdCwgcCk7CiAgICAgICAgdmFyIHRvdGFsRnQgPSBUZXh0KE1vbmV5LkV4YWN0KHRvdGFsLCB1bml0KSwgUHQuUCgxMi41KSwgRm9udFdlaWdodHMuU2VtaUJvbGQsCiAgICAgICAgICAgIFNvbGlkKHRvdGFsID4gMCA/IFVzYWdlVGludC5Hb29kIDogUGFuZWxQYWxldHRlLkRpbSksIGRwaSk7CiAgICAgICAgZGMuRHJhd1RleHQodG90YWxGdCwgbmV3IFBvaW50KHAuWCArIHdpZHRoIC0gdG90YWxGdC5XaWR0aCwgcC5ZKSk7CgogICAgICAgIGRvdWJsZSBjaGFydFRvcCA9IHAuWSArIHRpdGxlRnQuSGVpZ2h0ICsgUHQuUChDaGFydEdhcEFmdGVyVGl0bGUpOwogICAgICAgIGRvdWJsZSBjaGFydEhlaWdodCA9IFB0LlAoMjYpOwogICAgICAgIGRvdWJsZSBnYXAgPSBQdC5QKDEuNSk7CiAgICAgICAgZG91YmxlIGJhcldpZHRoID0gKHdpZHRoIC0gZ2FwICogMjMpIC8gMjQ7CiAgICAgICAgZG91YmxlIG1heCA9IHNwZW5kLkxlbmd0aCA+IDAgPyBzcGVuZC5NYXgoKSA6IDA7CiAgICAgICAgZG91YmxlIGZsb29ySGVpZ2h0ID0gUHQuUCgxLjIpOwoKICAgICAgICAvLyDkuIDmnaHlvojmt6HnmoTln7rnur865p+x5bqV5a+56b2Q5LmL5aSWLOS5n+iuqSLmsqHph4fmoLfnmoTlsI/ml7Yi5pyJ5Liq5Y+C54Wn54mpCiAgICAgICAgdmFyIGF4aXNQZW4gPSBuZXcgUGVuKFNvbGlkKFdpdGhBbHBoYShQYW5lbFBhbGV0dGUuUHJpbWFyeSwgMC4xNCkpLCAxKTsKICAgICAgICBheGlzUGVuLkZyZWV6ZSgpOwogICAgICAgIGRjLkRyYXdMaW5lKGF4aXNQZW4sIG5ldyBQb2ludChwLlgsIGNoYXJ0VG9wICsgY2hhcnRIZWlnaHQpLAogICAgICAgICAgICBuZXcgUG9pbnQocC5YICsgd2lkdGgsIGNoYXJ0VG9wICsgY2hhcnRIZWlnaHQpKTsKCiAgICAgICAgZm9yIChpbnQgaG91ciA9IDA7IGhvdXIgPCBzcGVuZC5MZW5ndGggJiYgaG91ciA8IDI0OyBob3VyKyspCiAgICAgICAgewogICAgICAgICAgICBkb3VibGUgYmFySGVpZ2h0ID0gbWF4ID4gMCA/IHNwZW5kW2hvdXJdIC8gbWF4ICogY2hhcnRIZWlnaHQgOiAwOwogICAgICAgICAgICBkb3VibGUgZHJhd24gPSBNYXRoLk1heChiYXJIZWlnaHQsIGZsb29ySGVpZ2h0KTsKICAgICAgICAgICAgdmFyIHJlY3QgPSBuZXcgUmVjdChwLlggKyBob3VyICogKGJhcldpZHRoICsgZ2FwKSwgY2hhcnRUb3AgKyBjaGFydEhlaWdodCAtIGRyYXduLAogICAgICAgICAgICAgICAgYmFyV2lkdGgsIGRyYXduKTsKICAgICAgICAgICAgZGMuRHJhd1JvdW5kZWRSZWN0YW5nbGUoCiAgICAgICAgICAgICAgICBTb2xpZChzcGVuZFtob3VyXSA+IDAgPyBVc2FnZVRpbnQuR29vZCA6IFdpdGhBbHBoYShQYW5lbFBhbGV0dGUuUHJpbWFyeSwgMC4xMCkpLAogICAgICAgICAgICAgICAgbnVsbCwgcmVjdCwgUHQuUCgxKSwgUHQuUCgxKSk7CiAgICAgICAgfQoKICAgICAgICAvLyDohJrms6g65YaZ5riF5pWw5o2u5oCO5LmI5p2l55qELOmhuuW4pue7meWHuueOsOaIkOeahOWFheWAvC/otaDpgIHmi4bliIYoQVBJIOebtOaOpeaPkOS+mynjgIIKICAgICAgICAvLyDph5Hpop3kuLogMCDnmoTpgqPkuIDpobnkuI3lhpks5YWN5b6X5Ye6546wIui1oOmAgSDCpTAuMDAi6L+Z56eN5bqf6K+d44CCCiAgICAgICAgc3RyaW5nIHNvdXJjZSA9IG1heCA+IDAgPyAi5oyJ5bCP5pe26YeH5qC35L2Z6aKd5beuIiA6ICLku4rml6XmmoLml6Dph4fmoLciOwogICAgICAgIHN0cmluZyBzcGxpdCA9ICIiOwogICAgICAgIGlmIChwb29sIGlzIHsgVG9wcGVkVXBBbW91bnQ6IHsgfSB0b3BwZWQgfSAmJiB0b3BwZWQgPiAwKQogICAgICAgIHsKICAgICAgICAgICAgc3BsaXQgPSAkIiDCtyDlhYXlgLwge01vbmV5LkV4YWN0KHRvcHBlZCwgdW5pdCl9IjsKICAgICAgICAgICAgaWYgKHBvb2wuR3JhbnRlZEFtb3VudCBpcyB7IH0gZ3JhbnRlZCAmJiBncmFudGVkID4gMCkKICAgICAgICAgICAgICAgIHNwbGl0ICs9ICQiICsg6LWg6YCBIHtNb25leS5FeGFjdChncmFudGVkLCB1bml0KX0iOwogICAgICAgIH0KICAgICAgICB2YXIgbm90ZUZ0ID0gVGV4dChzb3VyY2UgKyBzcGxpdCwgUHQuUCgxMC41KSwgRm9udFdlaWdodHMuTm9ybWFsLCBTb2xpZChQYW5lbFBhbGV0dGUuRGltKSwgZHBpKTsKICAgICAgICBkb3VibGUgbm90ZVkgPSBjaGFydFRvcCArIGNoYXJ0SGVpZ2h0ICsgUHQuUChDaGFydEdhcEFmdGVyUGxvdCk7CiAgICAgICAgZGMuRHJhd1RleHQobm90ZUZ0LCBuZXcgUG9pbnQocC5YLCBub3RlWSkpOwoKICAgICAgICByZXR1cm4gbm90ZVkgKyBub3RlRnQuSGVpZ2h0OwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIGRvdWJsZSBEcmF3UG9vbFJvdyhEcmF3aW5nQ29udGV4dCBkYywgU3ViRGF0YSBzdWIsIFBvb2xEYXRhIHBvb2wsIFBvaW50IHAsIGRvdWJsZSB3ZHQsCiAgICAgICAgZG91YmxlIGRwaSwgRGF0ZVRpbWVPZmZzZXQgbm93KQogICAgewogICAgICAgIGJvb2wgYXZhaWwgPSBwb29sLklzQXZhaWxhYmxlOwogICAgICAgIGRvdWJsZSBmcmFjID0gYXZhaWwgPyBNYXRoLkNsYW1wKHBvb2wuRnJhY3Rpb24sIDAsIDEpIDogMDsKICAgICAgICBDb2xvciB0aW50ID0gYXZhaWwgPyBVc2FnZVRpbnQuRm9yKGZyYWMsIHBvb2wuSXNTcGVudCkgOiBQYW5lbFBhbGV0dGUuVHJhY2s7CgogICAgICAgIC8vIOihjDE65rGg5ZCNICsg6K+75pWwKD44MCUg57qiKQogICAgICAgIHZhciBsYWJlbEZ0ID0gVGV4dChwb29sLkxhYmVsLCBQdC5QKDEyLjUpLCBGb250V2VpZ2h0cy5NZWRpdW0sIFNvbGlkKFBhbmVsUGFsZXR0ZS5QcmltYXJ5KSwgZHBpKTsKICAgICAgICBkYy5EcmF3VGV4dChsYWJlbEZ0LCBuZXcgUG9pbnQocC5YLCBwLlkpKTsKICAgICAgICBzdHJpbmcgcmVhZG91dCA9ICFhdmFpbCA/ICItLSIKICAgICAgICAgICAgOiBwb29sLlBvb2xLaW5kID09ICJCYWxhbmNlIiA/IHBvb2wuRGlzcGxheVRleHQKICAgICAgICAgICAgOiBwb29sLlBlcmNlbnRUZXh0OwogICAgICAgIHZhciBwY3RGdCA9IFRleHQocmVhZG91dCwgUHQuUCgxMi41KSwgRm9udFdlaWdodHMuU2VtaUJvbGQsIFNvbGlkKHRpbnQpLCBkcGkpOwogICAgICAgIGRjLkRyYXdUZXh0KHBjdEZ0LCBuZXcgUG9pbnQocC5YICsgd2R0IC0gcGN0RnQuV2lkdGgsIHAuWSkpOwoKICAgICAgICAvLyDooYwyOui/m+W6puadoQogICAgICAgIGRvdWJsZSBiYXJZID0gcC5ZICsgbGFiZWxGdC5IZWlnaHQgKyBQdC5QKFJvd0dhcEFmdGVyTGFiZWwpOwogICAgICAgIGRvdWJsZSBiYXJIID0gQ2FyZC5Qcm9ncmVzc0JhckhlaWdodDsKICAgICAgICB2YXIgdHJhY2sgPSBuZXcgUmVjdChwLlgsIGJhclksIHdkdCwgYmFySCk7CiAgICAgICAgZGMuRHJhd1JvdW5kZWRSZWN0YW5nbGUoU29saWQoV2l0aEFscGhhKFBhbmVsUGFsZXR0ZS5QcmltYXJ5LCAwLjEyKSksIG51bGwsIHRyYWNrLCBiYXJIIC8gMiwgYmFySCAvIDIpOwogICAgICAgIGlmIChmcmFjID4gMC4wMDQpCiAgICAgICAgewogICAgICAgICAgICB2YXIgZmlsbCA9IG5ldyBSZWN0KHAuWCwgYmFyWSwgTWF0aC5NYXgod2R0ICogZnJhYywgYmFySCksIGJhckgpOwogICAgICAgICAgICBkYy5EcmF3Um91bmRlZFJlY3RhbmdsZShTb2xpZCh0aW50KSwgbnVsbCwgZmlsbCwgYmFySCAvIDIsIGJhckggLyAyKTsKICAgICAgICB9CgogICAgICAgIC8vIOihjDM655So6YePIC8g5Ymp5L2Z5pe26Ze0KOWAkuiuoeaXtuWunuaXtikKICAgICAgICBzdHJpbmcgZGV0YWlsID0gIWF2YWlsID8gIuaaguaXoOivu+aVsCIKICAgICAgICAgICAgOiBwb29sLlBvb2xLaW5kID09ICJCYWxhbmNlIiA/IEJhbGFuY2VEZXRhaWwocG9vbCkKICAgICAgICAgICAgLy8g572R6aG15Y+j5b6E5Lya5oqKIG1ldGVycyDnmoTlvq7nvo7liIbljp/lgLzkuIDotbfluKblm57mnaU66L+Z5pe25YaZ6YeR6aKd5q+U5YaZIjEwLjYgLyAxMDAiCiAgICAgICAgICAgIC8vIOi/meenjeeZvuWIhuavlOWIhuaVsOWlveivuyzkuZ/mraPlpb3mmK/nvZHpobXljaHniYfkuIrpgqPkuKTkuKrmlbAoJDYuMzggLyAkNjAp44CCCiAgICAgICAgICAgIDogcG9vbCBpcyB7IFVuaXQ6ICIlIiwgTGltaXRBbW91bnQ6IHsgfSBsaW1pdFVzZCwgVXNlZEFtb3VudDogeyB9IHVzZWRVc2QgfQogICAgICAgICAgICAgICAgPyAkIntNb25leS5FeGFjdCh1c2VkVXNkLCAiJCIpfSAvIHtNb25leS5FeGFjdChsaW1pdFVzZCwgIiQiKX0gwrcge3Bvb2wuUmVtYWluaW5nVGV4dChub3cpfSIKICAgICAgICAgICAgLy8gY3JlZGl0cyDmmK/mnI3liqHnq6/ljp/lgLws55u05o6l54Wn5pCsKOS4jeaKmOe+juWFgyk75YaZ5LiA5qyh5Y2V5L2NLOWFjeW+lyI3MCBjciAvIDM1IGNyIuWVsOWXpgogICAgICAgICAgICA6IHBvb2wuVW5pdCA9PSAiY3IiCiAgICAgICAgICAgICAgICA/ICQie3Bvb2wuVXNlZCA/PyAwOjAuI30gLyB7cG9vbC5DYXAgPz8gMDowLiN9IGNyIMK3IHtwb29sLlJlbWFpbmluZ1RleHQobm93KX0iCiAgICAgICAgICAgICAgICA6ICQie0Ftb3VudChwb29sLlVzZWQsIHBvb2wuVW5pdCl9IC8ge0Ftb3VudChwb29sLkNhcCwgcG9vbC5Vbml0KX0gwrcge3Bvb2wuUmVtYWluaW5nVGV4dChub3cpfSI7CiAgICAgICAgLy8g5raI6ICX6aKE5rWLOuivgeaNrui2s+Wkn+aXtue7meS4gOWPpSLnhaflvZPliY3pgJ/luqYiLOWkn+S4jeWIsOmHjee9ruWwsemihOitpijkuIrmuLggZm9yZWNhc3Qg5ZCM5qy+5Y+j5b6EKeOAggogICAgICAgIC8vIOaWh+ahiOimgeefrToi54Wn5b2T5YmN6YCf5bqmIui/meS6lOS4quWtl+aYr+WGl+S9meeahCgi57qmIuW3sue7j+ihqOaEjyks5bim552A5a6D5pW06KGM5Lya5ZyoCiAgICAgICAgLy8g5pyA5Z2P5oOF5Ya15LiLKOmVv+mHkeminSArIOmVv+WJqeS9meaXtumXtCArIOmihOa1iynotoXlh7rljaHniYflrr3luqbooqvoo4HmjonjgIIKICAgICAgICBkb3VibGU/IGhvdXJzTGVmdCA9IHBvb2wuUmVzZXRBdCBpcyB7IH0gcmEgPyAocmEgLSBub3cpLlRvdGFsSG91cnMgOiBudWxsOwogICAgICAgIGlmIChhdmFpbCAmJiBwb29sLkhhc1BlcmNlbnQgJiYgIXBvb2wuSXNTcGVudAogICAgICAgICAgICAmJiBCdXJuUmF0ZS5Fc3RpbWF0ZSgkIntzdWIuS2V5fTp7cG9vbC5Qb29sS2luZH0iLCBob3Vyc0xlZnQpIGlzIHsgfSBidXJuKQogICAgICAgIHsKICAgICAgICAgICAgZGV0YWlsICs9IGJ1cm4uRXhoYXVzdHMKICAgICAgICAgICAgICAgID8gJCIgwrcg57qmIHtCdXJuUmF0ZS5EZXNjcmliZShidXJuLkhvdXJzKX3lkI7nlKjlrowiCiAgICAgICAgICAgICAgICA6ICIgwrcg6aKE6K6h5aSf55So5Yiw6YeN572uIjsKICAgICAgICB9CiAgICAgICAgLy8g6KGMMyDlv4Xpobvoh6rlt7Hkv53or4HkuI3otoXlh7rljaHniYc65a6D5piv5Y2V6KGM57uY5Yi2LOWGheWuueWNtOS8mumaj+mHkemineS9jeaVsOOAgeWJqeS9meWkqeaVsAogICAgICAgIC8vIOS4juacieayoeaciemihOa1i+iAjOWPmOmVvyjlrp7mtYvmnIDlnY/og73liLAgMzM4ZGl1LOiAjOWGheWuueWMuuWPquaciee6piAyOTBkaXUp44CCCiAgICAgICAgLy8g5pS+5LiN5LiL5bCx5oyJ5q+U5L6L57yp5a2X5Y+3KOmHj+WMliAwLjVwdCzmiqTkvY/mlofmnKznvJPlrZgpLOiAjOS4jeaYr+iuqeWtl+iiq+WNoeeJh+i+uee8mOWIh+aOieOAggogICAgICAgIHZhciBkZXRhaWxGdCA9IEZpdFRleHQoZGV0YWlsLCBQdC5QKDEwLjUpLCBGb250V2VpZ2h0cy5Ob3JtYWwsIFNvbGlkKFBhbmVsUGFsZXR0ZS5EaW0pLCBkcGksIHdkdCk7CiAgICAgICAgZG91YmxlIGRldGFpbFkgPSBiYXJZICsgYmFySCArIFB0LlAoUm93R2FwQWZ0ZXJCYXIpOwogICAgICAgIGRjLkRyYXdUZXh0KGRldGFpbEZ0LCBuZXcgUG9pbnQocC5YLCBkZXRhaWxZKSk7CgogICAgICAgIHJldHVybiBkZXRhaWxZICsgZGV0YWlsRnQuSGVpZ2h0ICsgUHQuUChSb3dHYXBBZnRlckRldGFpbCk7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOWPluS4gOS4quiDveWhnui/myA8cGFyYW1yZWYgbmFtZT0ibWF4V2lkdGgiLz4g55qE5paH5pysOuWFiOaMiee7meWumuWtl+WPt+ivlSzmlL7kuI3kuIvlsLHmjInmr5TkvovnvKnjgIIKICAgIC8vLyDlrZflj7cqKumHj+WMluWIsCAwLjVwdCoq4oCU4oCU5ZCm5YiZIEZvcm1hdHRlZFRleHQg5Lya5Zug5Li66L+e57ut5Y+Y5YyW55qE5a2X5Y+35LiN5pat5paw5bu65a+56LGh44CCCiAgICAvLy8g5LiL6ZmQIDguNXB0OuWGjeWwj+WwsemavuS7pei+qOiupCzpgqPnp43mg4XlhrXor7TmmI7ov5nkuIDooYznmoTkv6Hmga/noa7lrp7ov4flr4bjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBGb3JtYXR0ZWRUZXh0IEZpdFRleHQoc3RyaW5nIHMsIGRvdWJsZSBiYXNlU2l6ZSwgRm9udFdlaWdodCB3ZWlnaHQsCiAgICAgICAgQnJ1c2ggYnJ1c2gsIGRvdWJsZSBkcGksIGRvdWJsZSBtYXhXaWR0aCkKICAgIHsKICAgICAgICB2YXIgZnQgPSBUZXh0KHMsIGJhc2VTaXplLCB3ZWlnaHQsIGJydXNoLCBkcGkpOwogICAgICAgIGlmIChmdC5XaWR0aCA8PSBtYXhXaWR0aCkgcmV0dXJuIGZ0OwoKICAgICAgICBkb3VibGUgc3RlcCA9IFB0LlAoMC41KTsKICAgICAgICBkb3VibGUgbWluID0gUHQuUCg4LjUpOwogICAgICAgIGRvdWJsZSB0YXJnZXQgPSBNYXRoLk1heChiYXNlU2l6ZSAqIG1heFdpZHRoIC8gZnQuV2lkdGgsIG1pbik7CiAgICAgICAgZG91YmxlIHF1YW50aXplZCA9IE1hdGguTWF4KE1hdGguRmxvb3IodGFyZ2V0IC8gc3RlcCkgKiBzdGVwLCBtaW4pOwogICAgICAgIHJldHVybiBUZXh0KHMsIHF1YW50aXplZCwgd2VpZ2h0LCBicnVzaCwgZHBpKTsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5L2Z6aKd5Z6L5rGg55qE6KGMMzrpkrEgKyDliIbmr43ku47lk6rmnaXjgILmsqHmnIki6YeN572uIuWPr+WAkuiuoeaXtuKAlOKAlOmihOS7mOS9memineS4jeS8mue/u+evhywKICAgIC8vLyDmiYDku6Xov5nph4zkuZ/kuI3or6Xlh7rnjrDliankvZnml7bpl7TjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBzdHJpbmcgQmFsYW5jZURldGFpbChQb29sRGF0YSBwb29sKQogICAgewogICAgICAgIHN0cmluZyBtb25leSA9ICQi5L2Z6aKdIHtNb25leS5FeGFjdChwb29sLkFtb3VudCwgcG9vbC5Vbml0KX0iOwogICAgICAgIHJldHVybiBwb29sLkVzdGltYXRlRnJvbSBpcyB7IH0gZnJvbSA/ICQie21vbmV5fSDCtyB7ZnJvbX0iCiAgICAgICAgICAgIDogcG9vbC5Ob3RlIGlzIHsgfSBub3RlID8gJCJ7bW9uZXl9IMK3IHtub3RlfSIKICAgICAgICAgICAgOiBtb25leTsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBzdHJpbmcgQW1vdW50KGRvdWJsZT8gdiwgc3RyaW5nIHVuaXQpID0+IHYgaXMgbm90IHsgfSBuCiAgICAgICAgPyAiLS0iCiAgICAgICAgOiB1bml0ID09ICIlIiA/IG4uVG9TdHJpbmcoIjAiKSArICIlIgogICAgICAgIDogdW5pdCArIG4uVG9TdHJpbmcoIjAuMDAiKTsKCiAgICAvLy8gPHN1bW1hcnk+VG9rZW4g5oC76YePOuKJpTFNIOS/neeVmSAxIOS9jeWwj+aVsCw8MU0g5L+d55WZIDIg5L2N5bCP5pWwLOWNleS9jSBN44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nIEZvcm1hdFRva2Vucyhsb25nIHRva2VucykKICAgIHsKICAgICAgICBkb3VibGUgbSA9IHRva2VucyAvIDFfMDAwXzAwMGQ7CiAgICAgICAgcmV0dXJuIG0gPj0gMSA/IG0uVG9TdHJpbmcoIjAuMCIpICsgIk0iIDogbS5Ub1N0cmluZygiMC4wMCIpICsgIk0iOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHZvaWQgRHJhd0xvZ28oRHJhd2luZ0NvbnRleHQgZGMsIFN1YkRhdGEgc3ViLCBSZWN0IGJveCkKICAgIHsKICAgICAgICBpZiAoc3ViLktleSA9PSAiZ29hdCIpCiAgICAgICAgewogICAgICAgICAgICB2YXIgYm1wID0gSWNvbnMuR29hdEJpdG1hcCgpOwogICAgICAgICAgICBpZiAoYm1wIGlzIG5vdCBudWxsKSBkYy5EcmF3SW1hZ2UoYm1wLCBib3gpOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQoKICAgICAgICBpZiAoc3ViLktleSA9PSAiZGVlcHNlZWsiKQogICAgICAgIHsKICAgICAgICAgICAgdmFyIHdoYWxlID0gSWNvbnMuRGVlcFNlZWtHZW9tZXRyeSgpLkNsb25lKCk7CiAgICAgICAgICAgIGRvdWJsZSB3aGFsZVNjYWxlID0gYm94LldpZHRoIC8gMjQuMDsKICAgICAgICAgICAgd2hhbGUuVHJhbnNmb3JtID0gbmV3IE1hdHJpeFRyYW5zZm9ybSh3aGFsZVNjYWxlLCAwLCAwLCB3aGFsZVNjYWxlLCBib3guWCwgYm94LlkpOwogICAgICAgICAgICBkYy5EcmF3R2VvbWV0cnkoU29saWQoUGFuZWxQYWxldHRlLlByaW1hcnkpLCBudWxsLCB3aGFsZSk7CiAgICAgICAgICAgIHJldHVybjsKICAgICAgICB9CgogICAgICAgIHZhciBnID0gSWNvbnMuT3BlbkNvZGVHZW9tZXRyeSgpLkNsb25lKCk7CiAgICAgICAgZG91YmxlIHMgPSBib3guV2lkdGggLyAyNC4wOwogICAgICAgIGcuVHJhbnNmb3JtID0gbmV3IE1hdHJpeFRyYW5zZm9ybShzLCAwLCAwLCBzLCBib3guWCwgYm94LlkpOwogICAgICAgIGRjLkRyYXdHZW9tZXRyeShTb2xpZChQYW5lbFBhbGV0dGUuUHJpbWFyeSksIG51bGwsIGcpOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIEZvcm1hdHRlZFRleHQgVGV4dChzdHJpbmcgcywgZG91YmxlIHNpemUsIEZvbnRXZWlnaHQgd2VpZ2h0LCBCcnVzaCBicnVzaCwgZG91YmxlIGRwaSkgPT4KICAgICAgICBuZXcocywgQ3VsdHVyZUluZm8uSW52YXJpYW50Q3VsdHVyZSwgRmxvd0RpcmVjdGlvbi5MZWZ0VG9SaWdodCwKICAgICAgICAgICAgbmV3IFR5cGVmYWNlKG5ldyBGb250RmFtaWx5KCJTZWdvZSBVSSwgTWljcm9zb2Z0IFlhSGVpIFVJIiksIEZvbnRTdHlsZXMuTm9ybWFsLCB3ZWlnaHQsIEZvbnRTdHJldGNoZXMuTm9ybWFsKSwKICAgICAgICAgICAgc2l6ZSwgYnJ1c2gsIGRwaSk7CgogICAgcHJpdmF0ZSBzdGF0aWMgU29saWRDb2xvckJydXNoIFNvbGlkKENvbG9yIGMpIHsgdmFyIGIgPSBuZXcgU29saWRDb2xvckJydXNoKGMpOyBiLkZyZWV6ZSgpOyByZXR1cm4gYjsgfQogICAgcHJpdmF0ZSBzdGF0aWMgQ29sb3IgV2l0aEFscGhhKENvbG9yIGMsIGRvdWJsZSBhKSA9PiBDb2xvci5Gcm9tQXJnYigoYnl0ZSkoYSAqIDI1NSksIGMuUiwgYy5HLCBjLkIpOwp9Cg==
+using System.Globalization;
+using System.Linq;
+using System.Windows;
+using System.Windows.Media;
+
+namespace PulseWin;
+
+/// <summary>
+/// 详情卡窗布局:规则圆角方框(无指针),贴 rail 一侧放置。
+///
+/// 高度**不另立常量**,而是直接向 <see cref="CardRenderer"/> 要实际步进——
+/// 从前两套数各写一份,结果就是"卡片比内容矮(裁字)"或"底部留一大块空",
+/// 每次调行距都要人工对齐两个文件。见 v1.10.1 的紧凑化。
+/// </summary>
+public static class CardLayout
+{
+    public const double Margin = 12;
+    public static readonly double GapToRail = Card.HorizontalGap;
+
+    /// <summary>账户卡的窗/内容框。高度按内容动态计算,防止文字溢出/留大片空。</summary>
+    public static (Size win, Rect body) SubCard(int poolCount, bool showStale, bool showChart)
+    {
+        double w = Card.Width;
+        double h = CardRenderer.HeaderBlock
+            + CardRenderer.RowPitch * poolCount
+            + CardRenderer.TailBlock
+            + (showStale ? CardRenderer.StaleBlock : 0)
+            + (showChart ? CardRenderer.ChartBlock : 0);
+        double m = Margin;
+        return (new Size(w + m * 2, h + m * 2), new Rect(m, m, w, h));
+    }
+}
+
+/// <summary>
+/// 详情卡内容绘制。从 <see cref="CardWindow"/> 抽出来是为了能**离屏渲染**:
+/// 卡片的排版规则(文字会不会被右缘切、底部会不会溢出)必须在像素上核对,
+/// 而不是等用户 hover 时才发现——诊断开关 <c>--card-shot</c> 就是走这条路径出图。
+///
+/// 下面那组 <c>*Block</c>/<c>RowPitch</c> 是**绘制步进本身**,布局高度直接引用它们,
+/// 所以改间距不会出现"画面改了、卡片高度没改"的错位。
+/// </summary>
+public static class CardRenderer
+{
+    // —— 关键竖直间距(单位 mac pt,与绘制代码里用的同一批值) ——
+    private const double RowGapAfterLabel = 3;     // 池名行 → 进度条
+    private const double RowGapAfterBar = 3;       // 进度条 → 明细行
+    private const double RowGapAfterDetail = 7;    // 明细行 → 下一行
+    private const double ChartGapAfterTitle = 7;
+    private const double ChartGapAfterPlot = 6;
+
+    /// <summary>头部区高度:顶部留白 + 图标 + 与首行的留白(即首行相对 body 顶的偏移)。</summary>
+    public static readonly double HeaderBlock = Pt.P(18) - 2 + Pt.P(18) + Pt.P(18);
+
+    /// <summary>
+    /// 一行的实际绘制步进。用与绘制同款的 FormattedText 量出来,而不是拍一个整数——
+    /// 中文行高是字体相关的浮点值,手写的整数迟早与画面错开。
+    /// </summary>
+    public static readonly double RowPitch = MeasureRowPitch();
+
+    /// <summary>末行之后到 body 底的留白(与顶部留白相称:Pad 减去行尾自带的间隔)。</summary>
+    public static readonly double TailBlock = Pt.P(18) - Pt.P(RowGapAfterDetail);
+
+    /// <summary>数据陈旧提示占的高度(与上一块的间隔 + 一行文字)。</summary>
+    public static readonly double StaleBlock = Pt.P(2) + MeasureLine(Pt.P(10.5));
+
+    /// <summary>"今日消耗"区块(标题 + 柱图 + 脚注)的高度。</summary>
+    public static readonly double ChartBlock = Pt.P(12.5 + ChartGapAfterTitle)
+        + Pt.P(26) + Pt.P(ChartGapAfterPlot) + MeasureLine(Pt.P(10.5));
+
+    private static double MeasureRowPitch()
+    {
+        double label = MeasureLine(Pt.P(12.5));
+        double detail = MeasureLine(Pt.P(10.5));
+        return label + Pt.P(RowGapAfterLabel) + Card.ProgressBarHeight + Pt.P(RowGapAfterBar)
+            + detail + Pt.P(RowGapAfterDetail);
+    }
+
+    /// <summary>量一行中文文本的高度(最坏情况按全中文取,英文只会更矮)。</summary>
+    private static double MeasureLine(double size) =>
+        Text("本周明细", size, FontWeights.Normal, Brushes.Black, 96).Height;
+
+    public static void Draw(DrawingContext dc, SubData sub, Rect body, bool showStale,
+        double dpi, DateTimeOffset now)
+    {
+        double r = Card.CornerRadius;
+        dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, body, r, r);
+
+        double x = body.X, y = body.Y;
+        double w = body.Width;
+        double pad = Card.Padding;
+        double px = x + pad;
+        double contentW = w - pad * 2;
+
+        // 组头:图标 + 名称 + 账户标识
+        double iconBox = Pt.P(18);
+        double py = y + pad - 2;
+        DrawLogo(dc, sub, new Rect(px, py, iconBox, iconBox));
+        var nameFt = Text(sub.Name, Pt.P(15), FontWeights.SemiBold, Solid(PanelPalette.Primary), dpi);
+        dc.DrawText(nameFt, new Point(px + iconBox + Pt.P(7), py + (iconBox - nameFt.Height) / 2));
+        var acctFt = Text(sub.AccountLabel, Pt.P(11), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+        dc.DrawText(acctFt, new Point(px + iconBox + Pt.P(7), py + (iconBox - nameFt.Height) / 2 + nameFt.Height + 1));
+
+        DrawHeaderReadout(dc, sub, new Point(px, py), contentW, dpi);
+
+        // 三池行
+        double rowY = y + HeaderBlock;
+        foreach (var pool in sub.Pools)
+            rowY = DrawPoolRow(dc, sub, pool, new Point(px, rowY), contentW, dpi, now);
+
+        // 余额型数据源再画一张"今日消耗"(数据来自本程序自己的按小时采样)
+        double cursorY = rowY;
+        if (sub.HourlySpend is { } hourly)
+        {
+            var balancePool = sub.Pools.FirstOrDefault(p => p.PoolKind == "Balance");
+            cursorY = DrawSpendChart(dc, hourly, balancePool, new Point(px, cursorY), contentW, dpi);
+        }
+
+        // 数据陈旧提示:网络断了以后界面照旧显示最后一次成功数据,如果不标明
+        // 用户会以为看到的是最新值。
+        if (showStale && sub.FetchedAt is { } fetched)
+        {
+            var age = now - fetched;
+            string text = age.TotalMinutes < 60
+                ? $"数据 {(int)Math.Max(age.TotalMinutes, 1)} 分钟前"
+                : $"数据 {age.TotalHours:0.#} 小时前";
+            var staleFt = Text("⚠ " + text + " · 未能刷新", Pt.P(10.5), FontWeights.Normal,
+                Solid(UsageTint.Alarm), dpi);
+            dc.DrawText(staleFt, new Point(px, cursorY + Pt.P(2)));
+        }
+    }
+
+    /// <summary>
+    /// 头部右侧读数。有 token 数据的源(GOAT、OpenCode Go)显示"X.X亿 · 本月已用 Token";
+    /// 无 token 的源回退显示月度用量百分比;余额型(DeepSeek)直接显示余额。
+    /// </summary>
+    private static void DrawHeaderReadout(DrawingContext dc, SubData sub, Point p, double contentW, double dpi)
+    {
+        if (sub.PeriodTokens is { } tokens)
+        {
+            var tokenFt = Text(FormatTokens(tokens), Pt.P(17), FontWeights.Bold,
+                Solid(PanelPalette.Primary), dpi);
+            dc.DrawText(tokenFt, new Point(p.X + contentW - tokenFt.Width, p.Y - 1));
+            var labelFt = Text("本月已用 Token", Pt.P(10.5), FontWeights.Normal,
+                Solid(PanelPalette.Dim), dpi);
+            dc.DrawText(labelFt, new Point(p.X + contentW - labelFt.Width, p.Y - 1 + tokenFt.Height + Pt.P(1)));
+        }
+        else if (sub.Pools.FirstOrDefault(pl => pl.PoolKind == "Monthly") is { IsAvailable: true } monthPool)
+        {
+            // 头部只报百分比,不报金额。金额要先乘"1 credit 值多少美元"(模型的 monthly
+            // allowance),而那个数官方随时会调、换个模型也会变——写在这里等于把服务端
+            // 原值换成一个会飘的推算值。绝对量放在下面的池行里,以 credits(服务端原值)呈现。
+            Color mt = UsageTint.For(monthPool.Fraction, monthPool.IsSpent);
+            var usedFt = Text(monthPool.PercentText, Pt.P(17), FontWeights.Bold, Solid(mt), dpi);
+            dc.DrawText(usedFt, new Point(p.X + contentW - usedFt.Width, p.Y - 1));
+            var labelFt = Text("本月额度已用", Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+            dc.DrawText(labelFt, new Point(p.X + contentW - labelFt.Width, p.Y - 1 + usedFt.Height + Pt.P(1)));
+        }
+        else if (sub.Pools.FirstOrDefault(pl => pl.PoolKind == "Balance") is { IsAvailable: true } balancePool)
+        {
+            // 余额型:右边就是钱本身。它没有"已用/总额"可写,而钱就是这一池的全部读数。
+            Color bt = UsageTint.For(balancePool.Fraction, balancePool.IsSpent);
+            var amountFt = Text(Money.Exact(balancePool.Amount, balancePool.Unit), Pt.P(17),
+                FontWeights.Bold, Solid(bt), dpi);
+            dc.DrawText(amountFt, new Point(p.X + contentW - amountFt.Width, p.Y - 1));
+            var basisFt = Text(balancePool.EstimateFrom ?? "当前余额", Pt.P(10.5),
+                FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+            dc.DrawText(basisFt, new Point(p.X + contentW - basisFt.Width, p.Y - 1 + amountFt.Height + Pt.P(1)));
+        }
+    }
+
+    /// <summary>
+    /// 今日每小时的消耗柱状图。
+    ///
+    /// 数据来自本程序对余额的按小时采样,**没有运行的那些小时是空的**——所以
+    /// 图上留一条极细的淡线表示"没采样",而不是画成 0:宁可缺一根柱子,也不能把
+    /// "没看见"说成"没花钱"。返回值 = 下一块内容应从这里开始的 y(<see cref="ChartBlock"/>)。
+    /// </summary>
+    private static double DrawSpendChart(DrawingContext dc, double[] spend, PoolData? pool,
+        Point p, double width, double dpi)
+    {
+        string unit = pool?.Unit ?? "$";
+        double total = spend.Sum();
+
+        var titleFt = Text("今日消耗", Pt.P(12.5), FontWeights.Medium, Solid(PanelPalette.Primary), dpi);
+        dc.DrawText(titleFt, p);
+        var totalFt = Text(Money.Exact(total, unit), Pt.P(12.5), FontWeights.SemiBold,
+            Solid(total > 0 ? UsageTint.Good : PanelPalette.Dim), dpi);
+        dc.DrawText(totalFt, new Point(p.X + width - totalFt.Width, p.Y));
+
+        double chartTop = p.Y + titleFt.Height + Pt.P(ChartGapAfterTitle);
+        double chartHeight = Pt.P(26);
+        double gap = Pt.P(1.5);
+        double barWidth = (width - gap * 23) / 24;
+        double max = spend.Length > 0 ? spend.Max() : 0;
+        double floorHeight = Pt.P(1.2);
+
+        // 一条很淡的基线:柱底对齐之外,也让"没采样的小时"有个参照物
+        var axisPen = new Pen(Solid(WithAlpha(PanelPalette.Primary, 0.14)), 1);
+        axisPen.Freeze();
+        dc.DrawLine(axisPen, new Point(p.X, chartTop + chartHeight),
+            new Point(p.X + width, chartTop + chartHeight));
+
+        for (int hour = 0; hour < spend.Length && hour < 24; hour++)
+        {
+            double barHeight = max > 0 ? spend[hour] / max * chartHeight : 0;
+            double drawn = Math.Max(barHeight, floorHeight);
+            var rect = new Rect(p.X + hour * (barWidth + gap), chartTop + chartHeight - drawn,
+                barWidth, drawn);
+            dc.DrawRoundedRectangle(
+                Solid(spend[hour] > 0 ? UsageTint.Good : WithAlpha(PanelPalette.Primary, 0.10)),
+                null, rect, Pt.P(1), Pt.P(1));
+        }
+
+        // 脚注:写清数据怎么来的,顺带给出现成的充值/赠送拆分(API 直接提供)。
+        // 金额为 0 的那一项不写,免得出现"赠送 ¥0.00"这种废话。
+        string source = max > 0 ? "按小时采样余额差" : "今日暂无采样";
+        string split = "";
+        if (pool is { ToppedUpAmount: { } topped } && topped > 0)
+        {
+            split = $" · 充值 {Money.Exact(topped, unit)}";
+            if (pool.GrantedAmount is { } granted && granted > 0)
+                split += $" + 赠送 {Money.Exact(granted, unit)}";
+        }
+        var noteFt = Text(source + split, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+        double noteY = chartTop + chartHeight + Pt.P(ChartGapAfterPlot);
+        dc.DrawText(noteFt, new Point(p.X, noteY));
+
+        return noteY + noteFt.Height;
+    }
+
+    private static double DrawPoolRow(DrawingContext dc, SubData sub, PoolData pool, Point p, double wdt,
+        double dpi, DateTimeOffset now)
+    {
+        bool avail = pool.IsAvailable;
+        double frac = avail ? Math.Clamp(pool.Fraction, 0, 1) : 0;
+        Color tint = avail ? UsageTint.For(frac, pool.IsSpent) : PanelPalette.Track;
+
+        // 行1:池名 + 读数(>80% 红)
+        var labelFt = Text(pool.Label, Pt.P(12.5), FontWeights.Medium, Solid(PanelPalette.Primary), dpi);
+        dc.DrawText(labelFt, new Point(p.X, p.Y));
+        string readout = !avail ? "--"
+            : pool.PoolKind == "Balance" ? pool.DisplayText
+            : pool.PercentText;
+        var pctFt = Text(readout, Pt.P(12.5), FontWeights.SemiBold, Solid(tint), dpi);
+        dc.DrawText(pctFt, new Point(p.X + wdt - pctFt.Width, p.Y));
+
+        // 行2:进度条
+        double barY = p.Y + labelFt.Height + Pt.P(RowGapAfterLabel);
+        double barH = Card.ProgressBarHeight;
+        var track = new Rect(p.X, barY, wdt, barH);
+        dc.DrawRoundedRectangle(Solid(WithAlpha(PanelPalette.Primary, 0.12)), null, track, barH / 2, barH / 2);
+        if (frac > 0.004)
+        {
+            var fill = new Rect(p.X, barY, Math.Max(wdt * frac, barH), barH);
+            dc.DrawRoundedRectangle(Solid(tint), null, fill, barH / 2, barH / 2);
+        }
+
+        // 行3:用量 / 剩余时间(倒计时实时)
+        string detail = !avail ? "暂无读数"
+            : pool.PoolKind == "Balance" ? BalanceDetail(pool)
+            // 网页口径会把 meters 的微美分原值一起带回来:这时写金额比写"10.6 / 100"
+            // 这种百分比分数好读,也正好是网页卡片上那两个数($6.38 / $60)。
+            : pool is { Unit: "%", LimitAmount: { } limitUsd, UsedAmount: { } usedUsd }
+                ? $"{Money.Exact(usedUsd, "$")} / {Money.Exact(limitUsd, "$")} · {pool.RemainingText(now)}"
+            // credits 是服务端原值,直接照搬(不折美元);写一次单位,免得"70 cr / 35 cr"啰嗦
+            : pool.Unit == "cr"
+                ? $"{pool.Used ?? 0:0.#} / {pool.Cap ?? 0:0.#} cr · {pool.RemainingText(now)}"
+                : $"{Amount(pool.Used, pool.Unit)} / {Amount(pool.Cap, pool.Unit)} · {pool.RemainingText(now)}";
+        // 消耗预测:证据足够时给一句"照当前速度",够不到重置就预警(上游 forecast 同款口径)。
+        // 文案要短:"照当前速度"这五个字是冗余的("约"已经表意),带着它整行会在
+        // 最坏情况下(长金额 + 长剩余时间 + 预测)超出卡片宽度被裁掉。
+        double? hoursLeft = pool.ResetAt is { } ra ? (ra - now).TotalHours : null;
+        if (avail && pool.HasPercent && !pool.IsSpent
+            && BurnRate.Estimate($"{sub.Key}:{pool.PoolKind}", hoursLeft) is { } burn)
+        {
+            detail += burn.Exhausts
+                ? $" · 约 {BurnRate.Describe(burn.Hours)}后用完"
+                : " · 预计够用到重置";
+        }
+        // 行3 必须自己保证不超出卡片:它是单行绘制,内容却会随金额位数、剩余天数
+        // 与有没有预测而变长(实测最坏能到 338diu,而内容区只有约 290diu)。
+        // 放不下就按比例缩字号(量化 0.5pt,护住文本缓存),而不是让字被卡片边缘切掉。
+        var detailFt = FitText(detail, Pt.P(10.5), FontWeights.Normal, Solid(PanelPalette.Dim), dpi, wdt);
+        double detailY = barY + barH + Pt.P(RowGapAfterBar);
+        dc.DrawText(detailFt, new Point(p.X, detailY));
+
+        return detailY + detailFt.Height + Pt.P(RowGapAfterDetail);
+    }
+
+    /// <summary>
+    /// 取一个能塞进 <paramref name="maxWidth"/> 的文本:先按给定字号试,放不下就按比例缩。
+    /// 字号**量化到 0.5pt**——否则 FormattedText 会因为连续变化的字号不断新建对象。
+    /// 下限 8.5pt:再小就难以辨认,那种情况说明这一行的信息确实过密。
+    /// </summary>
+    private static FormattedText FitText(string s, double baseSize, FontWeight weight,
+        Brush brush, double dpi, double maxWidth)
+    {
+        var ft = Text(s, baseSize, weight, brush, dpi);
+        if (ft.Width <= maxWidth) return ft;
+
+        double step = Pt.P(0.5);
+        double min = Pt.P(8.5);
+        double target = Math.Max(baseSize * maxWidth / ft.Width, min);
+        double quantized = Math.Max(Math.Floor(target / step) * step, min);
+        return Text(s, quantized, weight, brush, dpi);
+    }
+
+    /// <summary>
+    /// 余额型池的行3:钱 + 分母从哪来。没有"重置"可倒计时——预付余额不会翻篇,
+    /// 所以这里也不该出现剩余时间。
+    /// </summary>
+    private static string BalanceDetail(PoolData pool)
+    {
+        string money = $"余额 {Money.Exact(pool.Amount, pool.Unit)}";
+        return pool.EstimateFrom is { } from ? $"{money} · {from}"
+            : pool.Note is { } note ? $"{money} · {note}"
+            : money;
+    }
+
+    private static string Amount(double? v, string unit) => v is not { } n
+        ? "--"
+        : unit == "%" ? n.ToString("0") + "%"
+        : unit + n.ToString("0.00");
+
+    /// <summary>Token 总量:≥1M 保留 1 位小数,<1M 保留 2 位小数,单位 M。</summary>
+    private static string FormatTokens(long tokens)
+    {
+        double m = tokens / 1_000_000d;
+        return m >= 1 ? m.ToString("0.0") + "M" : m.ToString("0.00") + "M";
+    }
+
+    private static void DrawLogo(DrawingContext dc, SubData sub, Rect box)
+    {
+        if (sub.Key == "goat")
+        {
+            var bmp = Icons.GoatBitmap();
+            if (bmp is not null) dc.DrawImage(bmp, box);
+            return;
+        }
+
+        if (sub.Key == "deepseek")
+        {
+            var whale = Icons.DeepSeekGeometry().Clone();
+            double whaleScale = box.Width / 24.0;
+            whale.Transform = new MatrixTransform(whaleScale, 0, 0, whaleScale, box.X, box.Y);
+            dc.DrawGeometry(Solid(PanelPalette.Primary), null, whale);
+            return;
+        }
+
+        var g = Icons.OpenCodeGeometry().Clone();
+        double s = box.Width / 24.0;
+        g.Transform = new MatrixTransform(s, 0, 0, s, box.X, box.Y);
+        dc.DrawGeometry(Solid(PanelPalette.Primary), null, g);
+    }
+
+    private static FormattedText Text(string s, double size, FontWeight weight, Brush brush, double dpi) =>
+        new(s, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+            new Typeface(new FontFamily("Segoe UI, Microsoft YaHei UI"), FontStyles.Normal, weight, FontStretches.Normal),
+            size, brush, dpi);
+
+    private static SolidColorBrush Solid(Color c) { var b = new SolidColorBrush(c); b.Freeze(); return b; }
+    private static Color WithAlpha(Color c, double a) => Color.FromArgb((byte)(a * 255), c.R, c.G, c.B);
+}

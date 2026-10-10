@@ -1,1 +1,377 @@
-dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uVGV4dC5Kc29uOwp1c2luZyBTeXN0ZW0uV2luZG93czsKdXNpbmcgU3lzdGVtLldpbmRvd3MuVGhyZWFkaW5nOwp1c2luZyBNaWNyb3NvZnQuV2ViLldlYlZpZXcyLkNvcmU7CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyDpgJrnlKjnmoQqKuWGheW1jCBXZWJWaWV3MiDnmbvlvZXnqpcqKjrmiZPlvIDmn5DkuKrlrpjmlrnnq5nngrnnmoTnmbvlvZXpobUs55m75b2V5oiQ5Yqf5ZCO55u05o6l5LuO5rWP6KeI5Zmo5byV5pOO55qECi8vLyBjb29raWUg572Q6YeM5Y+W5Lya6K+dIGNvb2tpZeOAguebruagh+ermeeUsSA8c2VlIGNyZWY9IkJyb3dzZXJMb2dpblRhcmdldCIvPiDlhrPlrprjgIIKLy8vCi8vLyAqKuS4uuS7gOS5iOW/hemhu+i/meS5iOWBmioqKDIwMjYtMTAtMTAg5a6e5rWLLOaOqOe/u+S6hiB2MS4xNy4wIOeahOe7k+iuuik65LuO5pys5py6IEVkZ2Ug55qEIGNvb2tpZQovLy8g5pWw5o2u5bqT6YeM6K+76L+Z5p2h6Lev5bey57uPKirlvbvlupUqKuS4jemAmuKAlOKAlOS4jeWPquaYryLmtY/op4jlmajov5DooYzml7bmlofku7booqvmjpLku5bplIHlrpoi6YKj5LmI566A5Y2V44CCCi8vLyDmnYDmjonlhajpg6ggPGM+bXNlZGdlLmV4ZTwvYz4g5LmL5ZCO5bqT56Gu5a6e6IO95aSN5Yi25LqGKOmUgeaYryBFZGdl44CM5ZCv5Yqo5Yqg6YCf44CN55qE5ZCO5Y+w6L+b56iL5oyB5pyJ55qEKSwKLy8vIOS9huWkjeWItuWHuuadpeS5n+ayoeeUqDpFZGdlIDE1NCDph4wgKio3MDIg5p2hIGNvb2tpZSDlhajpg6jmmK8gPGM+djIwPC9jPiDliY3nvIAqKizljbMgQ2hyb21pdW0g55qECi8vLyBBcHAtQm91bmQgRW5jcnlwdGlvbizlr4bpkqXmjInmtY/op4jlmajlj6/miafooYzmlofku7bot6/lvoQgKyDnlKjmiLfnu5HlrprjgIHnlLHmtY/op4jlmajoh6rlt7HnmoTmj5DmnYPmnI3liqEKLy8vIOino+WwgSznrKzkuInmlrnov5vnqIvop6PkuI3lh7rmnaUo6L+Z5q2j5piv5a6D55qE6K6+6K6h55uu55qEKeOAgm9wZW5jb2RlIOS4jiBjb21tYW5kY29kZSDnmoTkvJror50gY29va2llCi8vLyDkuIDmnaHpg73mi7zkuI3ov5sgQ29va2llIOWktOOAggovLy8KLy8vIDxzZWUgY3JlZj0iQ29yZVdlYlZpZXcyLkNvb2tpZU1hbmFnZXIiLz4g57uZ55qE5pivKirlvJXmk47lt7Lnu4/op6Plr4YqKueahCBjb29raWUs5pei5LiN56Kw5paH5Lu2Ci8vLyDkuZ/kuI3norAgQUJFO0h0dHBPbmx5IOS5n+aLv+W+l+WIsOKAlOKAlOi/meaYryA8Yz5kb2N1bWVudC5jb29raWU8L2M+IOWBmuS4jeWIsOeahOOAgkdvR2F1Z2Ug6LWw55qE5bCx5pivCi8vLyDov5nmnaHot6/jgIIKLy8vCi8vLyAqKuS4gOS7vSBwcm9maWxlIOWQjOaXtuWPquiDveiiq+S4gOS4qui/m+eoi+eUqCoqKDIwMjYtMTAtMTAg5a6e5rWL6Lip5YiwKTpXZWJWaWV3MiDnmoQgdXNlciBkYXRhCi8vLyBmb2xkZXIg5piv6Leo6L+b56iL54us5Y2g55qELOesrOS6jOS4queql+WPoyjlk6rmgJXlnKjlj6bkuIDkuKogUHVsc2VXaW4g6L+b56iL6YeMKeS8mioq5Y2h5Zyo5Yid5aeL5YyW44CBCi8vLyDmtY/op4jlmajov5vnqIvmsLjov5zotbfkuI3mnaUqKiznlYzpnaLlsLHmmK/kuIDlnZfnqbrnmb3jgIHnirbmgIHlgZzlnKgi5q2j5Zyo6L295YWl55m75b2V6aG14oCmIuOAguaJgOS7pei/memHjOacieS4pOmBkwovLy8g6Ziy5oqkOuKRoOi3qOi/m+eoi+WRveWQjeS6kuaWpemHjyzlt7Lnu4/mnInnmbvlvZXnqpflvIDnnYDlsLHnm7TmjqXor7TmuIXmpZrogIzkuI3mmK/nmb3lsY874pGh5pW05Liq6L+b56iL5YWx55So5LiA5Lu9Ci8vLyA8c2VlIGNyZWY9IkNvcmVXZWJWaWV3MkVudmlyb25tZW50Ii8+KOWQjOi/m+eoi+WGhemHjeWkjSBDcmVhdGVBc3luYyDkuZ/kuIDmoLfkvJrlh7rpl67popgpLAovLy8g5LiU5Yid5aeL5YyW5bim6LaF5pe2LOi2heaXtuWwseaKiuWOn+WboOWGmeWIsOeKtuaAgeihjOS4juiviuaWreaXpeW/lyzkuI3lho3ml6DpmZDmnJ/pnZnpu5jnrYnlvoXjgIIKLy8vIDwvc3VtbWFyeT4KcHVibGljIHBhcnRpYWwgY2xhc3MgQnJvd3NlckxvZ2luV2luZG93IDogV2luZG93CnsKICAgIC8vLyA8c3VtbWFyeT7ot6jov5vnqIvkupLmlqU65ZCM5LiA5pe25Yi75Y+q5YWB6K645LiA5Liq55m75b2V56qXKFdlYlZpZXcyIHByb2ZpbGUg5piv6Leo6L+b56iL54us5Y2g55qEKeOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIHJlYWRvbmx5IE11dGV4IExvZ2luR2F0ZSA9IG5ldyhpbml0aWFsbHlPd25lZDogZmFsc2UsIEAiTG9jYWxcUHVsc2VXaW4uQnJvd3NlckxvZ2luV2luZG93Iik7CgogICAgLy8vIDxzdW1tYXJ5PuaVtOS4qui/m+eoi+WFseeUqOS4gOS7vSBXZWJWaWV3MiDnjq/looPjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBDb3JlV2ViVmlldzJFbnZpcm9ubWVudD8gX3NoYXJlZEVudmlyb25tZW50OwoKICAgIC8vLyA8c3VtbWFyeT7liJ3lp4vljJbotoXml7Y6V2ViVmlldzIg6LW35LiN5p2l5pe25LiN6KaB5peg6ZmQ5pyf562J5LiL5Y6744CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgVGltZVNwYW4gSW5pdFRpbWVvdXQgPSBUaW1lU3Bhbi5Gcm9tU2Vjb25kcygyNSk7CgogICAgcHJpdmF0ZSByZWFkb25seSBCcm93c2VyTG9naW5UYXJnZXQgX3RhcmdldDsKICAgIHByaXZhdGUgcmVhZG9ubHkgc3RyaW5nIF91c2VyRGF0YUZvbGRlcjsKICAgIHByaXZhdGUgcmVhZG9ubHkgYm9vbCBfb3duc0dhdGU7CiAgICBwcml2YXRlIERpc3BhdGNoZXJUaW1lcj8gX3BvbGw7CiAgICAvLy8gPHN1bW1hcnk+6L2u6K+i6YeN5YWl5a6I5Y2rOuS4iuS4gOasoSBhd2FpdCDov5jmsqHlm57mnaXlsLHkuI3lho3lj5HkuIDmrKHjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGJvb2wgX3BvbGxpbmc7CiAgICBwcml2YXRlIGJvb2wgX2NhcHR1cmVkOwogICAgLy8vIDxzdW1tYXJ5PkdpdEh1YiDlt7LnmbvlvZXjgIHljbTlgZzlnKjml6DlhbPpobXpnaIoMkZBL3Bhc3NrZXkg5LmL5ZCO5bi46KeB55qEIHJldHVybl90byDkuKLlpLEp55qE6LW354K55pe25Yi7OwogICAgLy8vIOacieWAvOWwseS6pOe7meeci+mXqOeLlyzov4fkuoblrr3pmZDmnJ/oh6rliqjph43mlrDlj5HotbfnmbvlvZXjgII8Yz5kZWZhdWx0PC9jPiA9IOayoeWNoeedgOOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgRGF0ZVRpbWVPZmZzZXQgX2dpdGh1YlN0dWNrU2luY2U7CiAgICAvLy8gPHN1bW1hcnk+5pys6L2u5bey6Ieq5Yqo6YeN6K+V6L+H5Yeg5qyhKOmYsuatouadpeWbnui4ouaIkOatu+W+queOrynjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGludCBfYXV0b1Jlc3VtZXM7CiAgICBwcml2YXRlIGNvbnN0IGludCBNYXhBdXRvUmVzdW1lcyA9IDM7CiAgICAvLy8gPHN1bW1hcnk+5ZyoIEdpdEh1YiDml6DlhbPpobXpnaLkuIrlgZzlpJrkuYXmiY3liKTlrpoi5Y2h5L2PIijnu5nmraPluLjlm57ot7PnlZnml7bpl7Qp44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgVGltZVNwYW4gU3R1Y2tHcmFjZSA9IFRpbWVTcGFuLkZyb21TZWNvbmRzKDQpOwogICAgcHJpdmF0ZSBpbnQgX25hdkhlbHBlckluamVjdGVkRm9yOwoKICAgIC8vLyA8cGFyYW0gbmFtZT0idGFyZ2V0Ij7nm67moIfnq5ko55m75b2V6aG144CB5Lya6K+dIGNvb2tpZSDlkI3jgIHokL3nm5jplK4p44CCPC9wYXJhbT4KICAgIC8vLyA8cGFyYW0gbmFtZT0idXNlckRhdGFGb2xkZXIiPldlYlZpZXcyIOeahCBwcm9maWxlIOebruW9lSjmlL7kvr/mkLogRGF0YVwg5LiLKeOAguS4pOS4quermeWFseeUqOWQjOS4gOS7veOAgjwvcGFyYW0+CiAgICBwdWJsaWMgQnJvd3NlckxvZ2luV2luZG93KEJyb3dzZXJMb2dpblRhcmdldCB0YXJnZXQsIHN0cmluZyB1c2VyRGF0YUZvbGRlcikKICAgIHsKICAgICAgICBJbml0aWFsaXplQ29tcG9uZW50KCk7CiAgICAgICAgX3RhcmdldCA9IHRhcmdldDsKICAgICAgICBfdXNlckRhdGFGb2xkZXIgPSB1c2VyRGF0YUZvbGRlcjsKICAgICAgICBUaXRsZSA9ICQi55m75b2VIHt0YXJnZXQuRGlzcGxheU5hbWV9IjsKICAgICAgICBIZWFkaW5nVGV4dC5UZXh0ID0gJCLnlKggR2l0SHViIOaIliB7dGFyZ2V0LkRpc3BsYXlOYW1lfSDotKblj7fnmbvlvZXkuIDmrKEiOwogICAgICAgIHRyeSB7IF9vd25zR2F0ZSA9IExvZ2luR2F0ZS5XYWl0T25lKDApOyB9CiAgICAgICAgY2F0Y2ggKEFiYW5kb25lZE11dGV4RXhjZXB0aW9uKSB7IF9vd25zR2F0ZSA9IHRydWU7IH0gICAvLyDkuIrkuIDkuKrov5vnqIvooqvlvLrmnYA65omA5pyJ5p2D5b2S5oiR5LusCiAgICAgICAgTG9hZGVkICs9IE9uTG9hZGVkQXN5bmM7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PuWPluWIsOeahCBDb29raWUg5aS0KOiviuaWrS/ml6Xlv5fnlKgpO+acquWPluWIsOS4uiBudWxs44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZz8gQ2FwdHVyZWRDb29raWVIZWFkZXIgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgcHJpdmF0ZSBhc3luYyB2b2lkIE9uTG9hZGVkQXN5bmMob2JqZWN0IHNlbmRlciwgUm91dGVkRXZlbnRBcmdzIGUpCiAgICB7CiAgICAgICAgaWYgKCFfb3duc0dhdGUpCiAgICAgICAgewogICAgICAgICAgICBTdGF0dXNUZXh0LlRleHQgPSAi5bey57uP5pyJ5LiA5Liq55m75b2V56qX5byA552AKOWQjOS4gOS4qiBXZWJWaWV3MiBwcm9maWxlIOS4gOasoeWPquiDveiiq+S4gOS4qui/m+eoi+S9v+eUqCnjgIIiCiAgICAgICAgICAgICAgICArICLor7flhYjmiorlroPlhbPmjoks5YaN54K56L+Z6YeM55qE55m75b2V44CCIjsKICAgICAgICAgICAgUmVzdGFydEJ1dHRvbi5Jc0VuYWJsZWQgPSBmYWxzZTsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgkIuaJk+W8gCB7X3RhcmdldC5EaXNwbGF5TmFtZX0g55m75b2V56qX6KKr5ouSOuW3suacieeZu+W9leeql+WcqOi/kOihjCIpOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQoKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIERpcmVjdG9yeS5DcmVhdGVEaXJlY3RvcnkoX3VzZXJEYXRhRm9sZGVyKTsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgkIntfdGFyZ2V0LkRpc3BsYXlOYW1lfSDnmbvlvZXnqpc65byA5aeL5Yid5aeL5YyWIFdlYlZpZXcyKHByb2ZpbGUge191c2VyRGF0YUZvbGRlcn0pIik7CgogICAgICAgICAgICB2YXIgZW52aXJvbm1lbnQgPSBhd2FpdCBHZXRFbnZpcm9ubWVudEFzeW5jKF91c2VyRGF0YUZvbGRlcik7CiAgICAgICAgICAgIGF3YWl0IFZpZXcuRW5zdXJlQ29yZVdlYlZpZXcyQXN5bmMoZW52aXJvbm1lbnQpLldhaXRBc3luYyhJbml0VGltZW91dCk7CgogICAgICAgICAgICB2YXIgY29yZSA9IFZpZXcuQ29yZVdlYlZpZXcyOwogICAgICAgICAgICBjb3JlLlNldHRpbmdzLkFyZURldlRvb2xzRW5hYmxlZCA9IGZhbHNlOwogICAgICAgICAgICBjb3JlLlNldHRpbmdzLklzU3RhdHVzQmFyRW5hYmxlZCA9IGZhbHNlOwogICAgICAgICAgICBjb3JlLk5hdmlnYXRpb25Db21wbGV0ZWQgKz0gT25OYXZpZ2F0aW9uQ29tcGxldGVkOwogICAgICAgICAgICAvLyDmtY/op4jlmagv5riy5p+T6L+b56iL5oyC5o6J5pe255WM6Z2i5Lya5Y+Y56m655m94oCU4oCU6K6w5LiL5p2lLOWIq+mdmem7mAogICAgICAgICAgICBjb3JlLlByb2Nlc3NGYWlsZWQgKz0gKF8sIGFyZ3MpID0+CiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIFN0YXR1c1RleHQuVGV4dCA9ICQiV2ViVmlldzIg55qEIHthcmdzLlByb2Nlc3NGYWlsZWRLaW5kfSDov5vnqIvlvILluLjpgIDlh7os6K+35YWz5o6J5pys56qX5Y+j6YeN6K+V44CCIjsKICAgICAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoJCJ7X3RhcmdldC5EaXNwbGF5TmFtZX0g55m75b2V56qXOnthcmdzLlByb2Nlc3NGYWlsZWRLaW5kfSDpgIDlh7ooe2FyZ3MuUmVhc29ufSkiKTsKICAgICAgICAgICAgfTsKICAgICAgICAgICAgY29yZS5OYXZpZ2F0ZShfdGFyZ2V0LkxvZ2luVXJsKTsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgkIntfdGFyZ2V0LkRpc3BsYXlOYW1lfSDnmbvlvZXnqpc6V2ViVmlldzIg5bCx57uqLOW3suWvvOiIquWIsOeZu+W9lemhtSIpOwoKICAgICAgICAgICAgX3BvbGwgPSBuZXcgRGlzcGF0Y2hlclRpbWVyIHsgSW50ZXJ2YWwgPSBUaW1lU3Bhbi5Gcm9tU2Vjb25kcygxKSB9OwogICAgICAgICAgICBfcG9sbC5UaWNrICs9IChfLCBfKSA9PgogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBfID0gVHJ5Q2FwdHVyZUFzeW5jKCk7CiAgICAgICAgICAgICAgICBfID0gUmVzdW1lSWZTdHVja0FzeW5jKCk7CiAgICAgICAgICAgIH07CiAgICAgICAgICAgIF9wb2xsLlN0YXJ0KCk7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChUaW1lb3V0RXhjZXB0aW9uKQogICAgICAgIHsKICAgICAgICAgICAgU3RhdHVzVGV4dC5UZXh0ID0gIldlYlZpZXcyIOWIneWni+WMlui2heaXtijmtY/op4jlmajov5vnqIvmsqHog73lkK/liqgp44CCIgogICAgICAgICAgICAgICAgKyAi5bi46KeB5Y6f5Zug5piv5Y+m5LiA5Liq55m75b2V56qXL+WPpuS4gOS4qiBQdWxzZVdpbiDov5jljaDnnYDlkIzkuIDku70gcHJvZmlsZeKAlOKAlCIKICAgICAgICAgICAgICAgICsgIuaKiuWug+S7rOWFs+aOieWGjeivlTvoi6Xlj43lpI3lpoLmraQs5Y+v5oqKIERhdGFcXFdlYlZpZXcyIOebruW9leWIoOaOiemHjeadpeOAgiI7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoJCJ7X3RhcmdldC5EaXNwbGF5TmFtZX0g55m75b2V56qXOldlYlZpZXcyIOWIneWni+WMlui2heaXtih7SW5pdFRpbWVvdXQuVG90YWxTZWNvbmRzOjB9IOenkikiKTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIFN0YXR1c1RleHQuVGV4dCA9ICLnmbvlvZXnqpflkK/liqjlpLHotKU6IiArIGV4Lk1lc3NhZ2UKICAgICAgICAgICAgICAgICsgIijoi6Xmj5DnpLrnvLrlsJEgV2ViVmlldzIg6L+Q6KGM5pe2LOijheS4gOasoeOAjE1pY3Jvc29mdCBFZGdlIFdlYlZpZXcyIFJ1bnRpbWXjgI3ljbPlj68pIjsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgkIntfdGFyZ2V0LkRpc3BsYXlOYW1lfSDnmbvlvZXnqpflkK/liqjlpLHotKUiLCBleCk7CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDlj5Yo5bm25Zyo6aaW5qyh5Yib5bu6KeacrOi/m+eoi+WFseeUqOeahCBXZWJWaWV3MiDnjq/looPjgIIKICAgIC8vLyAqKuW/hemhu+WFseeUqCoqOuWQjOS4gOS4qiB1c2VyIGRhdGEgZm9sZGVyIOWcqOacrOi/m+eoi+mHjOesrOS6jOasoSA8Yz5DcmVhdGVBc3luYzwvYz4g5Lya5aSx6LSl5oiWCiAgICAvLy8g6ZW/5pe26Ze05LiN5bCx57uq4oCU4oCUIuW8gOS4gOasoeeZu+W9leeql+OAgeWFs+aOieOAgeWGjeW8gCLmraPlpb3kvJrmkp7kuIrjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBhc3luYyBUYXNrPENvcmVXZWJWaWV3MkVudmlyb25tZW50PiBHZXRFbnZpcm9ubWVudEFzeW5jKHN0cmluZyB1c2VyRGF0YUZvbGRlcikKICAgIHsKICAgICAgICBpZiAoX3NoYXJlZEVudmlyb25tZW50IGlzIHsgfSBleGlzdGluZykgcmV0dXJuIGV4aXN0aW5nOwoKICAgICAgICB2YXIgZ2F0ZSA9IEVudmlyb25tZW50R2F0ZTsKICAgICAgICBhd2FpdCBnYXRlLldhaXRBc3luYygpOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgX3NoYXJlZEVudmlyb25tZW50ID8/PSBhd2FpdCBDb3JlV2ViVmlldzJFbnZpcm9ubWVudAogICAgICAgICAgICAgICAgLkNyZWF0ZUFzeW5jKGJyb3dzZXJFeGVjdXRhYmxlRm9sZGVyOiBudWxsLCB1c2VyRGF0YUZvbGRlcjogdXNlckRhdGFGb2xkZXIpCiAgICAgICAgICAgICAgICAuV2FpdEFzeW5jKEluaXRUaW1lb3V0KTsKICAgICAgICAgICAgcmV0dXJuIF9zaGFyZWRFbnZpcm9ubWVudDsKICAgICAgICB9CiAgICAgICAgZmluYWxseQogICAgICAgIHsKICAgICAgICAgICAgZ2F0ZS5SZWxlYXNlKCk7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHJlYWRvbmx5IFNlbWFwaG9yZVNsaW0gRW52aXJvbm1lbnRHYXRlID0gbmV3KDEsIDEpOwoKICAgIHByaXZhdGUgdm9pZCBPbk5hdmlnYXRpb25Db21wbGV0ZWQob2JqZWN0PyBzZW5kZXIsIENvcmVXZWJWaWV3Mk5hdmlnYXRpb25Db21wbGV0ZWRFdmVudEFyZ3MgZSkKICAgIHsKICAgICAgICBzdHJpbmcgdXJsID0gVmlldy5Db3JlV2ViVmlldzI/LlNvdXJjZSA/PyAiIjsKCiAgICAgICAgaWYgKElzVGFyZ2V0SG9zdCh1cmwpKQogICAgICAgIHsKICAgICAgICAgICAgX2dpdGh1YlN0dWNrU2luY2UgPSBkZWZhdWx0OwogICAgICAgICAgICBTdGF0dXNUZXh0LlRleHQgPSAkIuW3suWbnuWIsCB7X3RhcmdldC5EaXNwbGF5TmFtZX0s5q2j5Zyo56Gu6K6k5Lya6K+d4oCmIjsKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KCiAgICAgICAgaWYgKHVybC5Db250YWlucygiZ2l0aHViLmNvbSIsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbElnbm9yZUNhc2UpKQogICAgICAgIHsKICAgICAgICAgICAgLy8g5YGc5Zyo55m75b2V6KGo5Y2VIC8g5Lik5q2l6aqM6K+BIC8g6K6+5aSH6aqM6K+B6L+Z5LqbIuetieS6uuaTjeS9nCLnmoTpobXmmK/mraPluLjnmoQ7CiAgICAgICAgICAgIC8vIOWBnOWcqOWIq+eahCBHaXRIdWIg6aG16Z2i5aSa5Y2K5bCx5pivIDJGQSDkuYvlkI4gcmV0dXJuX3RvIOS4ouS6hizkuqTnu5nnnIvpl6jni5foh6rliqjnu63ot5HjgIIKICAgICAgICAgICAgX2dpdGh1YlN0dWNrU2luY2UgPSBJc0dpdEh1YkZsb3dQYWdlKHVybCkgPyBkZWZhdWx0IDogRGF0ZVRpbWVPZmZzZXQuTm93OwogICAgICAgICAgICBTdGF0dXNUZXh0LlRleHQgPSBfZ2l0aHViU3R1Y2tTaW5jZSA9PSBkZWZhdWx0CiAgICAgICAgICAgICAgICA/ICLmraPlnKggR2l0SHViIOeZu+W9leKApiIKICAgICAgICAgICAgICAgIDogIui/memhteS4juaOiOadg+aXoOWFszvlh6Dnp5LlhoXmsqHlvoDlm57ot7PlsLHoh6rliqjph43mlrDlj5HotbfnmbvlvZUo5Lmf5Y+v54K55bem5LiL6KeS44CM57un57ut55m75b2V44CNKeOAgiI7CiAgICAgICAgICAgIF8gPSBJbmplY3ROYXZIZWxwZXJBc3luYygpOwogICAgICAgIH0KICAgICAgICBlbHNlCiAgICAgICAgewogICAgICAgICAgICBfZ2l0aHViU3R1Y2tTaW5jZSA9IGRlZmF1bHQ7CiAgICAgICAgICAgIGlmICghZS5Jc1N1Y2Nlc3MpCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIFN0YXR1c1RleHQuVGV4dCA9ICQi6L+Z5LiA5q2l5rKh6L295YWl5oiQ5YqfKHtlLldlYkVycm9yU3RhdHVzfSk75Y+v54K544CM6YeN5paw6L295YWl44CN6YeN6K+V44CCIjsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+5oyJICoq5Li75py65ZCNKiog5Yik5pat5piv5LiN5piv55uu5qCH56uZKOS4jeiDveaLvyBVUkwg5a2Q5Liy5Yik5patOkdpdEh1YiDnmoQgT0F1dGgg5Zyw5Z2A6YeMCiAgICAvLy8g5bim552A55uu5qCH56uZ5Z+f5ZCNLOWtkOS4suWMuemFjeS8muaKiiBHaXRIdWIg6aG16Z2i6K+v5Yik5oiQIuW3suWbnuWIsOebruagh+ermSIp44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBib29sIElzVGFyZ2V0SG9zdChzdHJpbmcgdXJsKQogICAgewogICAgICAgIGlmICghVXJpLlRyeUNyZWF0ZSh1cmwsIFVyaUtpbmQuQWJzb2x1dGUsIG91dCB2YXIgdXJpKSkgcmV0dXJuIGZhbHNlOwogICAgICAgIHN0cmluZyBob3N0ID0gbmV3IFVyaShfdGFyZ2V0LlNpdGUpLkhvc3Q7CiAgICAgICAgcmV0dXJuIHVyaS5Ib3N0LkVxdWFscyhob3N0LCBTdHJpbmdDb21wYXJpc29uLk9yZGluYWxJZ25vcmVDYXNlKQogICAgICAgICAgICB8fCB1cmkuSG9zdC5FbmRzV2l0aCgiLiIgKyBob3N0LCBTdHJpbmdDb21wYXJpc29uLk9yZGluYWxJZ25vcmVDYXNlKTsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+R2l0SHViIOa1geeoi+mHjCLnrYnnlKjmiLfmk43kvZwi55qE6aG1KOeZu+W9leihqOWNlSAvIOS8muivnSAvIOS4pOatpemqjOivgSnigJTigJTlgZzlnKjov5nlhL/nrpfmraPluLjjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBib29sIElzR2l0SHViRmxvd1BhZ2Uoc3RyaW5nIHVybCkgPT4KICAgICAgICB1cmwuQ29udGFpbnMoImdpdGh1Yi5jb20vbG9naW4iLCBTdHJpbmdDb21wYXJpc29uLk9yZGluYWxJZ25vcmVDYXNlKQogICAgICAgIHx8IHVybC5Db250YWlucygiZ2l0aHViLmNvbS9zZXNzaW9ucyIsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbElnbm9yZUNhc2UpCiAgICAgICAgfHwgdXJsLkNvbnRhaW5zKCJnaXRodWIuY29tL3R3b19mYWN0b3IiLCBTdHJpbmdDb21wYXJpc29uLk9yZGluYWxJZ25vcmVDYXNlKTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g55yL6Zeo54uXOioq5Y+q5ZyoIkdpdEh1YiDlt7LnmbvlvZXjgIHljbTlgZzlnKjml6DlhbPpobXpnaIi5pe25omN6YeN5paw5Y+R6LW355m75b2VKirjgIIKICAgIC8vLwogICAgLy8vIOi/meaYryBHb0dhdWdlIOi4qei/h+eahOWdkTrlvIDkuobkuKTmraXpqozor4EvcGFzc2tleSDnmoTotKblj7fotbAgT0F1dGgsR2l0SHViIOacieaXtuS4jeWGjeWbnui3sywKICAgIC8vLyDogIzmmK/miornqpflj6PnlZnlnKggZ2l0aHViLmNvbSDnmoTmn5DkuKrorr7nva7pobUo5pys5py65a6e5rWLOuWBnOWcqCAiQ29uZmlndXJlIHBhc3N3b3JkbGVzcwogICAgLy8vIGF1dGhlbnRpY2F0aW9uIiks5LqO5piv55m75b2V5rC46L+c5a6M5LiN5oiQ44CC6L+Z6YeM56Gu6K6kIEdpdEh1YiDkvqfnoa7lrp7lt7LnmbvlvZUKICAgIC8vLyAoPGM+bWV0YVtuYW1lPXVzZXItbG9naW5dPC9jPiDmnInlgLwp5LmL5ZCOLOmHjeaWsOWvvOiIquWbnuWumOaWueeZu+W9lemhteKAlOKAlOatpOaXtiBHaXRIdWIg5Lya6K+dCiAgICAvLy8g5bey57uP5bu656uLLOaVtOadoSBPQXV0aCDkvJrpobrot5HlrozjgILmnIDlpJrph43or5UgPHNlZSBjcmVmPSJNYXhBdXRvUmVzdW1lcyIvPiDmrKHjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIGFzeW5jIFRhc2sgUmVzdW1lSWZTdHVja0FzeW5jKCkKICAgIHsKICAgICAgICBpZiAoX2NhcHR1cmVkIHx8IF9wb2xsaW5nKSByZXR1cm47CiAgICAgICAgaWYgKF9naXRodWJTdHVja1NpbmNlID09IGRlZmF1bHQgfHwgX2F1dG9SZXN1bWVzID49IE1heEF1dG9SZXN1bWVzKSByZXR1cm47CiAgICAgICAgaWYgKERhdGVUaW1lT2Zmc2V0Lk5vdyAtIF9naXRodWJTdHVja1NpbmNlIDwgU3R1Y2tHcmFjZSkgcmV0dXJuOwoKICAgICAgICB2YXIgY29yZSA9IFZpZXcuQ29yZVdlYlZpZXcyOwogICAgICAgIGlmIChjb3JlIGlzIG51bGwpIHJldHVybjsKCiAgICAgICAgX3BvbGxpbmcgPSB0cnVlOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgLy8g5rKh55m75b2V5bCx5Yir5omT5omwKOeUqOaIt+WPr+iDveato+WcqOWhq+WvhueggSzlj6rmmK8gVVJMIOi/mOayoeWPmOaIkCBmbG93IOmhtSkKICAgICAgICAgICAgc3RyaW5nIGxvZ2dlZEluID0gYXdhaXQgY29yZS5FeGVjdXRlU2NyaXB0QXN5bmMoCiAgICAgICAgICAgICAgICAiZG9jdW1lbnQucXVlcnlTZWxlY3RvcignbWV0YVtuYW1lPVwidXNlci1sb2dpblwiXScpPy5nZXRBdHRyaWJ1dGUoJ2NvbnRlbnQnKSB8fCAnJyIpOwogICAgICAgICAgICBpZiAobG9nZ2VkSW4uVHJpbSgnIicsICcgJykuTGVuZ3RoID09IDApIHJldHVybjsKCiAgICAgICAgICAgIF9hdXRvUmVzdW1lcysrOwogICAgICAgICAgICBfZ2l0aHViU3R1Y2tTaW5jZSA9IGRlZmF1bHQ7CiAgICAgICAgICAgIFN0YXR1c1RleHQuVGV4dCA9ICQiR2l0SHViIOW3sueZu+W9leS9hui/memhteS4juaOiOadg+aXoOWFsyzoh6rliqjph43mlrDlj5HotbfnmbvlvZUiCiAgICAgICAgICAgICAgICArICQiKHtfYXV0b1Jlc3VtZXN9L3tNYXhBdXRvUmVzdW1lc30p4oCmIjsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgkIntfdGFyZ2V0LkRpc3BsYXlOYW1lfSDnmbvlvZU6R2l0SHViIOWBnOWcqOaXoOWFs+mhtemdoizoh6rliqjnu63ot5HnrKwge19hdXRvUmVzdW1lc30g5qyhIik7CiAgICAgICAgICAgIGNvcmUuTmF2aWdhdGUoX3RhcmdldC5Mb2dpblVybCk7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChFeGNlcHRpb24gZXgpCiAgICAgICAgewogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCLnmbvlvZXnqpfoh6rliqjnu63ot5HlpLHotKUiLCBleCk7CiAgICAgICAgfQogICAgICAgIGZpbmFsbHkKICAgICAgICB7CiAgICAgICAgICAgIF9wb2xsaW5nID0gZmFsc2U7CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDlnKjpnZ7nm67moIfnq5nnmoTpobXpnaLkuIrms6jlhaXkuIDmnaHmgqzmta7lr7zoiKooV2ViVmlldzIg5Y+R5biD54mI5rKh5pyJ5ZCO6YCA5oyJ6ZKuLEdpdEh1YiDkvqfkuIDml6bot7PliLAKICAgIC8vLyDml6DlhbPpobXpnaLlsLHlm57kuI3mnaXkuoYp44CC55yL6Zeo54uX5piv6Ieq5Yqo6YKj5p2h6LevLOi/meadoeaYr+e7meeUqOaIt+aJi+WKqOWFnOW6leeahOOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHByaXZhdGUgYXN5bmMgVGFzayBJbmplY3ROYXZIZWxwZXJBc3luYygpCiAgICB7CiAgICAgICAgdmFyIGNvcmUgPSBWaWV3LkNvcmVXZWJWaWV3MjsKICAgICAgICBpZiAoY29yZSBpcyBudWxsKSByZXR1cm47CiAgICAgICAgLy8g5ZCM5LiA5Liq5paH5qGj5Y+q5rOo5YWl5LiA5qyhKOWvvOiIquWQjiBfX3B1bHNld2luTmF2IOmaj+aWh+aho+a2iOWksSzkvJrph43mlrDms6jlhaUpCiAgICAgICAgaW50IHN0YW1wID0gY29yZS5Tb3VyY2U/LkdldEhhc2hDb2RlKCkgPz8gMDsKICAgICAgICBpZiAoc3RhbXAgPT0gX25hdkhlbHBlckluamVjdGVkRm9yKSByZXR1cm47CiAgICAgICAgX25hdkhlbHBlckluamVjdGVkRm9yID0gc3RhbXA7CgogICAgICAgIHN0cmluZyBzY3JpcHQgPSBOYXZIZWxwZXJTY3JpcHQuUmVwbGFjZSgKICAgICAgICAgICAgIl9fUkVTVU1FX18iLCBKc29uU2VyaWFsaXplci5TZXJpYWxpemUoX3RhcmdldC5Mb2dpblVybCkpOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgYXdhaXQgY29yZS5FeGVjdXRlU2NyaXB0QXN5bmMoc2NyaXB0KTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoIueZu+W9leeql+azqOWFpeWvvOiIquadoeWksei0pSIsIGV4KTsKICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSBjb25zdCBzdHJpbmcgTmF2SGVscGVyU2NyaXB0ID0gIiIiCiAgICAgICAgKGZ1bmN0aW9uICgpIHsKICAgICAgICAgIGlmICh3aW5kb3cuX19wdWxzZXdpbk5hdikgeyB3aW5kb3cuX19wdWxzZXdpblJlc3VtZSA9IF9fUkVTVU1FX187IHJldHVybjsgfQogICAgICAgICAgd2luZG93Ll9fcHVsc2V3aW5OYXYgPSAxOwogICAgICAgICAgd2luZG93Ll9fcHVsc2V3aW5SZXN1bWUgPSBfX1JFU1VNRV9fOwogICAgICAgICAgdmFyIGNzcyA9ICdwYWRkaW5nOjZweCAxMnB4O21hcmdpbi1yaWdodDo4cHg7Ym9yZGVyLXJhZGl1czo2cHg7JwogICAgICAgICAgICAgICAgICArICdib3JkZXI6MXB4IHNvbGlkIHJnYmEoMCwwLDAsLjI1KTtiYWNrZ3JvdW5kOiNmZmY7Y29sb3I6IzExMTsnCiAgICAgICAgICAgICAgICAgICsgJ2N1cnNvcjpwb2ludGVyO2JveC1zaGFkb3c6MCAxcHggNHB4IHJnYmEoMCwwLDAsLjM1KTsnCiAgICAgICAgICAgICAgICAgICsgJ2ZvbnQ6MTJweCBzeXN0ZW0tdWksc2Fucy1zZXJpZjt3aGl0ZS1zcGFjZTpub3dyYXA7JzsKICAgICAgICAgIGZ1bmN0aW9uIG1rKGxhYmVsLCBmbikgewogICAgICAgICAgICB2YXIgYiA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2J1dHRvbicpOwogICAgICAgICAgICBiLnRleHRDb250ZW50ID0gbGFiZWw7IGIuc3R5bGUuY3NzVGV4dCA9IGNzczsgYi5vbmNsaWNrID0gZm47IHJldHVybiBiOwogICAgICAgICAgfQogICAgICAgICAgdmFyIGJhciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2RpdicpOwogICAgICAgICAgYmFyLnN0eWxlLmNzc1RleHQgPSAncG9zaXRpb246Zml4ZWQ7bGVmdDoxMHB4O2JvdHRvbToxMHB4O3otaW5kZXg6MjE0NzQ4MzY0NzsnOwogICAgICAgICAgYmFyLmFwcGVuZENoaWxkKG1rKCdcdTIxOTAgXHU4ZmQ0XHU1NmRlJywgZnVuY3Rpb24gKCkgeyBoaXN0b3J5LmJhY2soKTsgfSkpOwogICAgICAgICAgYmFyLmFwcGVuZENoaWxkKG1rKCdcdTdlZTdcdTdlZWRcdTc2N2JcdTVmNTUgXHUyMTkyJywKICAgICAgICAgICAgZnVuY3Rpb24gKCkgeyBsb2NhdGlvbi5hc3NpZ24od2luZG93Ll9fcHVsc2V3aW5SZXN1bWUpOyB9KSk7CiAgICAgICAgICAoZG9jdW1lbnQuYm9keSB8fCBkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQpLmFwcGVuZENoaWxkKGJhcik7CiAgICAgICAgfSkoKTsKICAgICAgICAiIiI7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOavj+enkumXruS4gOasoeW8leaTjueahCBjb29raWUg572Q44CC5ou/5Yiw5Lya6K+dIGNvb2tpZSDlsLHmi7zmiJAgQ29va2llIOWktOS6pOe7mQogICAgLy8vIDxzZWUgY3JlZj0iQnJvd3NlckNvb2tpZVN0b3JlIi8+IOiQveebmCznhLblkI7oh6rlt7HlhbPnqpfjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIGFzeW5jIFRhc2sgVHJ5Q2FwdHVyZUFzeW5jKCkKICAgIHsKICAgICAgICBpZiAoX2NhcHR1cmVkIHx8IF9wb2xsaW5nKSByZXR1cm47CiAgICAgICAgdmFyIGNvcmUgPSBWaWV3LkNvcmVXZWJWaWV3MjsKICAgICAgICBpZiAoY29yZSBpcyBudWxsKSByZXR1cm47CgogICAgICAgIF9wb2xsaW5nID0gdHJ1ZTsKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIHZhciBjb29raWVzID0gYXdhaXQgY29yZS5Db29raWVNYW5hZ2VyLkdldENvb2tpZXNBc3luYyhfdGFyZ2V0LlNpdGUpOwogICAgICAgICAgICB2YXIgaGVhZGVyID0gQnVpbGRDb29raWVIZWFkZXIoY29va2llcywgX3RhcmdldC5TZXNzaW9uQ29va2llTmFtZXMpOwogICAgICAgICAgICBpZiAoaGVhZGVyIGlzIG51bGwpIHJldHVybjsKCiAgICAgICAgICAgIENhcHR1cmVkQ29va2llSGVhZGVyID0gaGVhZGVyOwogICAgICAgICAgICBfY2FwdHVyZWQgPSB0cnVlOwogICAgICAgICAgICBfcG9sbD8uU3RvcCgpOwogICAgICAgICAgICBCcm93c2VyQ29va2llU3RvcmUuU2F2ZU1hbnVhbChfdGFyZ2V0Lkhvc3RLZXl3b3JkLCBoZWFkZXIpOwogICAgICAgICAgICBTdGF0dXNUZXh0LlRleHQgPSAi55m75b2V5oiQ5YqfLOW3suS/neWtmOS8muivnSBjb29raWXjgIIiOwogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQie190YXJnZXQuRGlzcGxheU5hbWV9IOeZu+W9leaIkOWKnyzlt7Lkv53lrZjkvJror50gY29va2llIik7CiAgICAgICAgICAgIERpYWxvZ1Jlc3VsdCA9IHRydWU7CiAgICAgICAgICAgIENsb3NlKCk7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChFeGNlcHRpb24gZXgpCiAgICAgICAgewogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCLnmbvlvZXnqpfor7vlj5YgY29va2llIOWksei0pSIsIGV4KTsKICAgICAgICB9CiAgICAgICAgZmluYWxseQogICAgICAgIHsKICAgICAgICAgICAgX3BvbGxpbmcgPSBmYWxzZTsKICAgICAgICB9CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOaKiuW8leaTjue7meeahCBjb29raWUg5ou85oiQIENvb2tpZSDlpLTjgILmlbTkuKrnm67moIfln5/nmoTpg73luKbkuIoo5LiO55yf5a6e6K+35rGC5LiA6Ie0LOS5n+mhuuW4puimhueblgogICAgLy8vIOWPqueUqOaXp+eJiOWQjeWtl+eahOWOhuWPsui0puWPtyk7PHBhcmFtcmVmIG5hbWU9InNlc3Npb25Db29raWVOYW1lcyIvPiDkuIDmnaHpg73msqHlkb3kuK3lsLHov5Tlm54KICAgIC8vLyBudWxs4oCU4oCU6YKj6K+05piO55m75b2V6L+Y5rKh5a6M5oiQ44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgaW50ZXJuYWwgc3RhdGljIHN0cmluZz8gQnVpbGRDb29raWVIZWFkZXIoCiAgICAgICAgSUVudW1lcmFibGU8Q29yZVdlYlZpZXcyQ29va2llPiBjb29raWVzLCBJUmVhZE9ubHlMaXN0PHN0cmluZz4gc2Vzc2lvbkNvb2tpZU5hbWVzKQogICAgewogICAgICAgIHZhciBwYWlycyA9IG5ldyBMaXN0PHN0cmluZz4oKTsKICAgICAgICBib29sIGhhc1Nlc3Npb24gPSBmYWxzZTsKICAgICAgICBmb3JlYWNoICh2YXIgY29va2llIGluIGNvb2tpZXMpCiAgICAgICAgewogICAgICAgICAgICBpZiAoc3RyaW5nLklzTnVsbE9yRW1wdHkoY29va2llLk5hbWUpIHx8IHN0cmluZy5Jc051bGxPckVtcHR5KGNvb2tpZS5WYWx1ZSkpIGNvbnRpbnVlOwogICAgICAgICAgICBwYWlycy5BZGQoJCJ7Y29va2llLk5hbWV9PXtjb29raWUuVmFsdWV9Iik7CiAgICAgICAgICAgIGlmIChzZXNzaW9uQ29va2llTmFtZXMuQ29udGFpbnMoY29va2llLk5hbWUsIFN0cmluZ0NvbXBhcmVyLk9yZGluYWwpKSBoYXNTZXNzaW9uID0gdHJ1ZTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGhhc1Nlc3Npb24gPyBzdHJpbmcuSm9pbigiOyAiLCBwYWlycykgOiBudWxsOwogICAgfQoKICAgIC8vIOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlCDmjInpkq4g4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCUCgogICAgcHJpdmF0ZSB2b2lkIFJlc3RhcnRfQ2xpY2sob2JqZWN0IHNlbmRlciwgUm91dGVkRXZlbnRBcmdzIGUpCiAgICB7CiAgICAgICAgX2dpdGh1YlN0dWNrU2luY2UgPSBkZWZhdWx0OwogICAgICAgIF9hdXRvUmVzdW1lcyA9IDA7CiAgICAgICAgVmlldy5Db3JlV2ViVmlldzI/Lk5hdmlnYXRlKF90YXJnZXQuTG9naW5VcmwpOwogICAgfQoKICAgIHByaXZhdGUgdm9pZCBDYW5jZWxfQ2xpY2sob2JqZWN0IHNlbmRlciwgUm91dGVkRXZlbnRBcmdzIGUpCiAgICB7CiAgICAgICAgRGlhbG9nUmVzdWx0ID0gZmFsc2U7CiAgICAgICAgQ2xvc2UoKTsKICAgIH0KCiAgICBwcm90ZWN0ZWQgb3ZlcnJpZGUgdm9pZCBPbkNsb3NlZChFdmVudEFyZ3MgZSkKICAgIHsKICAgICAgICBfcG9sbD8uU3RvcCgpOwogICAgICAgIF9wb2xsID0gbnVsbDsKICAgICAgICAvLyBXZWJWaWV3MiDkuI3mmL7lvI/ph4rmlL7nmoTor50s5a6D55qE5rWP6KeI5Zmo6L+b56iL5Lya6Lef552A5pys6L+b56iL5rS7552AO+WFs+eql+aXtua4heaOieOAggogICAgICAgIHRyeSB7IFZpZXcuRGlzcG9zZSgpOyB9IGNhdGNoIHsgLyog5bey57uP5YWz5LqGICovIH0KICAgICAgICBpZiAoX293bnNHYXRlKQogICAgICAgIHsKICAgICAgICAgICAgdHJ5IHsgTG9naW5HYXRlLlJlbGVhc2VNdXRleCgpOyB9IGNhdGNoIChBcHBsaWNhdGlvbkV4Y2VwdGlvbikgeyAvKiDkuI3lsZ7kuo7mnKznur/nqIsgKi8gfQogICAgICAgIH0KICAgICAgICBiYXNlLk9uQ2xvc2VkKGUpOwogICAgfQp9Cg==
+using System.IO;
+using System.Text.Json;
+using System.Windows;
+using System.Windows.Threading;
+using Microsoft.Web.WebView2.Core;
+
+namespace PulseWin;
+
+/// <summary>
+/// 通用的**内嵌 WebView2 登录窗**:打开某个官方站点的登录页,登录成功后直接从浏览器引擎的
+/// cookie 罐里取会话 cookie。目标站由 <see cref="BrowserLoginTarget"/> 决定。
+///
+/// **为什么必须这么做**(2026-10-10 实测,推翻了 v1.17.0 的结论):从本机 Edge 的 cookie
+/// 数据库里读这条路已经**彻底**不通——不只是"浏览器运行时文件被排他锁定"那么简单。
+/// 杀掉全部 <c>msedge.exe</c> 之后库确实能复制了(锁是 Edge「启动加速」的后台进程持有的),
+/// 但复制出来也没用:Edge 154 里 **702 条 cookie 全部是 <c>v20</c> 前缀**,即 Chromium 的
+/// App-Bound Encryption,密钥按浏览器可执行文件路径 + 用户绑定、由浏览器自己的提权服务
+/// 解封,第三方进程解不出来(这正是它的设计目的)。opencode 与 commandcode 的会话 cookie
+/// 一条都拼不进 Cookie 头。
+///
+/// <see cref="CoreWebView2.CookieManager"/> 给的是**引擎已经解密**的 cookie,既不碰文件
+/// 也不碰 ABE;HttpOnly 也拿得到——这是 <c>document.cookie</c> 做不到的。GoGauge 走的就是
+/// 这条路。
+///
+/// **一份 profile 同时只能被一个进程用**(2026-10-10 实测踩到):WebView2 的 user data
+/// folder 是跨进程独占的,第二个窗口(哪怕在另一个 PulseWin 进程里)会**卡在初始化、
+/// 浏览器进程永远起不来**,界面就是一块空白、状态停在"正在载入登录页…"。所以这里有两道
+/// 防护:①跨进程命名互斥量,已经有登录窗开着就直接说清楚而不是白屏;②整个进程共用一份
+/// <see cref="CoreWebView2Environment"/>(同进程内重复 CreateAsync 也一样会出问题),
+/// 且初始化带超时,超时就把原因写到状态行与诊断日志,不再无限期静默等待。
+/// </summary>
+public partial class BrowserLoginWindow : Window
+{
+    /// <summary>跨进程互斥:同一时刻只允许一个登录窗(WebView2 profile 是跨进程独占的)。</summary>
+    private static readonly Mutex LoginGate = new(initiallyOwned: false, @"Local\PulseWin.BrowserLoginWindow");
+
+    /// <summary>整个进程共用一份 WebView2 环境。</summary>
+    private static CoreWebView2Environment? _sharedEnvironment;
+
+    /// <summary>初始化超时:WebView2 起不来时不要无限期等下去。</summary>
+    private static readonly TimeSpan InitTimeout = TimeSpan.FromSeconds(25);
+
+    private readonly BrowserLoginTarget _target;
+    private readonly string _userDataFolder;
+    private readonly bool _ownsGate;
+    private DispatcherTimer? _poll;
+    /// <summary>轮询重入守卫:上一次 await 还没回来就不再发一次。</summary>
+    private bool _polling;
+    private bool _captured;
+    /// <summary>GitHub 已登录、却停在无关页面(2FA/passkey 之后常见的 return_to 丢失)的起点时刻;
+    /// 有值就交给看门狗,过了宽限期自动重新发起登录。<c>default</c> = 没卡着。</summary>
+    private DateTimeOffset _githubStuckSince;
+    /// <summary>本轮已自动重试过几次(防止来回踢成死循环)。</summary>
+    private int _autoResumes;
+    private const int MaxAutoResumes = 3;
+    /// <summary>在 GitHub 无关页面上停多久才判定"卡住"(给正常回跳留时间)。</summary>
+    private static readonly TimeSpan StuckGrace = TimeSpan.FromSeconds(4);
+    private int _navHelperInjectedFor;
+
+    /// <param name="target">目标站(登录页、会话 cookie 名、落盘键)。</param>
+    /// <param name="userDataFolder">WebView2 的 profile 目录(放便携 Data\ 下)。两个站共用同一份。</param>
+    public BrowserLoginWindow(BrowserLoginTarget target, string userDataFolder)
+    {
+        InitializeComponent();
+        _target = target;
+        _userDataFolder = userDataFolder;
+        Title = $"登录 {target.DisplayName}";
+        HeadingText.Text = $"用 GitHub 或 {target.DisplayName} 账号登录一次";
+        try { _ownsGate = LoginGate.WaitOne(0); }
+        catch (AbandonedMutexException) { _ownsGate = true; }   // 上一个进程被强杀:所有权归我们
+        Loaded += OnLoadedAsync;
+    }
+
+    /// <summary>取到的 Cookie 头(诊断/日志用);未取到为 null。</summary>
+    public string? CapturedCookieHeader { get; private set; }
+
+    private async void OnLoadedAsync(object sender, RoutedEventArgs e)
+    {
+        if (!_ownsGate)
+        {
+            StatusText.Text = "已经有一个登录窗开着(同一个 WebView2 profile 一次只能被一个进程使用)。"
+                + "请先把它关掉,再点这里的登录。";
+            RestartButton.IsEnabled = false;
+            Diagnostics.Note($"打开 {_target.DisplayName} 登录窗被拒:已有登录窗在运行");
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(_userDataFolder);
+            Diagnostics.Note($"{_target.DisplayName} 登录窗:开始初始化 WebView2(profile {_userDataFolder})");
+
+            var environment = await GetEnvironmentAsync(_userDataFolder);
+            await View.EnsureCoreWebView2Async(environment).WaitAsync(InitTimeout);
+
+            var core = View.CoreWebView2;
+            core.Settings.AreDevToolsEnabled = false;
+            core.Settings.IsStatusBarEnabled = false;
+            core.NavigationCompleted += OnNavigationCompleted;
+            // 浏览器/渲染进程挂掉时界面会变空白——记下来,别静默
+            core.ProcessFailed += (_, args) =>
+            {
+                StatusText.Text = $"WebView2 的 {args.ProcessFailedKind} 进程异常退出,请关掉本窗口重试。";
+                Diagnostics.Note($"{_target.DisplayName} 登录窗:{args.ProcessFailedKind} 退出({args.Reason})");
+            };
+            core.Navigate(_target.LoginUrl);
+            Diagnostics.Note($"{_target.DisplayName} 登录窗:WebView2 就绪,已导航到登录页");
+
+            _poll = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _poll.Tick += (_, _) =>
+            {
+                _ = TryCaptureAsync();
+                _ = ResumeIfStuckAsync();
+            };
+            _poll.Start();
+        }
+        catch (TimeoutException)
+        {
+            StatusText.Text = "WebView2 初始化超时(浏览器进程没能启动)。"
+                + "常见原因是另一个登录窗/另一个 PulseWin 还占着同一份 profile——"
+                + "把它们关掉再试;若反复如此,可把 Data\\WebView2 目录删掉重来。";
+            Diagnostics.Note($"{_target.DisplayName} 登录窗:WebView2 初始化超时({InitTimeout.TotalSeconds:0} 秒)");
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "登录窗启动失败:" + ex.Message
+                + "(若提示缺少 WebView2 运行时,装一次「Microsoft Edge WebView2 Runtime」即可)";
+            Diagnostics.Note($"{_target.DisplayName} 登录窗启动失败", ex);
+        }
+    }
+
+    /// <summary>
+    /// 取(并在首次创建)本进程共用的 WebView2 环境。
+    /// **必须共用**:同一个 user data folder 在本进程里第二次 <c>CreateAsync</c> 会失败或
+    /// 长时间不就绪——"开一次登录窗、关掉、再开"正好会撞上。
+    /// </summary>
+    private static async Task<CoreWebView2Environment> GetEnvironmentAsync(string userDataFolder)
+    {
+        if (_sharedEnvironment is { } existing) return existing;
+
+        var gate = EnvironmentGate;
+        await gate.WaitAsync();
+        try
+        {
+            _sharedEnvironment ??= await CoreWebView2Environment
+                .CreateAsync(browserExecutableFolder: null, userDataFolder: userDataFolder)
+                .WaitAsync(InitTimeout);
+            return _sharedEnvironment;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private static readonly SemaphoreSlim EnvironmentGate = new(1, 1);
+
+    private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    {
+        string url = View.CoreWebView2?.Source ?? "";
+
+        if (IsTargetHost(url))
+        {
+            _githubStuckSince = default;
+            StatusText.Text = $"已回到 {_target.DisplayName},正在确认会话…";
+            return;
+        }
+
+        if (url.Contains("github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            // 停在登录表单 / 两步验证 / 设备验证这些"等人操作"的页是正常的;
+            // 停在别的 GitHub 页面多半就是 2FA 之后 return_to 丢了,交给看门狗自动续跑。
+            _githubStuckSince = IsGitHubFlowPage(url) ? default : DateTimeOffset.Now;
+            StatusText.Text = _githubStuckSince == default
+                ? "正在 GitHub 登录…"
+                : "这页与授权无关;几秒内没往回跳就自动重新发起登录(也可点左下角「继续登录」)。";
+            _ = InjectNavHelperAsync();
+        }
+        else
+        {
+            _githubStuckSince = default;
+            if (!e.IsSuccess)
+            {
+                StatusText.Text = $"这一步没载入成功({e.WebErrorStatus});可点「重新载入」重试。";
+            }
+        }
+    }
+
+    /// <summary>按 **主机名** 判断是不是目标站(不能拿 URL 子串判断:GitHub 的 OAuth 地址里
+    /// 带着目标站域名,子串匹配会把 GitHub 页面误判成"已回到目标站")。</summary>
+    private bool IsTargetHost(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+        string host = new Uri(_target.Site).Host;
+        return uri.Host.Equals(host, StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith("." + host, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>GitHub 流程里"等用户操作"的页(登录表单 / 会话 / 两步验证)——停在这儿算正常。</summary>
+    private static bool IsGitHubFlowPage(string url) =>
+        url.Contains("github.com/login", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("github.com/sessions", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("github.com/two_factor", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 看门狗:**只在"GitHub 已登录、却停在无关页面"时才重新发起登录**。
+    ///
+    /// 这是 GoGauge 踩过的坑:开了两步验证/passkey 的账号走 OAuth,GitHub 有时不再回跳,
+    /// 而是把窗口留在 github.com 的某个设置页(本机实测:停在 "Configure passwordless
+    /// authentication"),于是登录永远完不成。这里确认 GitHub 侧确实已登录
+    /// (<c>meta[name=user-login]</c> 有值)之后,重新导航回官方登录页——此时 GitHub 会话
+    /// 已经建立,整条 OAuth 会顺跑完。最多重试 <see cref="MaxAutoResumes"/> 次。
+    /// </summary>
+    private async Task ResumeIfStuckAsync()
+    {
+        if (_captured || _polling) return;
+        if (_githubStuckSince == default || _autoResumes >= MaxAutoResumes) return;
+        if (DateTimeOffset.Now - _githubStuckSince < StuckGrace) return;
+
+        var core = View.CoreWebView2;
+        if (core is null) return;
+
+        _polling = true;
+        try
+        {
+            // 没登录就别打扰(用户可能正在填密码,只是 URL 还没变成 flow 页)
+            string loggedIn = await core.ExecuteScriptAsync(
+                "document.querySelector('meta[name=\"user-login\"]')?.getAttribute('content') || ''");
+            if (loggedIn.Trim('"', ' ').Length == 0) return;
+
+            _autoResumes++;
+            _githubStuckSince = default;
+            StatusText.Text = $"GitHub 已登录但这页与授权无关,自动重新发起登录"
+                + $"({_autoResumes}/{MaxAutoResumes})…";
+            Diagnostics.Note($"{_target.DisplayName} 登录:GitHub 停在无关页面,自动续跑第 {_autoResumes} 次");
+            core.Navigate(_target.LoginUrl);
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("登录窗自动续跑失败", ex);
+        }
+        finally
+        {
+            _polling = false;
+        }
+    }
+
+    /// <summary>
+    /// 在非目标站的页面上注入一条悬浮导航(WebView2 发布版没有后退按钮,GitHub 侧一旦跳到
+    /// 无关页面就回不来了)。看门狗是自动那条路,这条是给用户手动兜底的。
+    /// </summary>
+    private async Task InjectNavHelperAsync()
+    {
+        var core = View.CoreWebView2;
+        if (core is null) return;
+        // 同一个文档只注入一次(导航后 __pulsewinNav 随文档消失,会重新注入)
+        int stamp = core.Source?.GetHashCode() ?? 0;
+        if (stamp == _navHelperInjectedFor) return;
+        _navHelperInjectedFor = stamp;
+
+        string script = NavHelperScript.Replace(
+            "__RESUME__", JsonSerializer.Serialize(_target.LoginUrl));
+        try
+        {
+            await core.ExecuteScriptAsync(script);
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("登录窗注入导航条失败", ex);
+        }
+    }
+
+    private const string NavHelperScript = """
+        (function () {
+          if (window.__pulsewinNav) { window.__pulsewinResume = __RESUME__; return; }
+          window.__pulsewinNav = 1;
+          window.__pulsewinResume = __RESUME__;
+          var css = 'padding:6px 12px;margin-right:8px;border-radius:6px;'
+                  + 'border:1px solid rgba(0,0,0,.25);background:#fff;color:#111;'
+                  + 'cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35);'
+                  + 'font:12px system-ui,sans-serif;white-space:nowrap;';
+          function mk(label, fn) {
+            var b = document.createElement('button');
+            b.textContent = label; b.style.cssText = css; b.onclick = fn; return b;
+          }
+          var bar = document.createElement('div');
+          bar.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:2147483647;';
+          bar.appendChild(mk('\u2190 \u8fd4\u56de', function () { history.back(); }));
+          bar.appendChild(mk('\u7ee7\u7eed\u767b\u5f55 \u2192',
+            function () { location.assign(window.__pulsewinResume); }));
+          (document.body || document.documentElement).appendChild(bar);
+        })();
+        """;
+
+    /// <summary>
+    /// 每秒问一次引擎的 cookie 罐。拿到会话 cookie 就拼成 Cookie 头交给
+    /// <see cref="BrowserCookieStore"/> 落盘,然后自己关窗。
+    /// </summary>
+    private async Task TryCaptureAsync()
+    {
+        if (_captured || _polling) return;
+        var core = View.CoreWebView2;
+        if (core is null) return;
+
+        _polling = true;
+        try
+        {
+            var cookies = await core.CookieManager.GetCookiesAsync(_target.Site);
+            var header = BuildCookieHeader(cookies, _target.SessionCookieNames);
+            if (header is null) return;
+
+            CapturedCookieHeader = header;
+            _captured = true;
+            _poll?.Stop();
+            BrowserCookieStore.SaveManual(_target.HostKeyword, header);
+            StatusText.Text = "登录成功,已保存会话 cookie。";
+            Diagnostics.Note($"{_target.DisplayName} 登录成功,已保存会话 cookie");
+            DialogResult = true;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("登录窗读取 cookie 失败", ex);
+        }
+        finally
+        {
+            _polling = false;
+        }
+    }
+
+    /// <summary>
+    /// 把引擎给的 cookie 拼成 Cookie 头。整个目标域的都带上(与真实请求一致,也顺带覆盖
+    /// 只用旧版名字的历史账号);<paramref name="sessionCookieNames"/> 一条都没命中就返回
+    /// null——那说明登录还没完成。
+    /// </summary>
+    internal static string? BuildCookieHeader(
+        IEnumerable<CoreWebView2Cookie> cookies, IReadOnlyList<string> sessionCookieNames)
+    {
+        var pairs = new List<string>();
+        bool hasSession = false;
+        foreach (var cookie in cookies)
+        {
+            if (string.IsNullOrEmpty(cookie.Name) || string.IsNullOrEmpty(cookie.Value)) continue;
+            pairs.Add($"{cookie.Name}={cookie.Value}");
+            if (sessionCookieNames.Contains(cookie.Name, StringComparer.Ordinal)) hasSession = true;
+        }
+        return hasSession ? string.Join("; ", pairs) : null;
+    }
+
+    // ————————————————— 按钮 —————————————————
+
+    private void Restart_Click(object sender, RoutedEventArgs e)
+    {
+        _githubStuckSince = default;
+        _autoResumes = 0;
+        View.CoreWebView2?.Navigate(_target.LoginUrl);
+    }
+
+    private void Cancel_Click(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
+        Close();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _poll?.Stop();
+        _poll = null;
+        // WebView2 不显式释放的话,它的浏览器进程会跟着本进程活着;关窗时清掉。
+        try { View.Dispose(); } catch { /* 已经关了 */ }
+        if (_ownsGate)
+        {
+            try { LoginGate.ReleaseMutex(); } catch (ApplicationException) { /* 不属于本线程 */ }
+        }
+        base.OnClosed(e);
+    }
+}

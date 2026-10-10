@@ -1,1 +1,270 @@
-dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uV2luZG93czsKdXNpbmcgU3lzdGVtLldpbmRvd3MuQ29udHJvbHM7CnVzaW5nIFN5c3RlbS5XaW5kb3dzLk1lZGlhOwp1c2luZyBTeXN0ZW0uV2luZG93cy5NZWRpYS5JbWFnaW5nOwp1c2luZyBTeXN0ZW0uV2luZG93cy5UaHJlYWRpbmc7CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyDlt6XlhbfnqpfnmoTnprvlsY/lh7rlm74oYC0tdWktc2hvdGAp44CC5LiNIFNob3cg55yf5a6e56qX5Y+j44CB5LiN5oqi54Sm54K544CB5LiN5Y+XIuW3suacieWunuS+iyLlrojljavlvbHlk40sCi8vLyDkuqfnianlhpnliLAgPGM+RGF0YVx1aS1zaG90XDwvYz7jgIIKLy8vCi8vLyDkuLrku4DkuYjopoHmnInlroM66Imy5Z2X5oyJ6ZKu6KOF5LiN6KOF5b6X5LiL5paH5a2X44CB54Ot5Zu+5Lya5LiN5Lya5aSn54mH55WZ56m6LOi/meexu+S6i+WPquiDveeci+WDj+e0oCwKLy8vIOiAjOiuvue9rueqly/nu5/orqHnqpfmiJHotbfkuI3kuobnrKzkuozku70o5Y2V5a6e5L6LKSzkuZ/kuI3or6XljrvliqjnlKjmiLfmraPlvIDnnYDnmoTpgqPkuKrov5vnqIvjgIIKLy8vIOiuvue9rueql+imgeS4gOS4qiBVc2FnZUVuZ2luZSDmiY3og73mnoTpgKAs6ICM5Ye65Zu+5LiN6K+l6aG65bim5omTIEFQSSzmiYDku6Xnjq/oibLpgInmi6nlmajljZXni6zmuLLmn5Pmjqfku7bjgIIKLy8vIDwvc3VtbWFyeT4KaW50ZXJuYWwgc3RhdGljIGNsYXNzIFVpU2hvdAp7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgUnVuKCkKICAgIHsKICAgICAgICBzdHJpbmcgZGlyID0gUGF0aC5Db21iaW5lKFNuYXBzaG90U291cmNlLkRhdGFEaXJlY3RvcnksICJ1aS1zaG90Iik7CiAgICAgICAgRGlyZWN0b3J5LkNyZWF0ZURpcmVjdG9yeShkaXIpOwoKICAgICAgICAvLyAtLXVpLXNob3Qg5rKh5pyJ5Li756qX5Y+jLOm7mOiupOeahCBPbkxhc3RXaW5kb3dDbG9zZSDkvJrlnKjnrKzkuIDlvKDlm77lkI7lsLHmiorlupTnlKjlhbPmjokKICAgICAgICAvLyAo56ys5LqM5byg56qX5Y+q5p2l5b6X5Y+K5a2Y5LiA5byg56m65Zu+LOi/mOS8muaKmyLlupTnlKjnqIvluo/lr7nosaHmraPlnKjlhbPpl60iKeOAguaUueaIkOaYvuW8j+mAgOWHuuOAggogICAgICAgIFN5c3RlbS5XaW5kb3dzLkFwcGxpY2F0aW9uLkN1cnJlbnQuU2h1dGRvd25Nb2RlID0gU2h1dGRvd25Nb2RlLk9uRXhwbGljaXRTaHV0ZG93bjsKCiAgICAgICAgUmVuZGVyVGludFBpY2tlcnMoUGF0aC5Db21iaW5lKGRpciwgInRpbnQtcGlja2VyLnBuZyIpKTsKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIHVzaW5nIHZhciBlbmdpbmUgPSBuZXcgVXNhZ2VFbmdpbmUoKTsgICAvLyDkuI0gU3RhcnQ65byV5pOO5Y+q5pyJIFN0YXJ0IOWQjuaJjeWPkee9kee7nOivt+axggogICAgICAgICAgICBSZW5kZXJTZXR0aW5nc1BhZ2UoZW5naW5lLCBQYXRoLkNvbWJpbmUoZGlyLCAic2V0dGluZ3MtYXBwZWFyYW5jZS5wbmciKSwgIuWkluingiIsICJOYXZBcHBlYXJhbmNlIik7CiAgICAgICAgICAgIFJlbmRlclNldHRpbmdzUGFnZShlbmdpbmUsIFBhdGguQ29tYmluZShkaXIsICJzZXR0aW5ncy1iZWhhdmlvci5wbmciKSwgIuihjOS4uiIsICJOYXZCZWhhdmlvciIpOwogICAgICAgICAgICBSZW5kZXJTZXR0aW5nc1BhZ2UoZW5naW5lLCBQYXRoLkNvbWJpbmUoZGlyLCAic2V0dGluZ3MtcmluZ3MucG5nIiksICLlnIbnjq/kuI7mlbDlrZciLCAiTmF2UmluZ3MiKTsKICAgICAgICAgICAgUmVuZGVyU2V0dGluZ3NQYWdlKGVuZ2luZSwgUGF0aC5Db21iaW5lKGRpciwgInNldHRpbmdzLXNvdXJjZXMucG5nIiksICLmlbDmja7mupAiLCAiTmF2U291cmNlcyIpOwogICAgICAgIH0KICAgICAgICBjYXRjaCAoRXhjZXB0aW9uIGV4KQogICAgICAgIHsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgi6K6+572u6aG15Ye65Zu+5aSx6LSlIiwgZXgpOwogICAgICAgIH0KICAgICAgICBSZW5kZXJTcGVuZFdpbmRvdyhkaXIpOwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT7orr7nva7nqpfnmoTmn5DkuIDpobUo55So5ZCM5LiA5Liq5LiNIFN0YXJ0IOeahOW8leaTjizpgb/lhY3ph43lpI3liJ3lp4vljJYp44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgdm9pZCBSZW5kZXJTZXR0aW5nc1BhZ2UoVXNhZ2VFbmdpbmUgZW5naW5lLCBzdHJpbmcgcGF0aCwgc3RyaW5nIHRpdGxlLCBzdHJpbmcgbmF2TmFtZSkKICAgIHsKICAgICAgICB0cnkKICAgICAgICB7CiAgICAgICAgICAgIHZhciB3aW5kb3cgPSBuZXcgU2V0dGluZ3NXaW5kb3coZW5naW5lKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBXaW5kb3dTdGFydHVwTG9jYXRpb24gPSBXaW5kb3dTdGFydHVwTG9jYXRpb24uTWFudWFsLAogICAgICAgICAgICAgICAgTGVmdCA9IC0zMjAwMCwKICAgICAgICAgICAgICAgIFRvcCA9IC0zMjAwMCwKICAgICAgICAgICAgICAgIFNob3dJblRhc2tiYXIgPSBmYWxzZSwKICAgICAgICAgICAgfTsKICAgICAgICAgICAgd2luZG93LlNob3coKTsKICAgICAgICAgICAgLy8g5YiH5Yiw55uu5qCH6aG1KOS+p+agj+aYryBSYWRpb0J1dHRvbiznm7TmjqXnva4gSXNDaGVja2VkIOS8muinpuWPkSBOYXZfQ2hlY2tlZCnjgIIKICAgICAgICAgICAgLy8gKirlv4XpobvlnKggU2hvdyDkuYvlkI4qKjpTaG93IOS5i+WJjeWPr+inhuagkei/mOayoeW7uizliIfpobXlkI7lhoXlsYLlrrnlmajmsqHmnInlrp7pmYXlsLrlr7jjgIIKICAgICAgICAgICAgaWYgKHdpbmRvdy5GaW5kTmFtZShuYXZOYW1lKSBpcyBTeXN0ZW0uV2luZG93cy5Db250cm9scy5SYWRpb0J1dHRvbiBuYXYpCiAgICAgICAgICAgICAgICBuYXYuSXNDaGVja2VkID0gdHJ1ZTsKICAgICAgICAgICAgLy8g5YiH6aG15Lya5o2i5o6J5Y+v6KeB55qEIFN0YWNrUGFuZWws5biD5bGA6KaB6K6p5a6D6LeR5a6M5LiA6YGN5YaN5oiq5Zu+OwogICAgICAgICAgICAvLyDnlKggVXBkYXRlTGF5b3V0IOi/mOS4jeWkn+KAlOKAlOWkluWxgueql+WPo+WwuuWvuOayoeWPmCzlhoXlsYLmmK/mh5LluIPlsYDjgIIKICAgICAgICAgICAgd2luZG93LkRpc3BhdGNoZXIuSW52b2tlKCgpID0+IHsgfSwgU3lzdGVtLldpbmRvd3MuVGhyZWFkaW5nLkRpc3BhdGNoZXJQcmlvcml0eS5SZW5kZXIpOwogICAgICAgICAgICB3aW5kb3cuVXBkYXRlTGF5b3V0KCk7CiAgICAgICAgICAgIHdpbmRvdy5EaXNwYXRjaGVyLkludm9rZSgoKSA9PiB7IH0sIFN5c3RlbS5XaW5kb3dzLlRocmVhZGluZy5EaXNwYXRjaGVyUHJpb3JpdHkuUmVuZGVyKTsKCiAgICAgICAgICAgIGRvdWJsZSB3ID0gd2luZG93LkFjdHVhbFdpZHRoLCBoID0gd2luZG93LkFjdHVhbEhlaWdodDsKICAgICAgICAgICAgaWYgKHcgPCAxIHx8IGggPCAxKSB3ID0gd2luZG93LldpZHRoOwogICAgICAgICAgICBpZiAoaCA8IDEpIGggPSB3aW5kb3cuSGVpZ2h0OwogICAgICAgICAgICBTYXZlKHdpbmRvdywgbmV3IFNpemUodywgaCksIHBhdGgpOwogICAgICAgICAgICAvLyDmlbTnqpflm77lj5fnqpflj6Ppq5jluqbpmZDliLYs5Y2h54mH5LiL5Y2K5Y+v6IO96KKr6KOBKOaVsOaNrua6kOmhteeahCBPcGVuQ29kZSBHbyDljaEKICAgICAgICAgICAgLy8g5bCx5b6I6ZW/KTvlj6blh7rkuIDlvKDlhoXlrrnplb/lm74o5rua5Yqo5Yy65YWo6auYKeWFnOW6leOAggogICAgICAgICAgICBTYXZlRnVsbENvbnRlbnQod2luZG93LCBQYXRoLkNoYW5nZUV4dGVuc2lvbihwYXRoLCAiLmZ1bGwucG5nIikpOwogICAgICAgICAgICB3aW5kb3cuQ2xvc2UoKTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoJCLorr7nva7pobXlh7rlm77lpLHotKUoe3RpdGxlfSkiLCBleCk7CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT7njq/oibLpgInmi6nlmag66Ieq5Yqo5qGjKOacgOmVv+aWh+ahiCkrIOS4gOS4quWbuuWumuiJsuahoyzpqozor4HmloflrZfkuI3ooqvlj7PnvJjliIfjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIFJlbmRlclRpbnRQaWNrZXJzKHN0cmluZyBwYXRoKQogICAgewogICAgICAgIHZhciBwYW5lbCA9IG5ldyBTdGFja1BhbmVsCiAgICAgICAgewogICAgICAgICAgICBCYWNrZ3JvdW5kID0gQnJ1c2hlcy5XaGl0ZSwKICAgICAgICAgICAgTWFyZ2luID0gbmV3IFRoaWNrbmVzcygyMCksCiAgICAgICAgfTsKICAgICAgICBwYW5lbC5DaGlsZHJlbi5BZGQobmV3IFRleHRCbG9jawogICAgICAgIHsKICAgICAgICAgICAgVGV4dCA9ICLnjq/oibLpgInmi6nlmago6K6+572uIOKAuiDlnIbnjq/kuI7mlbDlrZcg4oC6IOWchueOr+minOiJsikiLAogICAgICAgICAgICBGb250U2l6ZSA9IDEzLjUsIEZvbnRXZWlnaHQgPSBGb250V2VpZ2h0cy5TZW1pQm9sZCwKICAgICAgICAgICAgRm9yZWdyb3VuZCA9IG5ldyBTb2xpZENvbG9yQnJ1c2goQ29sb3IuRnJvbVJnYigweDFELCAweDFELCAweDFGKSksCiAgICAgICAgICAgIE1hcmdpbiA9IG5ldyBUaGlja25lc3MoMCwgMCwgMCwgMTApLAogICAgICAgIH0pOwogICAgICAgIGZvcmVhY2ggKHZhciAobGFiZWwsIHZhbHVlKSBpbiBuZXcgKHN0cmluZywgc3RyaW5nPylbXQogICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICAgKCJDb21tYW5kIENvZGUgR09BVCIsIG51bGwpLCAgICAgICAgLy8g6Ieq5YqoIMK3IOaMieeUqOmHjyDigJTigJQg5pyA6ZW/5paH5qGICiAgICAgICAgICAgICAgICAgICAgICgiT3BlbkNvZGUgR28iLCAiIzRENkJGRSIpLCAgICAgICAgICAvLyDlm7rlrproibIs5pi+56S6IEhFWAogICAgICAgICAgICAgICAgIH0pCiAgICAgICAgewogICAgICAgICAgICB2YXIgcm93ID0gbmV3IFN0YWNrUGFuZWwgeyBPcmllbnRhdGlvbiA9IE9yaWVudGF0aW9uLkhvcml6b250YWwsIE1hcmdpbiA9IG5ldyBUaGlja25lc3MoMCwgMCwgMCwgOCkgfTsKICAgICAgICAgICAgcm93LkNoaWxkcmVuLkFkZChuZXcgVGV4dEJsb2NrCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIFRleHQgPSBsYWJlbCwgRm9udFNpemUgPSAxMywgV2lkdGggPSAxNzAsCiAgICAgICAgICAgICAgICBWZXJ0aWNhbEFsaWdubWVudCA9IFZlcnRpY2FsQWxpZ25tZW50LkNlbnRlciwKICAgICAgICAgICAgICAgIEZvcmVncm91bmQgPSBuZXcgU29saWRDb2xvckJydXNoKENvbG9yLkZyb21SZ2IoMHgxRCwgMHgxRCwgMHgxRikpLAogICAgICAgICAgICB9KTsKICAgICAgICAgICAgcm93LkNoaWxkcmVuLkFkZChuZXcgVGludFBpY2tlciB7IFZhbHVlID0gdmFsdWUgfSk7CiAgICAgICAgICAgIHBhbmVsLkNoaWxkcmVuLkFkZChyb3cpOwogICAgICAgIH0KCiAgICAgICAgdmFyIGhvc3QgPSBuZXcgQm9yZGVyCiAgICAgICAgewogICAgICAgICAgICBCYWNrZ3JvdW5kID0gbmV3IFNvbGlkQ29sb3JCcnVzaChDb2xvci5Gcm9tUmdiKDB4RjUsIDB4RjUsIDB4RjcpKSwKICAgICAgICAgICAgQ2hpbGQgPSBwYW5lbCwKICAgICAgICB9OwogICAgICAgIC8vIOWNleeLrOa1i+mHjzrmjqfku7bmsqHmjILliLDnqpflj6PkuIos5b6X6Ieq5bexIEFycmFuZ2Ug5omN5pyJ5bC65a+4CiAgICAgICAgaG9zdC5NZWFzdXJlKG5ldyBTaXplKGRvdWJsZS5Qb3NpdGl2ZUluZmluaXR5LCBkb3VibGUuUG9zaXRpdmVJbmZpbml0eSkpOwogICAgICAgIGhvc3QuQXJyYW5nZShuZXcgUmVjdChob3N0LkRlc2lyZWRTaXplKSk7CiAgICAgICAgaG9zdC5VcGRhdGVMYXlvdXQoKTsKICAgICAgICBTYXZlKGhvc3QsIGhvc3QuRGVzaXJlZFNpemUsIHBhdGgpOwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDlh7rlm77nlKjnmoTlkIjmiJDlrpjmlrnor7vmlbDjgILnnJ/lrp7mlbDmja7opoHmtY/op4jlmajnmbvlvZXmgIEo6K+7IGNvb2tpZSks6ICM5Ye65Zu+546v5aKD6YeM5rWP6KeI5ZmoCiAgICAvLy8gY29va2llIOW6k+aYr+mUgeedgOeahOKAlOKAlOeUqOWug+aKiuOAjOWumOaWuSB2cyDmnKzmnLrjgI3lr7nnhafmoLzkuI7pgJDmqKHlnovmppzmuLLmn5Plh7rmnaXnnIvjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBPcGVuQ29kZVVzYWdlU3RhdHMgU2FtcGxlT2ZmaWNpYWxVc2FnZSgpCiAgICB7CiAgICAgICAgdmFyIG5vdyA9IERhdGVUaW1lT2Zmc2V0Lk5vdzsKICAgICAgICB2YXIgbW9kZWxzID0gbmV3IExpc3Q8T3BlbkNvZGVNb2RlbFN0YXQ+CiAgICAgICAgewogICAgICAgICAgICBuZXcoImRlZXBzZWVrLXY0LjEtZmxhc2giLCAib3BlbmNvZGUtZ28iLCA1MTAwLCAyMl8wMDBfMDAwLCAzXzkwMF8wMDAsIDQ5OF8wMDBfMDAwLCAwLCA4LjgyKSwKICAgICAgICAgICAgbmV3KCJnbG0tNS4zLWZsYXNoIiwgIm9wZW5jb2RlLWdvIiwgNDIwLCAxXzUwMF8wMDAsIDIxMF8wMDAsIDI0XzAwMF8wMDAsIDAsIDAuNjEpLAogICAgICAgICAgICBuZXcoIm1pbW8tdjIuNSIsICJvcGVuY29kZS1nbyIsIDI1MCwgNjAwXzAwMCwgOTBfMDAwLCAxXzIwMF8wMDAsIDAsIDAuMjIpLAogICAgICAgIH07CiAgICAgICAgdmFyIGRheXMgPSBFbnVtZXJhYmxlLlJhbmdlKDAsIDcpLlNlbGVjdChpID0+IG5ldyBPcGVuQ29kZURheVN0YXQoCiAgICAgICAgICAgIG5vdy5BZGREYXlzKC1pKS5Ub1N0cmluZygieXl5eS1NTS1kZCIpLAogICAgICAgICAgICA4MDAgLSBpICogNjAsIDgyXzAwMF8wMDAgLSBpICogNV8wMDBfMDAwLCAxLjM4IC0gaSAqIDAuMDgpKS5Ub0xpc3QoKTsKICAgICAgICByZXR1cm4gbmV3IE9wZW5Db2RlVXNhZ2VTdGF0cygKICAgICAgICAgICAgIjMwZCIsIDU3NzAsIDIzXzU1Nl85MzIsIDRfMTA0XzI2OCwgNTIzXzI2NV8xOTAsIDAsIDkuNjUsIG1vZGVscywgZGF5cywgbm93KTsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIFJlbmRlclNwZW5kV2luZG93KHN0cmluZyBkaXIpCiAgICB7CiAgICAgICAgdmFyIHdpbmRvdyA9IG5ldyBTcGVuZFdpbmRvdwogICAgICAgIHsKICAgICAgICAgICAgV2luZG93U3RhcnR1cExvY2F0aW9uID0gV2luZG93U3RhcnR1cExvY2F0aW9uLk1hbnVhbCwKICAgICAgICAgICAgTGVmdCA9IC0zMjAwMCwgICAgICAgICAgLy8g5bGP5bmV5aSWOuW4g+WxgOeFp+eulyzkurrnnIvkuI3op4EKICAgICAgICAgICAgVG9wID0gLTMyMDAwLAogICAgICAgICAgICBTaG93SW5UYXNrYmFyID0gZmFsc2UsCiAgICAgICAgICAgIC8vIOm7mOiupCA2NDAg5a695Lya5oqK5a+554Wn5qC85LiO6YCQ5qih5Z6L6KGM55qE5Y+z57yY5paH5a2X5Y6L5Ye655S76Z2i4oCU4oCU5Ye65Zu+5piv57uZ5Lq655yL5o6S54mI55qELAogICAgICAgICAgICAvLyDlsLHmjInnlKjmiLflrp7pmYXkvJrmiornqpflj6Pmi4nliLDnmoTlrr3luqbmuLLmn5PjgIIKICAgICAgICAgICAgV2lkdGggPSAxNDAwLAogICAgICAgIH07CiAgICAgICAgd2luZG93LlNob3coKTsKCiAgICAgICAgLy8g562J5pWw5o2u5Yqg6L295a6MOueUqOmHj+eql+ivu+acrOacuuS4pOS4quW6kyArIOeUu+WbvizlvILmraXlrozmiJDlkI7miY3mnInlhoXlrrnjgIIKICAgICAgICAvLyDlh7rlm77nm7TmjqXmuLLmn5MgU2Nyb2xsVmlld2VyIOeahOWGheWuuShTdGFja1BhbmVsIOWFqOmrmCnigJTigJTnqpflj6Ppq5jluqbkvJrooqsKICAgICAgICAvLyBXaW4zMiDljovlm57lsY/luZUs5L2G5YaF5a655YWD57Sg55qE5a6M5pW06auY5bqm5LiN5Y+X6ZmQLOS4gOW8oOmVv+WbvuaUtuS4i+aJgOacieWNoeeJh+OAggogICAgICAgIC8vIOWFiOWHuuaAu+iniCzlho3pqbHliqjnnJ/lrp4gdGFiIOaMiemSrioq6YCQ5LiqKirliIfliLDmr4/kuKrlpZfppJDpobXlkITlh7rkuIDlvKAo5LiO5omL54K55ZCM5LiA5p2h6Lev5b6EKeOAggogICAgICAgIHZhciB0aW1lciA9IG5ldyBEaXNwYXRjaGVyVGltZXIgeyBJbnRlcnZhbCA9IFRpbWVTcGFuLkZyb21TZWNvbmRzKDIyKSB9OwogICAgICAgIHRpbWVyLlRpY2sgKz0gKF8sIF8pID0+CiAgICAgICAgewogICAgICAgICAgICB0aW1lci5TdG9wKCk7CiAgICAgICAgICAgIHRyeQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBTYXZlRnVsbENvbnRlbnQod2luZG93LCBQYXRoLkNvbWJpbmUoZGlyLCAidXNhZ2Utb3ZlcnZpZXcucG5nIikpOwogICAgICAgICAgICAgICAgLy8g5Y+m5a2Y5LiA5bygIueql+WPo+acrOi6qyIo5ZCr6aG26YOo5bel5YW35p2hOnRhYi/ljLrpl7Qv54q25oCB6KGMKeKAlOKAlOWktOmDqOS4jeWcqOa7muWKqOWMuumHjCwKICAgICAgICAgICAgICAgIC8vIOmVv+WbvuaUtuS4jeWIsOWugyzogIznirbmgIHooYzmlofmoYgoIuato+WcqOivu+WPluKApiLmnInmsqHmnInooqvmlLnlhpnmiJDnu5Pmnpwp5Y+q5pyJ5a6D6IO955yL5Yiw44CCCiAgICAgICAgICAgICAgICB3aW5kb3cuVXBkYXRlTGF5b3V0KCk7CiAgICAgICAgICAgICAgICBTYXZlKHdpbmRvdywgbmV3IFNpemUod2luZG93LkFjdHVhbFdpZHRoLCB3aW5kb3cuQWN0dWFsSGVpZ2h0KSwgUGF0aC5Db21iaW5lKGRpciwgInVzYWdlLXdpbmRvdy1jaHJvbWUucG5nIikpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIGNhdGNoIChFeGNlcHRpb24gZXgpCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoIueUqOmHj+eql+WHuuWbvuWksei0pSIsIGV4KTsKICAgICAgICAgICAgICAgIHdpbmRvdy5DbG9zZSgpOwogICAgICAgICAgICAgICAgU3lzdGVtLldpbmRvd3MuQXBwbGljYXRpb24uQ3VycmVudC5TaHV0ZG93bigpOwogICAgICAgICAgICAgICAgcmV0dXJuOwogICAgICAgICAgICB9CgogICAgICAgICAgICAvLyAqKuavj+S4quWll+mkkOmhtemDveimgeWHuuWbvioqOuS4gOmhtemHjCLlsJHkuoblk6rlvKDljaEi5Y+q5pyJ5Zyo5Zu+5LiK5omN55yL5b6X5Ye65p2lLAogICAgICAgICAgICAvLyDogIznqpflj6PkuIDmrKHlj6rmmL7npLrkuIDkuKogdGFiKOaJi+eCueaXouaFouOAgeS5n+ayoeazleS/neivgeavj+mhtemDveeci+WFqCnjgIIKICAgICAgICAgICAgaW50IGluZGV4ID0gMTsKICAgICAgICAgICAgaW50IGNvdW50ID0gd2luZG93LlVpU2hvdFRhYkNvdW50OwogICAgICAgICAgICB2YXIgc3RlcCA9IG5ldyBEaXNwYXRjaGVyVGltZXIgeyBJbnRlcnZhbCA9IFRpbWVTcGFuLkZyb21TZWNvbmRzKDUpIH07CiAgICAgICAgICAgIHN0ZXAuVGljayArPSAoXywgXykgPT4KICAgICAgICAgICAgewogICAgICAgICAgICAgICAgaWYgKGluZGV4ID49IGNvdW50KQogICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgIHN0ZXAuU3RvcCgpOwogICAgICAgICAgICAgICAgICAgIHdpbmRvdy5DbG9zZSgpOwogICAgICAgICAgICAgICAgICAgIFN5c3RlbS5XaW5kb3dzLkFwcGxpY2F0aW9uLkN1cnJlbnQuU2h1dGRvd24oKTsKICAgICAgICAgICAgICAgICAgICByZXR1cm47CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB0cnkKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICB3aW5kb3cuVWlTaG90T3BlblRhYihpbmRleCk7CiAgICAgICAgICAgICAgICAgICAgc3RyaW5nIGxhYmVsID0gd2luZG93LlVpU2hvdFRhYkxhYmVsKGluZGV4KTsKICAgICAgICAgICAgICAgICAgICAvLyBPcGVuQ29kZSBHbyDpobXnmoTlrpjmlrnor7vmlbDopoHmtY/op4jlmajnmbvlvZXmgIHmiY3mi7/lvpfliLAs5Ye65Zu+546v5aKD6K+75LiN5YiwIGNvb2tpZeKAlOKAlAogICAgICAgICAgICAgICAgICAgIC8vIOazqOWFpeS4gOS7veWQiOaIkOivu+aVsCzlpb3orqnjgIzlrpjmlrkgdnMg5pys5py644CN5a+554Wn5qC85LiO6YCQ5qih5Z6L5qac55yf55qE6KKr5riy5p+T5Ye65p2l55yL5LiA55y8CiAgICAgICAgICAgICAgICAgICAgLy8o6aG555uu6YeMIC0tcmFpbC1zaG90IOS5n+aYr+i/meS5iOW5sueahCnjgIIKICAgICAgICAgICAgICAgICAgICBpZiAobGFiZWwuQ29udGFpbnMoIk9wZW5Db2RlIiwgU3RyaW5nQ29tcGFyaXNvbi5PcmRpbmFsSWdub3JlQ2FzZSkpCiAgICAgICAgICAgICAgICAgICAgICAgIHdpbmRvdy5VaVNob3RJbmplY3RPZmZpY2lhbFVzYWdlKFNhbXBsZU9mZmljaWFsVXNhZ2UoKSk7CiAgICAgICAgICAgICAgICAgICAgc3RyaW5nIGZpbGUgPSAkInVzYWdlLWNoYW5uZWwte2luZGV4fS5wbmciOwogICAgICAgICAgICAgICAgICAgIFNhdmVGdWxsQ29udGVudCh3aW5kb3csIFBhdGguQ29tYmluZShkaXIsIGZpbGUpKTsKICAgICAgICAgICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQi5aWX6aSQ6aG15bey5Ye65Zu+IHtmaWxlfSDigJQge2xhYmVsfSIpOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQi55So6YeP56qX5aWX6aSQ6aG15Ye65Zu+5aSx6LSlKGluZGV4PXtpbmRleH0pIiwgZXgpOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgaW5kZXgrKzsKICAgICAgICAgICAgfTsKICAgICAgICAgICAgc3RlcC5TdGFydCgpOwogICAgICAgIH07CiAgICAgICAgdGltZXIuU3RhcnQoKTsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+5oqK5rua5Yqo5Yy655qE5YaF5a65KFN0YWNrUGFuZWwg5YWo6auYKea4suafk+aIkOS4gOW8oOmVv+WbvjvmsqHmnInmu5rliqjlrrnlmajliJnpgIDlm57mlbTnqpfjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIFNhdmVGdWxsQ29udGVudChGcmFtZXdvcmtFbGVtZW50IGhvc3QsIHN0cmluZyBwYXRoKQogICAgewogICAgICAgIGhvc3QuVXBkYXRlTGF5b3V0KCk7CiAgICAgICAgdmFyIHN2ID0gRmluZFNjcm9sbFZpZXdlcihob3N0KTsKICAgICAgICBpZiAoc3Y/LkNvbnRlbnQgaXMgRnJhbWV3b3JrRWxlbWVudCBjb250ZW50ICYmIGNvbnRlbnQuQWN0dWFsSGVpZ2h0ID4gMCkKICAgICAgICB7CiAgICAgICAgICAgIGNvbnRlbnQuVXBkYXRlTGF5b3V0KCk7CiAgICAgICAgICAgIFNhdmUoY29udGVudCwgbmV3IFNpemUoY29udGVudC5BY3R1YWxXaWR0aCwgY29udGVudC5BY3R1YWxIZWlnaHQpLCBwYXRoKTsKICAgICAgICB9CiAgICAgICAgZWxzZQogICAgICAgIHsKICAgICAgICAgICAgU2F2ZShob3N0LCBuZXcgU2l6ZShob3N0LkFjdHVhbFdpZHRoLCBob3N0LkFjdHVhbEhlaWdodCksIHBhdGgpOwogICAgICAgIH0KICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+56qX5Y+j6YeMKirmnIDlrr0qKueahOa7muWKqOWuueWZqDrorr7nva7nqpfmnInkvqfmoI8r5YaF5a655Yy65Lik5LiqIFNjcm9sbFZpZXdlciwKICAgIC8vLyDmipPnrKzkuIDkuKrkvJrmipPliLDkvqfmoI8o5Ye65Zu+5bCx5piv5LiA5p2h6buR6L655qCPKTvlhoXlrrnljLrmsLjov5zmr5TkvqfmoI/lrr3jgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBTY3JvbGxWaWV3ZXI/IEZpbmRTY3JvbGxWaWV3ZXIoRGVwZW5kZW5jeU9iamVjdCByb290KQogICAgewogICAgICAgIHZhciBhbGwgPSBuZXcgTGlzdDxTY3JvbGxWaWV3ZXI+KCk7CiAgICAgICAgQ29sbGVjdFNjcm9sbFZpZXdlcnMocm9vdCwgYWxsKTsKICAgICAgICByZXR1cm4gYWxsLk9yZGVyQnlEZXNjZW5kaW5nKHN2ID0+IHN2LkFjdHVhbFdpZHRoKS5GaXJzdE9yRGVmYXVsdCgpOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHZvaWQgQ29sbGVjdFNjcm9sbFZpZXdlcnMoRGVwZW5kZW5jeU9iamVjdCByb290LCBMaXN0PFNjcm9sbFZpZXdlcj4gZm91bmQpCiAgICB7CiAgICAgICAgaW50IGNvdW50ID0gVmlzdWFsVHJlZUhlbHBlci5HZXRDaGlsZHJlbkNvdW50KHJvb3QpOwogICAgICAgIGZvciAoaW50IGkgPSAwOyBpIDwgY291bnQ7IGkrKykKICAgICAgICB7CiAgICAgICAgICAgIHZhciBjaGlsZCA9IFZpc3VhbFRyZWVIZWxwZXIuR2V0Q2hpbGQocm9vdCwgaSk7CiAgICAgICAgICAgIGlmIChjaGlsZCBpcyBTY3JvbGxWaWV3ZXIgc3YpIGZvdW5kLkFkZChzdik7CiAgICAgICAgICAgIENvbGxlY3RTY3JvbGxWaWV3ZXJzKGNoaWxkLCBmb3VuZCk7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHZvaWQgU2F2ZShGcmFtZXdvcmtFbGVtZW50IGVsZW1lbnQsIFNpemUgc2l6ZSwgc3RyaW5nIHBhdGgpCiAgICB7CiAgICAgICAgdmFyIGJtcCA9IG5ldyBSZW5kZXJUYXJnZXRCaXRtYXAoCiAgICAgICAgICAgIChpbnQpTWF0aC5DZWlsaW5nKHNpemUuV2lkdGgpLCAoaW50KU1hdGguQ2VpbGluZyhzaXplLkhlaWdodCksIDk2LCA5NiwgUGl4ZWxGb3JtYXRzLlBiZ3JhMzIpOwogICAgICAgIGJtcC5SZW5kZXIoZWxlbWVudCk7CiAgICAgICAgdmFyIGVuY29kZXIgPSBuZXcgUG5nQml0bWFwRW5jb2RlcigpOwogICAgICAgIGVuY29kZXIuRnJhbWVzLkFkZChCaXRtYXBGcmFtZS5DcmVhdGUoYm1wKSk7CiAgICAgICAgdXNpbmcgdmFyIGZzID0gRmlsZS5DcmVhdGUocGF0aCk7CiAgICAgICAgZW5jb2Rlci5TYXZlKGZzKTsKICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQi55WM6Z2i5bey5Ye65Zu+IHtwYXRofSAoe3NpemUuV2lkdGg6MH14e3NpemUuSGVpZ2h0OjB9KSIpOwogICAgfQp9Cg==
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+
+namespace PulseWin;
+
+/// <summary>
+/// 工具窗的离屏出图(`--ui-shot`)。不 Show 真实窗口、不抢焦点、不受"已有实例"守卫影响,
+/// 产物写到 <c>Data\ui-shot\</c>。
+///
+/// 为什么要有它:色块按钮装不装得下文字、热图会不会大片留空,这类事只能看像素,
+/// 而设置窗/统计窗我起不了第二份(单实例),也不该去动用户正开着的那个进程。
+/// 设置窗要一个 UsageEngine 才能构造,而出图不该顺带打 API,所以环色选择器单独渲染控件。
+/// </summary>
+internal static class UiShot
+{
+    public static void Run()
+    {
+        string dir = Path.Combine(SnapshotSource.DataDirectory, "ui-shot");
+        Directory.CreateDirectory(dir);
+
+        // --ui-shot 没有主窗口,默认的 OnLastWindowClose 会在第一张图后就把应用关掉
+        // (第二张窗只来得及存一张空图,还会抛"应用程序对象正在关闭")。改成显式退出。
+        System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        RenderTintPickers(Path.Combine(dir, "tint-picker.png"));
+        try
+        {
+            using var engine = new UsageEngine();   // 不 Start:引擎只有 Start 后才发网络请求
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-appearance.png"), "外观", "NavAppearance");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-behavior.png"), "行为", "NavBehavior");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-rings.png"), "圆环与数字", "NavRings");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-sources.png"), "数据源", "NavSources");
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("设置页出图失败", ex);
+        }
+        RenderSpendWindow(dir);
+    }
+
+    /// <summary>设置窗的某一页(用同一个不 Start 的引擎,避免重复初始化)。</summary>
+    private static void RenderSettingsPage(UsageEngine engine, string path, string title, string navName)
+    {
+        try
+        {
+            var window = new SettingsWindow(engine)
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -32000,
+                Top = -32000,
+                ShowInTaskbar = false,
+            };
+            window.Show();
+            // 切到目标页(侧栏是 RadioButton,直接置 IsChecked 会触发 Nav_Checked)。
+            // **必须在 Show 之后**:Show 之前可视树还没建,切页后内层容器没有实际尺寸。
+            if (window.FindName(navName) is System.Windows.Controls.RadioButton nav)
+                nav.IsChecked = true;
+            // 切页会换掉可见的 StackPanel,布局要让它跑完一遍再截图;
+            // 用 UpdateLayout 还不够——外层窗口尺寸没变,内层是懒布局。
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+            window.UpdateLayout();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+
+            double w = window.ActualWidth, h = window.ActualHeight;
+            if (w < 1 || h < 1) w = window.Width;
+            if (h < 1) h = window.Height;
+            Save(window, new Size(w, h), path);
+            // 整窗图受窗口高度限制,卡片下半可能被裁(数据源页的 OpenCode Go 卡
+            // 就很长);另出一张内容长图(滚动区全高)兜底。
+            SaveFullContent(window, Path.ChangeExtension(path, ".full.png"));
+            window.Close();
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note($"设置页出图失败({title})", ex);
+        }
+    }
+
+    /// <summary>环色选择器:自动档(最长文案)+ 一个固定色档,验证文字不被右缘切。</summary>
+    private static void RenderTintPickers(string path)
+    {
+        var panel = new StackPanel
+        {
+            Background = Brushes.White,
+            Margin = new Thickness(20),
+        };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "环色选择器(设置 › 圆环与数字 › 圆环颜色)",
+            FontSize = 13.5, FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            Margin = new Thickness(0, 0, 0, 10),
+        });
+        foreach (var (label, value) in new (string, string?)[]
+                 {
+                     ("Command Code GOAT", null),        // 自动 · 按用量 —— 最长文案
+                     ("OpenCode Go", "#4D6BFE"),          // 固定色,显示 HEX
+                 })
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+            row.Children.Add(new TextBlock
+            {
+                Text = label, FontSize = 13, Width = 170,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            });
+            row.Children.Add(new TintPicker { Value = value });
+            panel.Children.Add(row);
+        }
+
+        var host = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF7)),
+            Child = panel,
+        };
+        // 单独测量:控件没挂到窗口上,得自己 Arrange 才有尺寸
+        host.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        host.Arrange(new Rect(host.DesiredSize));
+        host.UpdateLayout();
+        Save(host, host.DesiredSize, path);
+    }
+
+    /// <summary>
+    /// 出图用的合成官方读数。真实数据要浏览器登录态(读 cookie),而出图环境里浏览器
+    /// cookie 库是锁着的——用它把「官方 vs 本机」对照格与逐模型榜渲染出来看。
+    /// </summary>
+    private static OpenCodeUsageStats SampleOfficialUsage()
+    {
+        var now = DateTimeOffset.Now;
+        var models = new List<OpenCodeModelStat>
+        {
+            new("deepseek-v4.1-flash", "opencode-go", 5100, 22_000_000, 3_900_000, 498_000_000, 0, 8.82),
+            new("glm-5.3-flash", "opencode-go", 420, 1_500_000, 210_000, 24_000_000, 0, 0.61),
+            new("mimo-v2.5", "opencode-go", 250, 600_000, 90_000, 1_200_000, 0, 0.22),
+        };
+        var days = Enumerable.Range(0, 7).Select(i => new OpenCodeDayStat(
+            now.AddDays(-i).ToString("yyyy-MM-dd"),
+            800 - i * 60, 82_000_000 - i * 5_000_000, 1.38 - i * 0.08)).ToList();
+        return new OpenCodeUsageStats(
+            "30d", 5770, 23_556_932, 4_104_268, 523_265_190, 0, 9.65, models, days, now);
+    }
+
+    private static void RenderSpendWindow(string dir)
+    {
+        var window = new SpendWindow
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = -32000,          // 屏幕外:布局照算,人看不见
+            Top = -32000,
+            ShowInTaskbar = false,
+            // 默认 640 宽会把对照格与逐模型行的右缘文字压出画面——出图是给人看排版的,
+            // 就按用户实际会把窗口拉到的宽度渲染。
+            Width = 1400,
+        };
+        window.Show();
+
+        // 等数据加载完:用量窗读本机两个库 + 画图,异步完成后才有内容。
+        // 出图直接渲染 ScrollViewer 的内容(StackPanel 全高)——窗口高度会被
+        // Win32 压回屏幕,但内容元素的完整高度不受限,一张长图收下所有卡片。
+        // 先出总览,再驱动真实 tab 按钮**逐个**切到每个套餐页各出一张(与手点同一条路径)。
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(22) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            try
+            {
+                SaveFullContent(window, Path.Combine(dir, "usage-overview.png"));
+                // 另存一张"窗口本身"(含顶部工具条:tab/区间/状态行)——头部不在滚动区里,
+                // 长图收不到它,而状态行文案("正在读取…"有没有被改写成结果)只有它能看到。
+                window.UpdateLayout();
+                Save(window, new Size(window.ActualWidth, window.ActualHeight), Path.Combine(dir, "usage-window-chrome.png"));
+            }
+            catch (Exception ex)
+            {
+                Diagnostics.Note("用量窗出图失败", ex);
+                window.Close();
+                System.Windows.Application.Current.Shutdown();
+                return;
+            }
+
+            // **每个套餐页都要出图**:一页里"少了哪张卡"只有在图上才看得出来,
+            // 而窗口一次只显示一个 tab(手点既慢、也没法保证每页都看全)。
+            int index = 1;
+            int count = window.UiShotTabCount;
+            var step = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            step.Tick += (_, _) =>
+            {
+                if (index >= count)
+                {
+                    step.Stop();
+                    window.Close();
+                    System.Windows.Application.Current.Shutdown();
+                    return;
+                }
+                try
+                {
+                    window.UiShotOpenTab(index);
+                    string label = window.UiShotTabLabel(index);
+                    // OpenCode Go 页的官方读数要浏览器登录态才拿得到,出图环境读不到 cookie——
+                    // 注入一份合成读数,好让「官方 vs 本机」对照格与逐模型榜真的被渲染出来看一眼
+                    //(项目里 --rail-shot 也是这么干的)。
+                    if (label.Contains("OpenCode", StringComparison.OrdinalIgnoreCase))
+                        window.UiShotInjectOfficialUsage(SampleOfficialUsage());
+                    string file = $"usage-channel-{index}.png";
+                    SaveFullContent(window, Path.Combine(dir, file));
+                    Diagnostics.Note($"套餐页已出图 {file} — {label}");
+                }
+                catch (Exception ex)
+                {
+                    Diagnostics.Note($"用量窗套餐页出图失败(index={index})", ex);
+                }
+                index++;
+            };
+            step.Start();
+        };
+        timer.Start();
+    }
+
+    /// <summary>把滚动区的内容(StackPanel 全高)渲染成一张长图;没有滚动容器则退回整窗。</summary>
+    private static void SaveFullContent(FrameworkElement host, string path)
+    {
+        host.UpdateLayout();
+        var sv = FindScrollViewer(host);
+        if (sv?.Content is FrameworkElement content && content.ActualHeight > 0)
+        {
+            content.UpdateLayout();
+            Save(content, new Size(content.ActualWidth, content.ActualHeight), path);
+        }
+        else
+        {
+            Save(host, new Size(host.ActualWidth, host.ActualHeight), path);
+        }
+    }
+
+    /// <summary>窗口里**最宽**的滚动容器:设置窗有侧栏+内容区两个 ScrollViewer,
+    /// 抓第一个会抓到侧栏(出图就是一条黑边栏);内容区永远比侧栏宽。</summary>
+    private static ScrollViewer? FindScrollViewer(DependencyObject root)
+    {
+        var all = new List<ScrollViewer>();
+        CollectScrollViewers(root, all);
+        return all.OrderByDescending(sv => sv.ActualWidth).FirstOrDefault();
+    }
+
+    private static void CollectScrollViewers(DependencyObject root, List<ScrollViewer> found)
+    {
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is ScrollViewer sv) found.Add(sv);
+            CollectScrollViewers(child, found);
+        }
+    }
+
+    private static void Save(FrameworkElement element, Size size, string path)
+    {
+        var bmp = new RenderTargetBitmap(
+            (int)Math.Ceiling(size.Width), (int)Math.Ceiling(size.Height), 96, 96, PixelFormats.Pbgra32);
+        bmp.Render(element);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bmp));
+        using var fs = File.Create(path);
+        encoder.Save(fs);
+        Diagnostics.Note($"界面已出图 {path} ({size.Width:0}x{size.Height:0})");
+    }
+}

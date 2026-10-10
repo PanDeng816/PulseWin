@@ -1,1 +1,391 @@
-dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uTmV0Owp1c2luZyBTeXN0ZW0uTmV0Lkh0dHA7CnVzaW5nIFN5c3RlbS5UZXh0Lkpzb247CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+5a6Y5pa55oyJ5qih5Z6L55qE6IGa5ZCIKOmHkemineadpeiHquWumOaWueiuoei0ueWtl+autSzkuI3nlKjmnKzmnLrniYzku7cp44CCPC9zdW1tYXJ5PgpwdWJsaWMgc2VhbGVkIHJlY29yZCBPcGVuQ29kZU1vZGVsU3RhdCgKICAgIHN0cmluZyBNb2RlbCwKICAgIHN0cmluZyBQcm92aWRlciwKICAgIGxvbmcgUmVxdWVzdHMsCiAgICBsb25nIElucHV0LAogICAgbG9uZyBPdXRwdXQsCiAgICBsb25nIENhY2hlUmVhZCwKICAgIGxvbmcgQ2FjaGVXcml0ZSwKICAgIGRvdWJsZSBDb3N0KQp7CiAgICBwdWJsaWMgbG9uZyBUb3RhbFRva2VucyA9PiBJbnB1dCArIE91dHB1dCArIENhY2hlUmVhZCArIENhY2hlV3JpdGU7Cn0KCi8vLyA8c3VtbWFyeT7lrpjmlrnmjInoh6rnhLbml6UoVVRDKeeahOiBmuWQiOOAgjwvc3VtbWFyeT4KcHVibGljIHNlYWxlZCByZWNvcmQgT3BlbkNvZGVEYXlTdGF0KHN0cmluZyBEYXksIGxvbmcgUmVxdWVzdHMsIGxvbmcgVG9rZW5zLCBkb3VibGUgQ29zdCk7CgovLy8gPHN1bW1hcnk+Ci8vLyBPcGVuQ29kZSDmnI3liqHnq6/nmoQqKuadg+WogeiBmuWQiOivu+aVsCoq4oCU4oCU5bCx5piv5o6n5Yi25Y+w55So6YeP6aG16Ieq5bex6K+755qE6YKj5aWX5o6l5Y+jCi8vLyAoPGM+L2NvbnNvbGUvYXBpL3VzYWdlL3tzdW1tYXJ5LG1vZGVscyxjb3N0LWJ5LWRheX08L2M+KeOAgui0puWPt+e6pyzopobnm5bmiYDmnInorr7lpIfkuI4gS2V544CCCi8vLyDnvZHpobUgdXNhZ2Ug6aG144CMTGFzdCAzMCBkYXlzIOKGkiBDb3N0IC8gUmVxdWVzdHMgLyBUb2tlbnPjgI3kuInmoLzmmL7npLrnmoTlsLHmmK/lroPjgIIKLy8vIDwvc3VtbWFyeT4KcHVibGljIHNlYWxlZCByZWNvcmQgT3BlbkNvZGVVc2FnZVN0YXRzKAogICAgc3RyaW5nIFJhbmdlLAogICAgbG9uZyBSZXF1ZXN0cywKICAgIGxvbmcgSW5wdXQsCiAgICBsb25nIE91dHB1dCwKICAgIGxvbmcgQ2FjaGVSZWFkLAogICAgbG9uZyBDYWNoZVdyaXRlLAogICAgZG91YmxlIENvc3QsCiAgICBJUmVhZE9ubHlMaXN0PE9wZW5Db2RlTW9kZWxTdGF0PiBNb2RlbHMsCiAgICBJUmVhZE9ubHlMaXN0PE9wZW5Db2RlRGF5U3RhdD4gRGF5cywKICAgIERhdGVUaW1lT2Zmc2V0IEZldGNoZWRBdCkKewogICAgLy8vIDxzdW1tYXJ5PuWumOaWueWPo+W+hOeahOaAuyB0b2tlbig9IOi+k+WFpSArIOi+k+WHuiArIOe8k+WtmOivuyArIOe8k+WtmOWGmSks5LiN5ZCr5o6o55CG5YiG6YePCiAgICAvLy8gKOacjeWKoeerr+eahCBvdXRwdXQg5bey57uP5oqK5a6D5ZCr5Zyo5YaF5LqGLOi/meS4gOeCueS4jumAkOivt+axguaYjue7huS4jeWQjCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgbG9uZyBUb3RhbFRva2VucyA9PiBJbnB1dCArIE91dHB1dCArIENhY2hlUmVhZCArIENhY2hlV3JpdGU7CgogICAgLy8vIDxzdW1tYXJ5Pui/meS4queql+WPo+mHjOWumOaWueacieiusOW9leeahOWkqeaVsOOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBpbnQgQWN0aXZlRGF5cyA9PiBEYXlzLkNvdW50Owp9CgovLy8gPHN1bW1hcnk+Ci8vLyDor7sgT3BlbkNvZGUg55qEKirotKblj7fnuqfnlKjph4/ogZrlkIgqKuOAggovLy8KLy8vICoq5Li65LuA5LmI5LiN5YaN57+7IHJlcXVlc3QtbG9ncyoqOumCo+aYr+mAkOivt+axguaYjue7hizlj6rog73muLjmoIfkuLLooYznv7vpobUoMTAwIOadoS/pobUp44CC6YeN5bqm6LSm5Y+3Ci8vLyDlrp7mtYsgKioxMTcg6aG1IC8gMzUzIOenkioqLOiAjOeVjOmdouS4iueahCLov5EgMzAg5aSpIuagueacrOe/u+S4jeWujOKAlOKAlOaXp+eahCA0MCDpobXkuIrpmZDlj6rlpJ/mnIDov5HkuKTkuInlpKksCi8vLyDmiqXlh7rmnaXnmoTmlbDlrZcoMS43NyDkur8gdG9rZW5zIC8gJDIuNTgp5Y+q5pyJ55yf5YC8KDUuNSDkur8gLyAkOS42NSnnmoTkuInliIbkuYvkuIAs5Y205qCH552ACi8vLyAi6L+RIDMwIOWkqSLjgILmjqfliLblj7Doh6rlt7HnmoTnlKjph4/pobXkuYvmiYDku6XkuIDngrnlsLHlh7rmlbAs5piv5Zug5Li65a6D6K+755qE5piv5LiL6Z2i6L+Z5LiJ5LiqKirogZrlkIgqKuaOpeWPo+OAggovLy8KLy8vIOWNj+iurigyMDI2LTEwLOWPluiHquaOp+WItuWPsOWJjeerryBidW5kbGUg6YeM55qE5p+l6K+i5a6a5LmJKToKLy8vICDCtyBHRVQgL2NvbnNvbGUvYXBpL29yZ3MgICAgICAgICAgICAgICAgICAgICAgICAgIOKGkiDlt6XkvZzljLrliJfooagKLy8vICDCtyBHRVQgL2NvbnNvbGUvYXBpL3VzYWdlL3N1bW1hcnk/cmFuZ2U9N2R8MzBkICAgIOKGkiDmgLvph48ocmVxdWVzdHMvdG9rZW5zL2Nvc3QpCi8vLyAgwrcgR0VUIC9jb25zb2xlL2FwaS91c2FnZS9tb2RlbHM/cmFuZ2U94oCmICAgICAgICAgIOKGkiDmjInmqKHlnosKLy8vICDCtyBHRVQgL2NvbnNvbGUvYXBpL3VzYWdlL2Nvc3QtYnktZGF5P3JhbmdlPeKApiAgICAg4oaSIOaMieiHqueEtuaXpQovLy8gIOmDveimgeW4piA8Yz54LW9yZy1pZDogd3JrX3h4eDwvYz475pWw5YC85a2X5q615LiA5b6L5pivKirlrZfnrKbkuLIqKijmnI3liqHnq68gQmlnSW50IOeahCBKU09OIOW9ouaAgSnjgIIKLy8vCi8vLyDmlbTmnaHpgJrpgZPkuI4gR09BVCDnmoTmtY/op4jlmajkvJror53lhbHnlKjkuIDkuKrlvIDlhbMs6buY6K6k5YWz44CB6K+75LiN5Yiw5bCx5a6J6Z2Z6L+U5ZueIG51bGzjgIIKLy8vIDwvc3VtbWFyeT4KcHVibGljIHN0YXRpYyBjbGFzcyBPcGVuQ29kZVVzYWdlU3RhdHNDbGllbnQKewogICAgcHJpdmF0ZSBjb25zdCBzdHJpbmcgQXBpQmFzZSA9ICJodHRwczovL29wZW5jb2RlLmFpL2NvbnNvbGUvYXBpIjsKICAgIHByaXZhdGUgY29uc3Qgc3RyaW5nIE9yaWdpbiA9ICJodHRwczovL29wZW5jb2RlLmFpIjsKICAgIC8vLyA8c3VtbWFyeT7lvq7nvo7liIYg4oaSIOe+juWFg+OAgjEg5b6u576O5YiGID0gMWUtNiDnvo7liIYgPSAxZS04IOe+juWFgyjkuI4gZ28vc3RhdHVzIOWQjOS4gOWNleS9jSnjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGNvbnN0IGRvdWJsZSBNaWNyb0NlbnRzUGVyVXNkID0gMTAwXzAwMF8wMDBkOwoKICAgIHByaXZhdGUgc3RhdGljIHJlYWRvbmx5IEh0dHBDbGllbnQgSHR0cCA9IENyZWF0ZUNsaWVudCgpOwoKICAgIC8vLyA8c3VtbWFyeT7kuIrkuIDmrKHmiJDlip8v5aSx6LSl55qE5Y6f5ZugKOeVjOmdouS4juiviuaWreaYvuekuueUqCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIHN0cmluZz8gTGFzdFN0YXR1cyB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0KCiAgICBwdWJsaWMgc3RhdGljIGJvb2w/IEF2YWlsYWJsZSB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0KCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g57uT5p6c57yT5a2YLOaMiSByYW5nZSDliIblvIDlrZgsKirlhoXlrZggKyDokL3nm5jkuKTlsYIqKuOAguS4ieadoeivt+axguWKoOi1t+adpeS4jeWIsOS4gOenkiznvJPlrZjkuI0KICAgIC8vLyDmmK/kuLrkuobnnIHnrYnlvoUs6ICM5piv5Li65LqGIuaJk+W8gOeUqOmHj+eql+WwseWHuuaVsOOAgeS4jeW/heavj+asoemDvemXruacjeWKoeerryI656qX5Y+j5q+P5qyh5YiH6aG1L+WIh+WMuumXtOOAgQogICAgLy8vIOavj+asoemHjeW8gOW6lOeUqOmDveS8mui1sOWIsOi/memHjOOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIHJlYWRvbmx5IERpY3Rpb25hcnk8c3RyaW5nLCAoT3BlbkNvZGVVc2FnZVN0YXRzIFN0YXRzLCBEYXRlVGltZU9mZnNldCBBdCk+IENhY2hlID0KICAgICAgICBuZXcoU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CgogICAgLy8vIDxzdW1tYXJ5Pue8k+WtmOaWsOmynOW6puOAguWumOaWuei/meS4queql+WPo+aYryoq5rua5YqoIDMwIOWkqSoq55qE57uf6K6h6YePLOWNgeS6lOWIhumSn+WGheS4jeS8muaciQogICAgLy8vIOmcgOimgeeri+WIu+WPjeaYoOeahOWPmOWMljvmg7PopoHlvZPkuIvnmoTmlbDlsLHngrnpobbpg6jnmoTjgIzph43mlrDor7vlj5bjgI3jgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBUaW1lU3BhbiBDYWNoZUxpZmV0aW1lID0gVGltZVNwYW4uRnJvbU1pbnV0ZXMoMTUpOwoKICAgIHByaXZhdGUgc3RhdGljIEFwcERhdGFQYXRocz8gX3BhdGhzOwoKICAgIC8vLyA8c3VtbWFyeT7kuKLmjonnu5PmnpznvJPlrZgo55WM6Z2i5LiK55qE44CM6YeN5paw6K+75Y+W44CN55SoKeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgdm9pZCBJbnZhbGlkYXRlKCkKICAgIHsKICAgICAgICBDYWNoZS5DbGVhcigpOwogICAgICAgIFNhdmVUb0Rpc2soKTsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+5pWw5o2u55uu5b2VKOe8k+WtmOiQveebmOeUqCnjgILlvJXmk47mnoTpgKDml7YgQXR0YWNo44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyB2b2lkIEF0dGFjaChBcHBEYXRhUGF0aHMgcGF0aHMpCiAgICB7CiAgICAgICAgX3BhdGhzID0gcGF0aHM7CiAgICAgICAgTG9hZEZyb21EaXNrKCk7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nIENhY2hlRmlsZSA9PiBfcGF0aHMgaXMgbnVsbAogICAgICAgID8gIiIKICAgICAgICA6IFBhdGguQ29tYmluZShfcGF0aHMuUm9vdERpcmVjdG9yeSwgIm9wZW5jb2RlLXVzYWdlLXN0YXRzLmpzb24iKTsKCiAgICAvLy8gPHN1bW1hcnk+6JC955uY5b2i5oCBOuavj+S4qiByYW5nZSDkuIDmnaHor7vmlbAgKyDmipPlj5bml7bliLvjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHNlYWxlZCByZWNvcmQgQ2FjaGVkU3RhdHMoT3BlbkNvZGVVc2FnZVN0YXRzIFN0YXRzLCBEYXRlVGltZU9mZnNldCBBdCk7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOaKiuS4iuasoeeahOivu+aVsOS7juejgeebmOaNoeWbnuadpeOAgioq5a6D5LiN5piv5pWw5o2u5rqQ44CB5Y+q5piv5Yqg6YCfKio65paH5Lu25Z2P5LqGIC8g5qC85byP5Y+Y5LqG5bCx5b2T5rKh5pyJLAogICAgLy8vIOS4i+asoeiBlOe9keeFp+agt+iDveaLv+WIsOOAguacieS6huWugyzlupTnlKjph43lkK/lkI7nrKzkuIDmrKHmiZPlvIDnlKjph4/nqpfkuZ/mmK/np5Llh7rmlbDjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIExvYWRGcm9tRGlzaygpCiAgICB7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBpZiAoQ2FjaGVGaWxlLkxlbmd0aCA9PSAwIHx8ICFGaWxlLkV4aXN0cyhDYWNoZUZpbGUpKSByZXR1cm47CiAgICAgICAgICAgIHZhciBzYXZlZCA9IEpzb25TZXJpYWxpemVyLkRlc2VyaWFsaXplPExpc3Q8Q2FjaGVkU3RhdHM+PihGaWxlLlJlYWRBbGxUZXh0KENhY2hlRmlsZSkpOwogICAgICAgICAgICBpZiAoc2F2ZWQgaXMgbnVsbCkgcmV0dXJuOwogICAgICAgICAgICBmb3JlYWNoICh2YXIgaXRlbSBpbiBzYXZlZCkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgaWYgKGl0ZW0uU3RhdHMuUmFuZ2UuTGVuZ3RoID4gMCkgQ2FjaGVbaXRlbS5TdGF0cy5SYW5nZV0gPSAoaXRlbS5TdGF0cywgaXRlbS5BdCk7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgY2F0Y2ggeyAvKiDnvJPlrZjlnY/kuoblsLHlvZPmsqHmnInigJTigJTkuI3lvbHlk43ogZTnvZHlj5blgLwgKi8gfQogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHZvaWQgU2F2ZVRvRGlzaygpCiAgICB7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBpZiAoQ2FjaGVGaWxlLkxlbmd0aCA9PSAwKSByZXR1cm47CiAgICAgICAgICAgIEZpbGUuV3JpdGVBbGxUZXh0KENhY2hlRmlsZSwgSnNvblNlcmlhbGl6ZXIuU2VyaWFsaXplKAogICAgICAgICAgICAgICAgQ2FjaGUuVmFsdWVzLlNlbGVjdCh2ID0+IG5ldyBDYWNoZWRTdGF0cyh2LlN0YXRzLCB2LkF0KSkuVG9MaXN0KCkpKTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggeyAvKiDokL3nm5jlpLHotKXkuI3lvbHlk43mnKzmrKHnu5PmnpwgKi8gfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT7miornvJPlrZjlubTpvoTor7TmiJDkurror50o54q25oCB6KGM5pi+56S6IuWkmuS5heWJjeivu+eahCIp44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nIEFnZShEYXRlVGltZU9mZnNldCBhdCkKICAgIHsKICAgICAgICB2YXIgc3BhbiA9IERhdGVUaW1lT2Zmc2V0Lk5vdyAtIGF0OwogICAgICAgIHJldHVybiBzcGFuLlRvdGFsTWludXRlcyA8IDEgPyAkInsoaW50KXNwYW4uVG90YWxTZWNvbmRzfSDnp5IiCiAgICAgICAgICAgIDogc3Bhbi5Ub3RhbEhvdXJzIDwgMSA/ICQieyhpbnQpc3Bhbi5Ub3RhbE1pbnV0ZXN9IOWIhumSnyIKICAgICAgICAgICAgOiBzcGFuLlRvdGFsRGF5cyA8IDEgPyAkInsoaW50KXNwYW4uVG90YWxIb3Vyc30g5bCP5pe2IgogICAgICAgICAgICA6ICQieyhpbnQpc3Bhbi5Ub3RhbERheXN9IOWkqSI7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PuaKiueVjOmdouWMuumXtOaYoOWwhOWIsOWumOaWueaPkOS+m+eahOeql+WPo+OAguOAjOS7iuWkqeOAjeeUqCAyNGgo5rua5YqoIDI0IOWwj+aXtizlrpjmlrnmsqHmnIkKICAgIC8vLyAi6Ieq54S25pelIui/meS4gOahoyks44CM6L+RIDcg5aSp44CN55SoIDdkLOWFtuS9mSjov5EgMzAg5aSpIC8g6Ieq5a6a5LmJIC8g5YWo6YOoKeS4gOW+iyAzMGTigJTigJQKICAgIC8vLyDlrpjmlrnmnIDlpJrlj6rnu5kgMzAg5aSp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyAoc3RyaW5nIFJhbmdlLCBzdHJpbmcgTGFiZWwpIFdpbmRvd0ZvcihTcGVuZFNwYW4gc3BhbikgPT4gc3BhbiBzd2l0Y2gKICAgIHsKICAgICAgICBTcGVuZFNwYW4uVG9kYXkgPT4gKCIyNGgiLCAi6L+RIDI0IOWwj+aXtiIpLAogICAgICAgIFNwZW5kU3Bhbi5XZWVrID0+ICgiN2QiLCAi6L+RIDcg5aSpIiksCiAgICAgICAgXyA9PiAoIjMwZCIsICLov5EgMzAg5aSpIiksCiAgICB9OwoKICAgIHByaXZhdGUgc3RhdGljIEh0dHBDbGllbnQgQ3JlYXRlQ2xpZW50KCkKICAgIHsKICAgICAgICB2YXIgY2xpZW50ID0gUHJveHlIdHRwLkNyZWF0ZShUaW1lU3Bhbi5Gcm9tU2Vjb25kcygzMCkpOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuVXNlckFnZW50LlBhcnNlQWRkKCJQdWxzZVdpbi8xLjAiKTsKICAgICAgICBjbGllbnQuRGVmYXVsdFJlcXVlc3RIZWFkZXJzLkFjY2VwdC5QYXJzZUFkZCgiYXBwbGljYXRpb24vanNvbiIpOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuQWRkKCJPcmlnaW4iLCBPcmlnaW4pOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuQWRkKCJSZWZlcmVyIiwgT3JpZ2luICsgIi9jb25zb2xlLyIpOwogICAgICAgIHJldHVybiBjbGllbnQ7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOaLiei0puWPt+S4iyoq5YWo6YOo5bel5L2c5Yy6KirlnKggPHBhcmFtcmVmIG5hbWU9InJhbmdlIi8+KDxjPjdkPC9jPi88Yz4zMGQ8L2M+Keeql+WPo+WGheeahOWumOaWueiBmuWQiOOAggogICAgLy8vIOi/lOWbniBudWxsID0g6YCa6YGT5b2T5YmN5LiN5Y+v55SoKOWOn+WboOingSA8c2VlIGNyZWY9Ikxhc3RTdGF0dXMiLz4p44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgLy8vIDxwYXJhbSBuYW1lPSJmb3JjZVJlZnJlc2giPnRydWUgPSDot7Pov4fnu5PmnpznvJPlrZjph43mlrDmi4ko55WM6Z2i5LiK55qE44CM6YeN5paw6K+75Y+W44CNKeOAgjwvcGFyYW0+CiAgICBwdWJsaWMgc3RhdGljIGFzeW5jIFRhc2s8T3BlbkNvZGVVc2FnZVN0YXRzPz4gVHJ5RmV0Y2hBc3luYygKICAgICAgICBzdHJpbmcgcmFuZ2UsCiAgICAgICAgQ2FuY2VsbGF0aW9uVG9rZW4gdG9rZW4gPSBkZWZhdWx0LAogICAgICAgIGJvb2wgZm9yY2VSZWZyZXNoID0gZmFsc2UpCiAgICB7CiAgICAgICAgaWYgKCFBcHBTZXR0aW5ncy5DdXJyZW50LlVzZUJyb3dzZXJTZXNzaW9uRm9yTW9kZWxEZXRhaWwpCiAgICAgICAgewogICAgICAgICAgICBMYXN0U3RhdHVzID0gIuacquWQr+eUqCjlj6/lnKjmnKzpobXlvIDlkK/jgIzmtY/op4jlmajkvJror53mmI7nu4bjgI0pIjsKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQoKICAgICAgICBpZiAoIWZvcmNlUmVmcmVzaCAmJiBDYWNoZS5UcnlHZXRWYWx1ZShyYW5nZSwgb3V0IHZhciBoaXQpCiAgICAgICAgICAgICYmIERhdGVUaW1lT2Zmc2V0Lk5vdyAtIGhpdC5BdCA8IENhY2hlTGlmZXRpbWUpCiAgICAgICAgewogICAgICAgICAgICBBdmFpbGFibGUgPSB0cnVlOwogICAgICAgICAgICBMYXN0U3RhdHVzID0gJCLlt7Lor7vliLDlrpjmlrnogZrlkIjor7vmlbAoe3JhbmdlfSx7QWdlKGhpdC5BdCl95YmN55qE57yT5a2YKSI7CiAgICAgICAgICAgIHJldHVybiBoaXQuU3RhdHM7CiAgICAgICAgfQoKICAgICAgICBzdHJpbmc/IGNvb2tpZSA9IEJyb3dzZXJDb29raWVTdG9yZS5HZXRDb29raWVIZWFkZXIoIm9wZW5jb2RlIiwgZm9yY2VSZWZyZXNoOiBmYWxzZSk7CiAgICAgICAgaWYgKGNvb2tpZSBpcyBudWxsKQogICAgICAgIHsKICAgICAgICAgICAgQXZhaWxhYmxlID0gZmFsc2U7CiAgICAgICAgICAgIExhc3RTdGF0dXMgPSBCcm93c2VyQ29va2llU3RvcmUuTGFzdEVycm9yID8/ICLor7vkuI3liLAgb3BlbmNvZGUuYWkg55qE55m75b2VIGNvb2tpZSI7CiAgICAgICAgICAgIHJldHVybiBudWxsOwogICAgICAgIH0KCiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBsb25nIHJlcXVlc3RzID0gMCwgaW5wdXQgPSAwLCBvdXRwdXQgPSAwLCBjYWNoZVJlYWQgPSAwLCBjYWNoZVdyaXRlID0gMDsKICAgICAgICAgICAgZG91YmxlIGNvc3QgPSAwOwogICAgICAgICAgICBpbnQgd29ya3NwYWNlcyA9IDA7CiAgICAgICAgICAgIHZhciBtb2RlbHMgPSBuZXcgRGljdGlvbmFyeTxzdHJpbmcsIE1vZGVsQWNjPihTdHJpbmdDb21wYXJlci5PcmRpbmFsKTsKICAgICAgICAgICAgdmFyIGRheXMgPSBuZXcgRGljdGlvbmFyeTxzdHJpbmcsIChsb25nIFJlcSwgbG9uZyBUb2ssIGRvdWJsZSBDb3N0KT4oU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CgogICAgICAgICAgICB1c2luZyAodmFyIGRvYyA9IGF3YWl0IEdldEpzb25Bc3luYygib3JncyIsIGNvb2tpZSwgbnVsbCwgdG9rZW4pKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBmb3JlYWNoICh2YXIgKGlkLCBfKSBpbiBQYXJzZU9yZ3MoZG9jLlJvb3RFbGVtZW50KSkKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICB3b3Jrc3BhY2VzKys7CiAgICAgICAgICAgICAgICAgICAgdXNpbmcgKHZhciBzdW1tYXJ5ID0gYXdhaXQgR2V0SnNvbkFzeW5jKCQidXNhZ2Uvc3VtbWFyeT9yYW5nZT17cmFuZ2V9IiwgY29va2llLCBpZCwgdG9rZW4pKQogICAgICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICAgICAgdmFyIHJvb3QgPSBzdW1tYXJ5LlJvb3RFbGVtZW50OwogICAgICAgICAgICAgICAgICAgICAgICByZXF1ZXN0cyArPSBMb25nU3RyKHJvb3QsICJ0b3RhbFJlcXVlc3RzIik7CiAgICAgICAgICAgICAgICAgICAgICAgIGlucHV0ICs9IExvbmdTdHIocm9vdCwgInRvdGFsSW5wdXRUb2tlbnMiKTsKICAgICAgICAgICAgICAgICAgICAgICAgb3V0cHV0ICs9IExvbmdTdHIocm9vdCwgInRvdGFsT3V0cHV0VG9rZW5zIik7CiAgICAgICAgICAgICAgICAgICAgICAgIGNhY2hlUmVhZCArPSBMb25nU3RyKHJvb3QsICJ0b3RhbENhY2hlUmVhZFRva2VucyIpOwogICAgICAgICAgICAgICAgICAgICAgICBjYWNoZVdyaXRlICs9IExvbmdTdHIocm9vdCwgInRvdGFsQ2FjaGVXcml0ZTVtVG9rZW5zIikKICAgICAgICAgICAgICAgICAgICAgICAgICAgICsgTG9uZ1N0cihyb290LCAidG90YWxDYWNoZVdyaXRlMWhUb2tlbnMiKTsKICAgICAgICAgICAgICAgICAgICAgICAgY29zdCArPSBMb25nU3RyKHJvb3QsICJ0b3RhbENvc3RNaWNyb0NlbnRzIikgLyBNaWNyb0NlbnRzUGVyVXNkOwogICAgICAgICAgICAgICAgICAgIH0KCiAgICAgICAgICAgICAgICAgICAgdXNpbmcgKHZhciBtb2RlbERvYyA9IGF3YWl0IEdldEpzb25Bc3luYygkInVzYWdlL21vZGVscz9yYW5nZT17cmFuZ2V9IiwgY29va2llLCBpZCwgdG9rZW4pKQogICAgICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICAgICAgTWVyZ2VNb2RlbHMobW9kZWxEb2MuUm9vdEVsZW1lbnQsIG1vZGVscyk7CiAgICAgICAgICAgICAgICAgICAgfQoKICAgICAgICAgICAgICAgICAgICB1c2luZyAodmFyIGRheURvYyA9IGF3YWl0IEdldEpzb25Bc3luYygkInVzYWdlL2Nvc3QtYnktZGF5P3JhbmdlPXtyYW5nZX0iLCBjb29raWUsIGlkLCB0b2tlbikpCiAgICAgICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgICAgICBNZXJnZURheXMoZGF5RG9jLlJvb3RFbGVtZW50LCBkYXlzKTsKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIGlmICh3b3Jrc3BhY2VzID09IDApCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIEF2YWlsYWJsZSA9IGZhbHNlOwogICAgICAgICAgICAgICAgTGFzdFN0YXR1cyA9ICLotKblj7fkuIvmsqHmnInlt6XkvZzljLoo5o6l5Y+j6L+U5Zue5LqG56m65YiX6KGoKSI7CiAgICAgICAgICAgICAgICByZXR1cm4gbnVsbDsKICAgICAgICAgICAgfQoKICAgICAgICAgICAgQXZhaWxhYmxlID0gdHJ1ZTsKICAgICAgICAgICAgTGFzdFN0YXR1cyA9ICQi5bey6K+75Yiw5a6Y5pa56IGa5ZCI6K+75pWwKHtyYW5nZX0se3dvcmtzcGFjZXN9IOS4quW3peS9nOWMuikiOwogICAgICAgICAgICB2YXIgc3RhdHMgPSBuZXcgT3BlbkNvZGVVc2FnZVN0YXRzKAogICAgICAgICAgICAgICAgcmFuZ2UsIHJlcXVlc3RzLCBpbnB1dCwgb3V0cHV0LCBjYWNoZVJlYWQsIGNhY2hlV3JpdGUsIGNvc3QsCiAgICAgICAgICAgICAgICBtb2RlbHMuU2VsZWN0KGt2ID0+IG5ldyBPcGVuQ29kZU1vZGVsU3RhdChrdi5LZXksIGt2LlZhbHVlLlByb3ZpZGVyLCBrdi5WYWx1ZS5SZXEsCiAgICAgICAgICAgICAgICAgICAgICAgIGt2LlZhbHVlLkluLCBrdi5WYWx1ZS5PdXQsIGt2LlZhbHVlLkNyLCBrdi5WYWx1ZS5Ddywga3YuVmFsdWUuQ29zdCkpCiAgICAgICAgICAgICAgICAgICAgLk9yZGVyQnlEZXNjZW5kaW5nKG0gPT4gbS5Ub3RhbFRva2VucykKICAgICAgICAgICAgICAgICAgICAuVG9MaXN0KCksCiAgICAgICAgICAgICAgICBkYXlzLlNlbGVjdChrdiA9PiBuZXcgT3BlbkNvZGVEYXlTdGF0KGt2LktleSwga3YuVmFsdWUuUmVxLCBrdi5WYWx1ZS5Ub2ssIGt2LlZhbHVlLkNvc3QpKQogICAgICAgICAgICAgICAgICAgIC5PcmRlckJ5RGVzY2VuZGluZyhkID0+IGQuRGF5LCBTdHJpbmdDb21wYXJlci5PcmRpbmFsKQogICAgICAgICAgICAgICAgICAgIC5Ub0xpc3QoKSwKICAgICAgICAgICAgICAgIERhdGVUaW1lT2Zmc2V0Lk5vdyk7CiAgICAgICAgICAgIENhY2hlW3JhbmdlXSA9IChzdGF0cywgRGF0ZVRpbWVPZmZzZXQuTm93KTsKICAgICAgICAgICAgU2F2ZVRvRGlzaygpOwogICAgICAgICAgICByZXR1cm4gc3RhdHM7CiAgICAgICAgfQogICAgICAgIGNhdGNoIChPcGVyYXRpb25DYW5jZWxlZEV4Y2VwdGlvbikgeyB0aHJvdzsgfQogICAgICAgIGNhdGNoIChDb21tYW5kQ29kZUFwaUV4Y2VwdGlvbiBleCkgd2hlbiAoZXguSXNBdXRoZW50aWNhdGlvbkVycm9yKQogICAgICAgIHsKICAgICAgICAgICAgQnJvd3NlckNvb2tpZVN0b3JlLkludmFsaWRhdGUoIm9wZW5jb2RlIik7CiAgICAgICAgICAgIEludmFsaWRhdGUoKTsKICAgICAgICAgICAgQXZhaWxhYmxlID0gZmFsc2U7CiAgICAgICAgICAgIExhc3RTdGF0dXMgPSAi5rWP6KeI5Zmo55m75b2V5oCB5bey6L+H5pyfLOivt+mHjeaWsOeZu+W9lSBvcGVuY29kZS5haSI7CiAgICAgICAgICAgIHJldHVybiBudWxsOwogICAgICAgIH0KICAgICAgICBjYXRjaCAoRXhjZXB0aW9uIGV4KQogICAgICAgIHsKICAgICAgICAgICAgLy8g5ouJ5LiN5Yiw5LiN5piv5LiW55WM5pyr5pelOuacieaXp+ivu+aVsOWwseWFiOeUqOWugyzlubbmiooi5aSa5penIuWGmeWcqOeKtuaAgemHjCjlroHlj6/moIfnnYDml7bpl7TmmL7npLrml6fmlbAsCiAgICAgICAgICAgIC8vIOS5n+S4jeimgeiuqeaVtOWdl+WPmOaIkCLor7vkuI3liLAiKQogICAgICAgICAgICBpZiAoQ2FjaGUuVHJ5R2V0VmFsdWUocmFuZ2UsIG91dCB2YXIgc3RhbGUpKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBBdmFpbGFibGUgPSBmYWxzZTsKICAgICAgICAgICAgICAgIExhc3RTdGF0dXMgPSAkIuivu+WPluWksei0pSzpgIDlm54ge0FnZShzdGFsZS5BdCl95YmN55qE6K+75pWwOiIgKyBleC5NZXNzYWdlOwogICAgICAgICAgICAgICAgcmV0dXJuIHN0YWxlLlN0YXRzOwogICAgICAgICAgICB9CiAgICAgICAgICAgIEF2YWlsYWJsZSA9IGZhbHNlOwogICAgICAgICAgICBMYXN0U3RhdHVzID0gIuivu+WPluWumOaWueiBmuWQiOivu+aVsOWksei0pToiICsgZXguTWVzc2FnZTsKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgc2VhbGVkIHJlY29yZCBNb2RlbEFjYygKICAgICAgICBzdHJpbmcgUHJvdmlkZXIsIGxvbmcgUmVxLCBsb25nIEluLCBsb25nIE91dCwgbG9uZyBDciwgbG9uZyBDdywgZG91YmxlIENvc3QpOwoKICAgIHByaXZhdGUgc3RhdGljIHZvaWQgTWVyZ2VNb2RlbHMoSnNvbkVsZW1lbnQgcm9vdCwgRGljdGlvbmFyeTxzdHJpbmcsIE1vZGVsQWNjPiBpbnRvKQogICAgewogICAgICAgIGZvcmVhY2ggKHZhciBpdGVtIGluIEl0ZW1zKHJvb3QpKQogICAgICAgIHsKICAgICAgICAgICAgc3RyaW5nIG1vZGVsID0gU3RyaW5nKGl0ZW0sICJtb2RlbCIpID8/ICIodW5rbm93bikiOwogICAgICAgICAgICBzdHJpbmcgcHJvdmlkZXIgPSBTdHJpbmcoaXRlbSwgInByb3ZpZGVyIikgPz8gIiI7CiAgICAgICAgICAgIGxvbmcgaW5Ub2sgPSBMb25nU3RyKGl0ZW0sICJ0b3RhbElucHV0VG9rZW5zIik7CiAgICAgICAgICAgIGxvbmcgb3V0VG9rID0gTG9uZ1N0cihpdGVtLCAidG90YWxPdXRwdXRUb2tlbnMiKTsKICAgICAgICAgICAgbG9uZyBjciA9IExvbmdTdHIoaXRlbSwgInRvdGFsQ2FjaGVSZWFkVG9rZW5zIik7CiAgICAgICAgICAgIGxvbmcgY3cgPSBMb25nU3RyKGl0ZW0sICJ0b3RhbENhY2hlV3JpdGU1bVRva2VucyIpICsgTG9uZ1N0cihpdGVtLCAidG90YWxDYWNoZVdyaXRlMWhUb2tlbnMiKTsKICAgICAgICAgICAgZG91YmxlIGNvc3QgPSBMb25nU3RyKGl0ZW0sICJ0b3RhbENvc3RNaWNyb0NlbnRzIikgLyBNaWNyb0NlbnRzUGVyVXNkOwogICAgICAgICAgICB2YXIgYWNjID0gaW50by5HZXRWYWx1ZU9yRGVmYXVsdChtb2RlbCwgbmV3IE1vZGVsQWNjKHByb3ZpZGVyLCAwLCAwLCAwLCAwLCAwLCAwKSk7CiAgICAgICAgICAgIGludG9bbW9kZWxdID0gYWNjIHdpdGgKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgUHJvdmlkZXIgPSBhY2MuUHJvdmlkZXIuTGVuZ3RoID4gMCA/IGFjYy5Qcm92aWRlciA6IHByb3ZpZGVyLAogICAgICAgICAgICAgICAgUmVxID0gYWNjLlJlcSArIExvbmdTdHIoaXRlbSwgInRvdGFsUmVxdWVzdHMiKSwKICAgICAgICAgICAgICAgIEluID0gYWNjLkluICsgaW5Ub2ssCiAgICAgICAgICAgICAgICBPdXQgPSBhY2MuT3V0ICsgb3V0VG9rLAogICAgICAgICAgICAgICAgQ3IgPSBhY2MuQ3IgKyBjciwKICAgICAgICAgICAgICAgIEN3ID0gYWNjLkN3ICsgY3csCiAgICAgICAgICAgICAgICBDb3N0ID0gYWNjLkNvc3QgKyBjb3N0LAogICAgICAgICAgICB9OwogICAgICAgIH0KICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIE1lcmdlRGF5cyhKc29uRWxlbWVudCByb290LCBEaWN0aW9uYXJ5PHN0cmluZywgKGxvbmcgUmVxLCBsb25nIFRvaywgZG91YmxlIENvc3QpPiBpbnRvKQogICAgewogICAgICAgIGlmIChyb290LlZhbHVlS2luZCAhPSBKc29uVmFsdWVLaW5kLkFycmF5KSByZXR1cm47CiAgICAgICAgZm9yZWFjaCAodmFyIGl0ZW0gaW4gcm9vdC5FbnVtZXJhdGVBcnJheSgpKQogICAgICAgIHsKICAgICAgICAgICAgaWYgKGl0ZW0uVmFsdWVLaW5kICE9IEpzb25WYWx1ZUtpbmQuT2JqZWN0KSBjb250aW51ZTsKICAgICAgICAgICAgc3RyaW5nIGRheSA9IFN0cmluZyhpdGVtLCAiZGF0ZSIpID8/ICIiOwogICAgICAgICAgICBpZiAoZGF5Lkxlbmd0aCA9PSAwKSBjb250aW51ZTsKICAgICAgICAgICAgdmFyIGFjYyA9IGludG8uR2V0VmFsdWVPckRlZmF1bHQoZGF5LCAoMCwgMCwgMCkpOwogICAgICAgICAgICBpbnRvW2RheV0gPSAoCiAgICAgICAgICAgICAgICBhY2MuUmVxICsgTG9uZ1N0cihpdGVtLCAidG90YWxSZXF1ZXN0cyIpLAogICAgICAgICAgICAgICAgYWNjLlRvayArIExvbmdTdHIoaXRlbSwgInRvdGFsVG9rZW5zIiksCiAgICAgICAgICAgICAgICBhY2MuQ29zdCArIExvbmdTdHIoaXRlbSwgInRvdGFsQ29zdE1pY3JvQ2VudHMiKSAvIE1pY3JvQ2VudHNQZXJVc2QpOwogICAgICAgIH0KICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBJRW51bWVyYWJsZTxKc29uRWxlbWVudD4gSXRlbXMoSnNvbkVsZW1lbnQgcm9vdCkKICAgIHsKICAgICAgICBpZiAocm9vdC5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5PYmplY3QKICAgICAgICAgICAgJiYgcm9vdC5UcnlHZXRQcm9wZXJ0eSgiaXRlbXMiLCBvdXQgdmFyIGl0ZW1zKQogICAgICAgICAgICAmJiBpdGVtcy5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5BcnJheSkKICAgICAgICB7CiAgICAgICAgICAgIHJldHVybiBpdGVtcy5FbnVtZXJhdGVBcnJheSgpOwogICAgICAgIH0KICAgICAgICByZXR1cm4gcm9vdC5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5BcnJheSA/IHJvb3QuRW51bWVyYXRlQXJyYXkoKSA6IFtdOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIElFbnVtZXJhYmxlPChzdHJpbmcgSWQsIHN0cmluZyBOYW1lKT4gUGFyc2VPcmdzKEpzb25FbGVtZW50IHJvb3QpCiAgICB7CiAgICAgICAgdmFyIHJlc3VsdCA9IG5ldyBMaXN0PChzdHJpbmcsIHN0cmluZyk+KCk7CiAgICAgICAgZm9yZWFjaCAodmFyIGl0ZW0gaW4gSXRlbXMocm9vdCkpCiAgICAgICAgewogICAgICAgICAgICBpZiAoaXRlbS5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QpIGNvbnRpbnVlOwogICAgICAgICAgICBzdHJpbmcgaWQgPSBTdHJpbmcoaXRlbSwgImlkIikgPz8gIiI7CiAgICAgICAgICAgIGlmICghaWQuU3RhcnRzV2l0aCgid3JrXyIsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbCkpIGNvbnRpbnVlOwogICAgICAgICAgICByZXN1bHQuQWRkKChpZCwgU3RyaW5nKGl0ZW0sICJuYW1lIikgPz8gIiIpKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHJlc3VsdDsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBhc3luYyBUYXNrPEpzb25Eb2N1bWVudD4gR2V0SnNvbkFzeW5jKAogICAgICAgIHN0cmluZyBwYXRoQW5kUXVlcnksIHN0cmluZyBjb29raWUsIHN0cmluZz8gb3JnSWQsIENhbmNlbGxhdGlvblRva2VuIHRva2VuKQogICAgewogICAgICAgIHVzaW5nIHZhciByZXEgPSBuZXcgSHR0cFJlcXVlc3RNZXNzYWdlKEh0dHBNZXRob2QuR2V0LCBBcGlCYXNlICsgIi8iICsgcGF0aEFuZFF1ZXJ5KTsKICAgICAgICByZXEuSGVhZGVycy5BZGQoIkNvb2tpZSIsIGNvb2tpZSk7CiAgICAgICAgaWYgKG9yZ0lkIGlzIG5vdCBudWxsKSByZXEuSGVhZGVycy5BZGQoIngtb3JnLWlkIiwgb3JnSWQpOwogICAgICAgIHVzaW5nIHZhciByZXNwID0gYXdhaXQgSHR0cC5TZW5kQXN5bmMocmVxLCBIdHRwQ29tcGxldGlvbk9wdGlvbi5SZXNwb25zZUhlYWRlcnNSZWFkLCB0b2tlbik7CiAgICAgICAgaWYgKHJlc3AuU3RhdHVzQ29kZSBpcyBIdHRwU3RhdHVzQ29kZS5VbmF1dGhvcml6ZWQgb3IgSHR0cFN0YXR1c0NvZGUuRm9yYmlkZGVuKQogICAgICAgIHsKICAgICAgICAgICAgdGhyb3cgbmV3IENvbW1hbmRDb2RlQXBpRXhjZXB0aW9uKHJlc3AuU3RhdHVzQ29kZSwgIua1j+iniOWZqOeZu+W9leaAgeW3sui/h+acnyzor7fph43mlrDnmbvlvZUgb3BlbmNvZGUuYWkiKTsKICAgICAgICB9CiAgICAgICAgcmVzcC5FbnN1cmVTdWNjZXNzU3RhdHVzQ29kZSgpOwogICAgICAgIGF3YWl0IHVzaW5nIHZhciBzdHJlYW0gPSBhd2FpdCByZXNwLkNvbnRlbnQuUmVhZEFzU3RyZWFtQXN5bmModG9rZW4pOwogICAgICAgIHJldHVybiBhd2FpdCBKc29uRG9jdW1lbnQuUGFyc2VBc3luYyhzdHJlYW0sIGNhbmNlbGxhdGlvblRva2VuOiB0b2tlbik7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nPyBTdHJpbmcoSnNvbkVsZW1lbnQgbywgc3RyaW5nIG5hbWUpID0+CiAgICAgICAgby5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5PYmplY3QgJiYgby5UcnlHZXRQcm9wZXJ0eShuYW1lLCBvdXQgdmFyIHYpCiAgICAgICAgJiYgdi5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5TdHJpbmcKICAgICAgICAgICAgPyB2LkdldFN0cmluZygpCiAgICAgICAgICAgIDogbnVsbDsKCiAgICAvLy8gPHN1bW1hcnk+6K+75LiA5Liq5pWw5YC85a2X5q6144CC5pyN5Yqh56uv5oqKIEJpZ0ludCDluo/liJfljJbmiJAqKuWtl+espuS4sioqLOi/memHjOS4pOenjeW9ouaAgemDveaUtuOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIGxvbmcgTG9uZ1N0cihKc29uRWxlbWVudCBvLCBzdHJpbmcgbmFtZSkKICAgIHsKICAgICAgICBpZiAoby5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QgfHwgIW8uVHJ5R2V0UHJvcGVydHkobmFtZSwgb3V0IHZhciB2KSkgcmV0dXJuIDA7CiAgICAgICAgaWYgKHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nKSByZXR1cm4gbG9uZy5UcnlQYXJzZSh2LkdldFN0cmluZygpLCBvdXQgbG9uZyBzKSA/IHMgOiAwOwogICAgICAgIGlmICh2LlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk51bWJlciAmJiB2LlRyeUdldEludDY0KG91dCBsb25nIG4pKSByZXR1cm4gbjsKICAgICAgICByZXR1cm4gMDsKICAgIH0KfQo=
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>官方按模型的聚合(金额来自官方计费字段,不用本机牌价)。</summary>
+public sealed record OpenCodeModelStat(
+    string Model,
+    string Provider,
+    long Requests,
+    long Input,
+    long Output,
+    long CacheRead,
+    long CacheWrite,
+    double Cost)
+{
+    public long TotalTokens => Input + Output + CacheRead + CacheWrite;
+}
+
+/// <summary>官方按自然日(UTC)的聚合。</summary>
+public sealed record OpenCodeDayStat(string Day, long Requests, long Tokens, double Cost);
+
+/// <summary>
+/// OpenCode 服务端的**权威聚合读数**——就是控制台用量页自己读的那套接口
+/// (<c>/console/api/usage/{summary,models,cost-by-day}</c>)。账号级,覆盖所有设备与 Key。
+/// 网页 usage 页「Last 30 days → Cost / Requests / Tokens」三格显示的就是它。
+/// </summary>
+public sealed record OpenCodeUsageStats(
+    string Range,
+    long Requests,
+    long Input,
+    long Output,
+    long CacheRead,
+    long CacheWrite,
+    double Cost,
+    IReadOnlyList<OpenCodeModelStat> Models,
+    IReadOnlyList<OpenCodeDayStat> Days,
+    DateTimeOffset FetchedAt)
+{
+    /// <summary>官方口径的总 token(= 输入 + 输出 + 缓存读 + 缓存写),不含推理分量
+    /// (服务端的 output 已经把它含在内了,这一点与逐请求明细不同)。</summary>
+    public long TotalTokens => Input + Output + CacheRead + CacheWrite;
+
+    /// <summary>这个窗口里官方有记录的天数。</summary>
+    public int ActiveDays => Days.Count;
+}
+
+/// <summary>
+/// 读 OpenCode 的**账号级用量聚合**。
+///
+/// **为什么不再翻 request-logs**:那是逐请求明细,只能游标串行翻页(100 条/页)。重度账号
+/// 实测 **117 页 / 353 秒**,而界面上的"近 30 天"根本翻不完——旧的 40 页上限只够最近两三天,
+/// 报出来的数字(1.77 亿 tokens / $2.58)只有真值(5.5 亿 / $9.65)的三分之一,却标着
+/// "近 30 天"。控制台自己的用量页之所以一点就出数,是因为它读的是下面这三个**聚合**接口。
+///
+/// 协议(2026-10,取自控制台前端 bundle 里的查询定义):
+///  · GET /console/api/orgs                          → 工作区列表
+///  · GET /console/api/usage/summary?range=7d|30d    → 总量(requests/tokens/cost)
+///  · GET /console/api/usage/models?range=…          → 按模型
+///  · GET /console/api/usage/cost-by-day?range=…     → 按自然日
+///  都要带 <c>x-org-id: wrk_xxx</c>;数值字段一律是**字符串**(服务端 BigInt 的 JSON 形态)。
+///
+/// 整条通道与 GOAT 的浏览器会话共用一个开关,默认关、读不到就安静返回 null。
+/// </summary>
+public static class OpenCodeUsageStatsClient
+{
+    private const string ApiBase = "https://opencode.ai/console/api";
+    private const string Origin = "https://opencode.ai";
+    /// <summary>微美分 → 美元。1 微美分 = 1e-6 美分 = 1e-8 美元(与 go/status 同一单位)。</summary>
+    private const double MicroCentsPerUsd = 100_000_000d;
+
+    private static readonly HttpClient Http = CreateClient();
+
+    /// <summary>上一次成功/失败的原因(界面与诊断显示用)。</summary>
+    public static string? LastStatus { get; private set; }
+
+    public static bool? Available { get; private set; }
+
+    /// <summary>
+    /// 结果缓存,按 range 分开存,**内存 + 落盘两层**。三条请求加起来不到一秒,缓存不
+    /// 是为了省等待,而是为了"打开用量窗就出数、不必每次都问服务端":窗口每次切页/切区间、
+    /// 每次重开应用都会走到这里。
+    /// </summary>
+    private static readonly Dictionary<string, (OpenCodeUsageStats Stats, DateTimeOffset At)> Cache =
+        new(StringComparer.Ordinal);
+
+    /// <summary>缓存新鲜度。官方这个窗口是**滚动 30 天**的统计量,十五分钟内不会有
+    /// 需要立刻反映的变化;想要当下的数就点顶部的「重新读取」。</summary>
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(15);
+
+    private static AppDataPaths? _paths;
+
+    /// <summary>丢掉结果缓存(界面上的「重新读取」用)。</summary>
+    public static void Invalidate()
+    {
+        Cache.Clear();
+        SaveToDisk();
+    }
+
+    /// <summary>数据目录(缓存落盘用)。引擎构造时 Attach。</summary>
+    public static void Attach(AppDataPaths paths)
+    {
+        _paths = paths;
+        LoadFromDisk();
+    }
+
+    private static string CacheFile => _paths is null
+        ? ""
+        : Path.Combine(_paths.RootDirectory, "opencode-usage-stats.json");
+
+    /// <summary>落盘形态:每个 range 一条读数 + 抓取时刻。</summary>
+    private sealed record CachedStats(OpenCodeUsageStats Stats, DateTimeOffset At);
+
+    /// <summary>
+    /// 把上次的读数从磁盘捡回来。**它不是数据源、只是加速**:文件坏了 / 格式变了就当没有,
+    /// 下次联网照样能拿到。有了它,应用重启后第一次打开用量窗也是秒出数。
+    /// </summary>
+    private static void LoadFromDisk()
+    {
+        try
+        {
+            if (CacheFile.Length == 0 || !File.Exists(CacheFile)) return;
+            var saved = JsonSerializer.Deserialize<List<CachedStats>>(File.ReadAllText(CacheFile));
+            if (saved is null) return;
+            foreach (var item in saved)
+            {
+                if (item.Stats.Range.Length > 0) Cache[item.Stats.Range] = (item.Stats, item.At);
+            }
+        }
+        catch { /* 缓存坏了就当没有——不影响联网取值 */ }
+    }
+
+    private static void SaveToDisk()
+    {
+        try
+        {
+            if (CacheFile.Length == 0) return;
+            File.WriteAllText(CacheFile, JsonSerializer.Serialize(
+                Cache.Values.Select(v => new CachedStats(v.Stats, v.At)).ToList()));
+        }
+        catch { /* 落盘失败不影响本次结果 */ }
+    }
+
+    /// <summary>把缓存年龄说成人话(状态行显示"多久前读的")。</summary>
+    private static string Age(DateTimeOffset at)
+    {
+        var span = DateTimeOffset.Now - at;
+        return span.TotalMinutes < 1 ? $"{(int)span.TotalSeconds} 秒"
+            : span.TotalHours < 1 ? $"{(int)span.TotalMinutes} 分钟"
+            : span.TotalDays < 1 ? $"{(int)span.TotalHours} 小时"
+            : $"{(int)span.TotalDays} 天";
+    }
+
+    /// <summary>把界面区间映射到官方提供的窗口。「今天」用 24h(滚动 24 小时,官方没有
+    /// "自然日"这一档),「近 7 天」用 7d,其余(近 30 天 / 自定义 / 全部)一律 30d——
+    /// 官方最多只给 30 天。</summary>
+    public static (string Range, string Label) WindowFor(SpendSpan span) => span switch
+    {
+        SpendSpan.Today => ("24h", "近 24 小时"),
+        SpendSpan.Week => ("7d", "近 7 天"),
+        _ => ("30d", "近 30 天"),
+    };
+
+    private static HttpClient CreateClient()
+    {
+        var client = ProxyHttp.Create(TimeSpan.FromSeconds(30));
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("PulseWin/1.0");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        client.DefaultRequestHeaders.Add("Origin", Origin);
+        client.DefaultRequestHeaders.Add("Referer", Origin + "/console/");
+        return client;
+    }
+
+    /// <summary>
+    /// 拉账号下**全部工作区**在 <paramref name="range"/>(<c>7d</c>/<c>30d</c>)窗口内的官方聚合。
+    /// 返回 null = 通道当前不可用(原因见 <see cref="LastStatus"/>)。
+    /// </summary>
+    /// <param name="forceRefresh">true = 跳过结果缓存重新拉(界面上的「重新读取」)。</param>
+    public static async Task<OpenCodeUsageStats?> TryFetchAsync(
+        string range,
+        CancellationToken token = default,
+        bool forceRefresh = false)
+    {
+        if (!AppSettings.Current.UseBrowserSessionForModelDetail)
+        {
+            LastStatus = "未启用(可在本页开启「浏览器会话明细」)";
+            return null;
+        }
+
+        if (!forceRefresh && Cache.TryGetValue(range, out var hit)
+            && DateTimeOffset.Now - hit.At < CacheLifetime)
+        {
+            Available = true;
+            LastStatus = $"已读到官方聚合读数({range},{Age(hit.At)}前的缓存)";
+            return hit.Stats;
+        }
+
+        string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+        if (cookie is null)
+        {
+            Available = false;
+            LastStatus = BrowserCookieStore.LastError ?? "读不到 opencode.ai 的登录 cookie";
+            return null;
+        }
+
+        try
+        {
+            long requests = 0, input = 0, output = 0, cacheRead = 0, cacheWrite = 0;
+            double cost = 0;
+            int workspaces = 0;
+            var models = new Dictionary<string, ModelAcc>(StringComparer.Ordinal);
+            var days = new Dictionary<string, (long Req, long Tok, double Cost)>(StringComparer.Ordinal);
+
+            using (var doc = await GetJsonAsync("orgs", cookie, null, token))
+            {
+                foreach (var (id, _) in ParseOrgs(doc.RootElement))
+                {
+                    workspaces++;
+                    using (var summary = await GetJsonAsync($"usage/summary?range={range}", cookie, id, token))
+                    {
+                        var root = summary.RootElement;
+                        requests += LongStr(root, "totalRequests");
+                        input += LongStr(root, "totalInputTokens");
+                        output += LongStr(root, "totalOutputTokens");
+                        cacheRead += LongStr(root, "totalCacheReadTokens");
+                        cacheWrite += LongStr(root, "totalCacheWrite5mTokens")
+                            + LongStr(root, "totalCacheWrite1hTokens");
+                        cost += LongStr(root, "totalCostMicroCents") / MicroCentsPerUsd;
+                    }
+
+                    using (var modelDoc = await GetJsonAsync($"usage/models?range={range}", cookie, id, token))
+                    {
+                        MergeModels(modelDoc.RootElement, models);
+                    }
+
+                    using (var dayDoc = await GetJsonAsync($"usage/cost-by-day?range={range}", cookie, id, token))
+                    {
+                        MergeDays(dayDoc.RootElement, days);
+                    }
+                }
+            }
+
+            if (workspaces == 0)
+            {
+                Available = false;
+                LastStatus = "账号下没有工作区(接口返回了空列表)";
+                return null;
+            }
+
+            Available = true;
+            LastStatus = $"已读到官方聚合读数({range},{workspaces} 个工作区)";
+            var stats = new OpenCodeUsageStats(
+                range, requests, input, output, cacheRead, cacheWrite, cost,
+                models.Select(kv => new OpenCodeModelStat(kv.Key, kv.Value.Provider, kv.Value.Req,
+                        kv.Value.In, kv.Value.Out, kv.Value.Cr, kv.Value.Cw, kv.Value.Cost))
+                    .OrderByDescending(m => m.TotalTokens)
+                    .ToList(),
+                days.Select(kv => new OpenCodeDayStat(kv.Key, kv.Value.Req, kv.Value.Tok, kv.Value.Cost))
+                    .OrderByDescending(d => d.Day, StringComparer.Ordinal)
+                    .ToList(),
+                DateTimeOffset.Now);
+            Cache[range] = (stats, DateTimeOffset.Now);
+            SaveToDisk();
+            return stats;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
+        {
+            BrowserCookieStore.Invalidate("opencode");
+            Invalidate();
+            Available = false;
+            LastStatus = "浏览器登录态已过期,请重新登录 opencode.ai";
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // 拉不到不是世界末日:有旧读数就先用它,并把"多旧"写在状态里(宁可标着时间显示旧数,
+            // 也不要让整块变成"读不到")
+            if (Cache.TryGetValue(range, out var stale))
+            {
+                Available = false;
+                LastStatus = $"读取失败,退回 {Age(stale.At)}前的读数:" + ex.Message;
+                return stale.Stats;
+            }
+            Available = false;
+            LastStatus = "读取官方聚合读数失败:" + ex.Message;
+            return null;
+        }
+    }
+
+    private sealed record ModelAcc(
+        string Provider, long Req, long In, long Out, long Cr, long Cw, double Cost);
+
+    private static void MergeModels(JsonElement root, Dictionary<string, ModelAcc> into)
+    {
+        foreach (var item in Items(root))
+        {
+            string model = String(item, "model") ?? "(unknown)";
+            string provider = String(item, "provider") ?? "";
+            long inTok = LongStr(item, "totalInputTokens");
+            long outTok = LongStr(item, "totalOutputTokens");
+            long cr = LongStr(item, "totalCacheReadTokens");
+            long cw = LongStr(item, "totalCacheWrite5mTokens") + LongStr(item, "totalCacheWrite1hTokens");
+            double cost = LongStr(item, "totalCostMicroCents") / MicroCentsPerUsd;
+            var acc = into.GetValueOrDefault(model, new ModelAcc(provider, 0, 0, 0, 0, 0, 0));
+            into[model] = acc with
+            {
+                Provider = acc.Provider.Length > 0 ? acc.Provider : provider,
+                Req = acc.Req + LongStr(item, "totalRequests"),
+                In = acc.In + inTok,
+                Out = acc.Out + outTok,
+                Cr = acc.Cr + cr,
+                Cw = acc.Cw + cw,
+                Cost = acc.Cost + cost,
+            };
+        }
+    }
+
+    private static void MergeDays(JsonElement root, Dictionary<string, (long Req, long Tok, double Cost)> into)
+    {
+        if (root.ValueKind != JsonValueKind.Array) return;
+        foreach (var item in root.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            string day = String(item, "date") ?? "";
+            if (day.Length == 0) continue;
+            var acc = into.GetValueOrDefault(day, (0, 0, 0));
+            into[day] = (
+                acc.Req + LongStr(item, "totalRequests"),
+                acc.Tok + LongStr(item, "totalTokens"),
+                acc.Cost + LongStr(item, "totalCostMicroCents") / MicroCentsPerUsd);
+        }
+    }
+
+    private static IEnumerable<JsonElement> Items(JsonElement root)
+    {
+        if (root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty("items", out var items)
+            && items.ValueKind == JsonValueKind.Array)
+        {
+            return items.EnumerateArray();
+        }
+        return root.ValueKind == JsonValueKind.Array ? root.EnumerateArray() : [];
+    }
+
+    private static IEnumerable<(string Id, string Name)> ParseOrgs(JsonElement root)
+    {
+        var result = new List<(string, string)>();
+        foreach (var item in Items(root))
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            string id = String(item, "id") ?? "";
+            if (!id.StartsWith("wrk_", StringComparison.Ordinal)) continue;
+            result.Add((id, String(item, "name") ?? ""));
+        }
+        return result;
+    }
+
+    private static async Task<JsonDocument> GetJsonAsync(
+        string pathAndQuery, string cookie, string? orgId, CancellationToken token)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/" + pathAndQuery);
+        req.Headers.Add("Cookie", cookie);
+        if (orgId is not null) req.Headers.Add("x-org-id", orgId);
+        using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token);
+        if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new CommandCodeApiException(resp.StatusCode, "浏览器登录态已过期,请重新登录 opencode.ai");
+        }
+        resp.EnsureSuccessStatusCode();
+        await using var stream = await resp.Content.ReadAsStreamAsync(token);
+        return await JsonDocument.ParseAsync(stream, cancellationToken: token);
+    }
+
+    private static string? String(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v)
+        && v.ValueKind == JsonValueKind.String
+            ? v.GetString()
+            : null;
+
+    /// <summary>读一个数值字段。服务端把 BigInt 序列化成**字符串**,这里两种形态都收。</summary>
+    private static long LongStr(JsonElement o, string name)
+    {
+        if (o.ValueKind != JsonValueKind.Object || !o.TryGetProperty(name, out var v)) return 0;
+        if (v.ValueKind == JsonValueKind.String) return long.TryParse(v.GetString(), out long s) ? s : 0;
+        if (v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out long n)) return n;
+        return 0;
+    }
+}

@@ -1,1 +1,241 @@
-dXNpbmcgU3lzdGVtLk5ldDsKdXNpbmcgU3lzdGVtLk5ldC5IdHRwOwp1c2luZyBTeXN0ZW0uVGV4dC5Kc29uOwoKbmFtZXNwYWNlIFB1bHNlV2luOwoKLy8vIDxzdW1tYXJ5PuaOp+WItuWPsCjnvZHpobUp57uZ5Ye655qE5LiA5Liq6aKd5bqm56qX5Y+j6K+75pWw44CCPC9zdW1tYXJ5PgovLy8gPHBhcmFtIG5hbWU9IlBlcmNlbnQiPuS4jiBvcGVuY29kZS5haSDnvZHpobUqKuWujOWFqOWQjOS4gOS4quWFrOW8jyoq566X5Ye655qE5pW05pWw55m+5YiG5q+U44CCPC9wYXJhbT4KLy8vIDxwYXJhbSBuYW1lPSJVc2VkVXNkIj7lt7LnlKjph5Hpop0o576O5YWDKeOAgjwvcGFyYW0+Ci8vLyA8cGFyYW0gbmFtZT0iTGltaXRVc2QiPui/meS4queql+WPo+eahOmineW6puS4iumZkCjnvo7lhYMp44CCPC9wYXJhbT4KcHVibGljIHNlYWxlZCByZWNvcmQgT3BlbkNvZGVDb25zb2xlV2luZG93KAogICAgZG91YmxlIFBlcmNlbnQsCiAgICBkb3VibGUgVXNlZFVzZCwKICAgIGRvdWJsZSBMaW1pdFVzZCwKICAgIERhdGVUaW1lT2Zmc2V0PyBSZXNldEF0KQp7CiAgICAvLy8gPHN1bW1hcnk+5pyq5Y+W5pW055qE57K+56Gu55m+5YiG5q+UKOWmgiAxMC42Myks55So5LqO55WM6Z2i5LiK55qE57uG6IqC5bGV56S644CCPC9zdW1tYXJ5PgogICAgcHVibGljIGRvdWJsZSBFeGFjdFBlcmNlbnQgPT4gTGltaXRVc2QgPiAwID8gVXNlZFVzZCAvIExpbWl0VXNkICogMTAwIDogMDsKfQoKLy8vIDxzdW1tYXJ5PuS4gOS4quW3peS9nOWMuijnvZHpobXlt6bkuIrop5IgZ28xL2dvMiDkuIvmi4nph4znmoTpgqPkuIDpobkp55qE5LiJ5Liq6aKd5bqm56qX5Y+j44CCPC9zdW1tYXJ5PgpwdWJsaWMgc2VhbGVkIHJlY29yZCBPcGVuQ29kZUNvbnNvbGVNZXRlcnMoCiAgICBzdHJpbmcgV29ya3NwYWNlSWQsCiAgICBzdHJpbmcgV29ya3NwYWNlTmFtZSwKICAgIE9wZW5Db2RlQ29uc29sZVdpbmRvdz8gRml2ZUhvdXIsCiAgICBPcGVuQ29kZUNvbnNvbGVXaW5kb3c/IFdlZWtseSwKICAgIE9wZW5Db2RlQ29uc29sZVdpbmRvdz8gTW9udGhseSk7CgovLy8gPHN1bW1hcnk+Ci8vLyBPcGVuQ29kZSBHbyDnmoQqKue9kemhteWPo+W+hCoq6aKd5bqm6K+75pWw4oCU4oCUPGM+R0VUIC9jb25zb2xlL2FwaS9nby9zdGF0dXM8L2M+44CCCi8vLwovLy8gKirkuLrku4DkuYjpnIDopoHlroMqKjpBUEkgS2V5IOmCo+S4querr+eCuSg8Yz4vemVuL2dvL3YxL3VzYWdlPC9jPinlj6rlm54qKuWQkeS4i+WPluaVtCoq55qECi8vLyDmlbTmlbDnmb7liIbmr5Qs6ICM572R6aG1KOS7peWPiuWQjOmXqOeahCBHb0dhdWdlKeivu+eahOaYryA8Yz5hY2Nlc3MubWV0ZXJzPC9jPiDph4znmoQKLy8vIDxjPnVzZWRNaWNyb0NlbnRzIC8gbGltaXRNaWNyb0NlbnRzPC9jPiDlvq7nvo7liIbljp/lgLws5YmN56uv5YaN6Ieq5bex566X55m+5YiG5q+U4oCU4oCUCi8vLyDkuKTovrnlj5bmlbTmlrnlvI/kuI3lkIws5ZCM5LiA5Liq55yf5a6e55So6YeP5Lya5beuIDEg5Liq55m+5YiG54K5KOe9kemhtSAxMSUgLyBBUEkgS2V5IDEwJSnjgIIKLy8vIOaDs+i3n+e9kemhteWvueW+l+S4iizlsLHlj6rog73otbDnvZHpobXov5nmnaHpgJrpgZMo6ZyA6KaB5rWP6KeI5Zmo55m75b2VIGNvb2tpZSnjgIIKLy8vCi8vLyDnmb7liIbmr5TlhazlvI/nhafmioTnvZHpobXliY3nq68s5LiA5a2X5LiN5beuOgovLy8gPGM+KHVzZWRNaWNyb0NlbnRzICogMjAwICsgbGltaXRNaWNyb0NlbnRzKSAvIChsaW1pdE1pY3JvQ2VudHMgKiAyKTwvYz4sCi8vLyDmlbTmlbDpmaTms5UgPSDlm5voiI3kupTlhaUocm91bmQgaGFsZiB1cCnjgILnlKggPHNlZSBjcmVmPSJsb25nIi8+IOWBmuaVtOaVsOi/kOeulywKLy8vIOS4jue9kemhteeahCBCaWdJbnQg57uT5p6c6YCQ5L2N5LiA6Ie0KEdvIFBsdXMg55qE5pyI5bqm5LiK6ZmQICQyNDAgPSAyLjRlMTAg5b6u576O5YiGLAovLy8g5LmYIDIwMCDkuYvlkI7ku43ov5zlnKggbG9uZyDojIPlm7TlhoUp44CCCi8vLwovLy8g5pW05p2h6YCa6YGT5LiO5piO57uG5YWx55So44CM5rWP6KeI5Zmo5Lya6K+d5piO57uG44CN5byA5YWzLOm7mOiupOWFszvor7vkuI3liLDlsLHlronpnZnov5Tlm54gbnVsbOOAggovLy8gPC9zdW1tYXJ5PgpwdWJsaWMgc3RhdGljIGNsYXNzIE9wZW5Db2RlQ29uc29sZUNsaWVudAp7CiAgICBwcml2YXRlIGNvbnN0IHN0cmluZyBBcGlCYXNlID0gImh0dHBzOi8vb3BlbmNvZGUuYWkvY29uc29sZS9hcGkiOwogICAgcHJpdmF0ZSBjb25zdCBzdHJpbmcgT3JpZ2luID0gImh0dHBzOi8vb3BlbmNvZGUuYWkiOwoKICAgIC8vLyA8c3VtbWFyeT7lvq7nvo7liIYg4oaSIOe+juWFg+OAgjEg5b6u576O5YiGID0gMWUtNiDnvo7liIYgPSAxZS04IOe+juWFg+OAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgY29uc3QgZG91YmxlIE1pY3JvQ2VudHNQZXJVc2QgPSAxMDBfMDAwXzAwMGQ7CgogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgSHR0cENsaWVudCBIdHRwID0gQ3JlYXRlQ2xpZW50KCk7CgogICAgLy8vIDxzdW1tYXJ5PuS4iuS4gOasoeaIkOWKny/lpLHotKXnmoTljp/lm6Ao55WM6Z2i5LiO6K+K5pat5pi+56S655SoKeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgc3RyaW5nPyBMYXN0U3RhdHVzIHsgZ2V0OyBwcml2YXRlIHNldDsgfQoKICAgIHByaXZhdGUgc3RhdGljIEh0dHBDbGllbnQgQ3JlYXRlQ2xpZW50KCkKICAgIHsKICAgICAgICB2YXIgY2xpZW50ID0gUHJveHlIdHRwLkNyZWF0ZShUaW1lU3Bhbi5Gcm9tU2Vjb25kcygzMCkpOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuVXNlckFnZW50LlBhcnNlQWRkKCJQdWxzZVdpbi8xLjAiKTsKICAgICAgICBjbGllbnQuRGVmYXVsdFJlcXVlc3RIZWFkZXJzLkFjY2VwdC5QYXJzZUFkZCgiYXBwbGljYXRpb24vanNvbiIpOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuQWRkKCJPcmlnaW4iLCBPcmlnaW4pOwogICAgICAgIGNsaWVudC5EZWZhdWx0UmVxdWVzdEhlYWRlcnMuQWRkKCJSZWZlcmVyIiwgT3JpZ2luICsgIi9jb25zb2xlLyIpOwogICAgICAgIHJldHVybiBjbGllbnQ7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOaLiei0puWPt+S4iyoq5YWo6YOo5bel5L2c5Yy6KirnmoTpop3luqbor7vmlbDjgILov5Tlm54gbnVsbCA9IOmAmumBk+W9k+WJjeS4jeWPr+eUqCjljp/lm6Dop4EKICAgIC8vLyA8c2VlIGNyZWY9Ikxhc3RTdGF0dXMiLz4p44CC5byA5YWz5Yik5pat5Zyo6LCD55So5pa5KOS4juaYjue7huWFseeUqOWQjOS4gOS4quW8gOWFsynjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIGFzeW5jIFRhc2s8SVJlYWRPbmx5TGlzdDxPcGVuQ29kZUNvbnNvbGVNZXRlcnM+Pz4gVHJ5RmV0Y2hNZXRlcnNBc3luYygKICAgICAgICBDYW5jZWxsYXRpb25Ub2tlbiB0b2tlbiA9IGRlZmF1bHQpCiAgICB7CiAgICAgICAgc3RyaW5nPyBjb29raWUgPSBCcm93c2VyQ29va2llU3RvcmUuR2V0Q29va2llSGVhZGVyKCJvcGVuY29kZSIsIGZvcmNlUmVmcmVzaDogZmFsc2UpOwogICAgICAgIGlmIChjb29raWUgaXMgbnVsbCkKICAgICAgICB7CiAgICAgICAgICAgIExhc3RTdGF0dXMgPSBCcm93c2VyQ29va2llU3RvcmUuTGFzdEVycm9yID8/ICLor7vkuI3liLAgb3BlbmNvZGUuYWkg55qE55m75b2VIGNvb2tpZSI7CiAgICAgICAgICAgIHJldHVybiBudWxsOwogICAgICAgIH0KCiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICB2YXIgcmVzdWx0ID0gbmV3IExpc3Q8T3BlbkNvZGVDb25zb2xlTWV0ZXJzPigpOwogICAgICAgICAgICB1c2luZyAodmFyIGRvYyA9IGF3YWl0IEdldEpzb25Bc3luYygib3JncyIsIGNvb2tpZSwgbnVsbCwgdG9rZW4pKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBmb3JlYWNoICh2YXIgKGlkLCBuYW1lKSBpbiBQYXJzZU9yZ3MoZG9jLlJvb3RFbGVtZW50KSkKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICB2YXIgbWV0ZXJzID0gYXdhaXQgRmV0Y2hNZXRlcnNBc3luYyhpZCwgbmFtZSwgY29va2llLCB0b2tlbik7CiAgICAgICAgICAgICAgICAgICAgaWYgKG1ldGVycyBpcyBub3QgbnVsbCkgcmVzdWx0LkFkZChtZXRlcnMpOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBpZiAocmVzdWx0LkNvdW50ID09IDApCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIExhc3RTdGF0dXMgPSAi6LSm5Y+35LiL5rKh5pyJ5Y+v6K+755qE5bel5L2c5Yy66aKd5bqmKOaOpeWPo+i/lOWbnuS6huepuuWIl+ihqCkiOwogICAgICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIExhc3RTdGF0dXMgPSAkIuW3suS7jue9kemhteaOp+WItuWPsOivu+WIsCB7cmVzdWx0LkNvdW50fSDkuKrlt6XkvZzljLrnmoTpop3luqbor7vmlbAiOwogICAgICAgICAgICByZXR1cm4gcmVzdWx0OwogICAgICAgIH0KICAgICAgICBjYXRjaCAoT3BlcmF0aW9uQ2FuY2VsZWRFeGNlcHRpb24pIHsgdGhyb3c7IH0KICAgICAgICBjYXRjaCAoQ29tbWFuZENvZGVBcGlFeGNlcHRpb24gZXgpIHdoZW4gKGV4LklzQXV0aGVudGljYXRpb25FcnJvcikKICAgICAgICB7CiAgICAgICAgICAgIEJyb3dzZXJDb29raWVTdG9yZS5JbnZhbGlkYXRlKCJvcGVuY29kZSIpOwogICAgICAgICAgICBMYXN0U3RhdHVzID0gIua1j+iniOWZqOeZu+W9leaAgeW3sui/h+acnyzor7fph43mlrDnmbvlvZUgb3BlbmNvZGUuYWkiOwogICAgICAgICAgICByZXR1cm4gbnVsbDsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIExhc3RTdGF0dXMgPSAi6K+75Y+W572R6aG16aKd5bqm5aSx6LSlOiIgKyBleC5NZXNzYWdlOwogICAgICAgICAgICByZXR1cm4gbnVsbDsKICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgYXN5bmMgVGFzazxPcGVuQ29kZUNvbnNvbGVNZXRlcnM/PiBGZXRjaE1ldGVyc0FzeW5jKAogICAgICAgIHN0cmluZyB3b3Jrc3BhY2VJZCwgc3RyaW5nIHdvcmtzcGFjZU5hbWUsIHN0cmluZyBjb29raWUsIENhbmNlbGxhdGlvblRva2VuIHRva2VuKQogICAgewogICAgICAgIHVzaW5nIHZhciBkb2MgPSBhd2FpdCBHZXRKc29uQXN5bmMoImdvL3N0YXR1cyIsIGNvb2tpZSwgd29ya3NwYWNlSWQsIHRva2VuKTsKICAgICAgICByZXR1cm4gUGFyc2VTdGF0dXMoZG9jLlJvb3RFbGVtZW50LCB3b3Jrc3BhY2VJZCwgd29ya3NwYWNlTmFtZSk7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOino+aekOS4gOautSBnby9zdGF0dXMg5ZON5bqU44CC6K+K5pat6Ieq5qOAKDxjPi0tZ28tbWV0ZXJzPC9jPinnm7TmjqXmi7/lkIjmiJDlk43lupTlloLlroMsCiAgICAvLy8g5aW95Zyo6K+75LiN5Yiw5rWP6KeI5ZmoIGNvb2tpZSDml7bkuZ/og73pqozkvY/jgIzop6PmnpAgKyDnmb7liIbmr5TlhazlvI/jgI3ov5nmnaHmnIDlrrnmmJPlh7rplJnnmoTot6/lvoTjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBpbnRlcm5hbCBzdGF0aWMgT3BlbkNvZGVDb25zb2xlTWV0ZXJzPyBQYXJzZVN0YXR1c0ZvckRpYWdub3N0aWNzKAogICAgICAgIHN0cmluZyBqc29uLCBzdHJpbmcgd29ya3NwYWNlSWQsIHN0cmluZyB3b3Jrc3BhY2VOYW1lKQogICAgewogICAgICAgIHVzaW5nIHZhciBkb2MgPSBKc29uRG9jdW1lbnQuUGFyc2UoanNvbik7CiAgICAgICAgcmV0dXJuIFBhcnNlU3RhdHVzKGRvYy5Sb290RWxlbWVudCwgd29ya3NwYWNlSWQsIHdvcmtzcGFjZU5hbWUpOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIE9wZW5Db2RlQ29uc29sZU1ldGVycz8gUGFyc2VTdGF0dXMoSnNvbkVsZW1lbnQgcm9vdCwgc3RyaW5nIHdvcmtzcGFjZUlkLCBzdHJpbmcgd29ya3NwYWNlTmFtZSkKICAgIHsKICAgICAgICBpZiAocm9vdC5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QpIHJldHVybiBudWxsOwogICAgICAgIGlmICghcm9vdC5UcnlHZXRQcm9wZXJ0eSgiYWNjZXNzIiwgb3V0IHZhciBhY2Nlc3MpIHx8IGFjY2Vzcy5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QpCiAgICAgICAgewogICAgICAgICAgICAvLyBhY2Nlc3MgPSBudWxsIOihqOekuui/meS4quW3peS9nOWMuuayoeaciSBHbyDorqLpmIUo5oiW6K6i6ZiF5bey6L+H5pyfKeKAlOKAlOS4jeaYr+mUmeivryzot7Pov4cKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgICAgIGlmICghYWNjZXNzLlRyeUdldFByb3BlcnR5KCJtZXRlcnMiLCBvdXQgdmFyIG1ldGVycykgfHwgbWV0ZXJzLlZhbHVlS2luZCAhPSBKc29uVmFsdWVLaW5kLk9iamVjdCkKICAgICAgICB7CiAgICAgICAgICAgIHJldHVybiBudWxsOwogICAgICAgIH0KCiAgICAgICAgRGF0ZVRpbWVPZmZzZXQ/IHBlcmlvZEVuZCA9IFBhcnNlRGF0ZShTdHIoYWNjZXNzLCAiZW5kc0F0IikpOwogICAgICAgIHJldHVybiBuZXcgT3BlbkNvZGVDb25zb2xlTWV0ZXJzKAogICAgICAgICAgICB3b3Jrc3BhY2VJZCwKICAgICAgICAgICAgd29ya3NwYWNlTmFtZSwKICAgICAgICAgICAgUGFyc2VNZXRlcihtZXRlcnMsICJmaXZlSG91ciIsIHBlcmlvZEVuZCksCiAgICAgICAgICAgIFBhcnNlTWV0ZXIobWV0ZXJzLCAid2VlayIsIHBlcmlvZEVuZCksCiAgICAgICAgICAgIFBhcnNlTWV0ZXIobWV0ZXJzLCAibW9udGgiLCBwZXJpb2RFbmQpKTsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBPcGVuQ29kZUNvbnNvbGVXaW5kb3c/IFBhcnNlTWV0ZXIoSnNvbkVsZW1lbnQgbWV0ZXJzLCBzdHJpbmcgbmFtZSwgRGF0ZVRpbWVPZmZzZXQ/IHBlcmlvZEVuZCkKICAgIHsKICAgICAgICBpZiAoIW1ldGVycy5UcnlHZXRQcm9wZXJ0eShuYW1lLCBvdXQgdmFyIG1ldGVyKSB8fCBtZXRlci5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QpCiAgICAgICAgewogICAgICAgICAgICByZXR1cm4gbnVsbDsKICAgICAgICB9CgogICAgICAgIGxvbmcgbGltaXQgPSBMb25nKG1ldGVyLCAibGltaXRNaWNyb0NlbnRzIik7CiAgICAgICAgaWYgKGxpbWl0IDw9IDApIHJldHVybiBudWxsOwogICAgICAgIGxvbmcgdXNlZCA9IExvbmcobWV0ZXIsICJ1c2VkTWljcm9DZW50cyIpOwoKICAgICAgICAvLyDkuI7nvZHpobXliY3nq6/lkIzkuIDkuKrmlbTmlbDlhazlvI865Zub6IiN5LqU5YWlKHJvdW5kIGhhbGYgdXApCiAgICAgICAgbG9uZyBwZXJjZW50ID0gKHVzZWQgKiAyMDAgKyBsaW1pdCkgLyAobGltaXQgKiAyKTsKCiAgICAgICAgcmV0dXJuIG5ldyBPcGVuQ29kZUNvbnNvbGVXaW5kb3coCiAgICAgICAgICAgIHBlcmNlbnQsCiAgICAgICAgICAgIHVzZWQgLyBNaWNyb0NlbnRzUGVyVXNkLAogICAgICAgICAgICBsaW1pdCAvIE1pY3JvQ2VudHNQZXJVc2QsCiAgICAgICAgICAgIFBhcnNlRGF0ZShTdHIobWV0ZXIsICJyZXNldHNBdCIpKSA/PyBwZXJpb2RFbmQpOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIElFbnVtZXJhYmxlPChzdHJpbmcgSWQsIHN0cmluZyBOYW1lKT4gUGFyc2VPcmdzKEpzb25FbGVtZW50IHJvb3QpCiAgICB7CiAgICAgICAgdmFyIHJlc3VsdCA9IG5ldyBMaXN0PChzdHJpbmcsIHN0cmluZyk+KCk7CiAgICAgICAgdmFyIGFycmF5ID0gcm9vdDsKICAgICAgICBpZiAoYXJyYXkuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuT2JqZWN0KQogICAgICAgIHsKICAgICAgICAgICAgZm9yZWFjaCAodmFyIG5hbWUgaW4gbmV3W10geyAiaXRlbXMiLCAiZGF0YSIsICJvcmdzIiB9KQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBpZiAoYXJyYXkuVHJ5R2V0UHJvcGVydHkobmFtZSwgb3V0IHZhciBpbm5lcikgJiYgaW5uZXIuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuQXJyYXkpCiAgICAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAgICAgYXJyYXkgPSBpbm5lcjsKICAgICAgICAgICAgICAgICAgICBicmVhazsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBpZiAoYXJyYXkuVmFsdWVLaW5kICE9IEpzb25WYWx1ZUtpbmQuQXJyYXkpIHJldHVybiByZXN1bHQ7CgogICAgICAgIGZvcmVhY2ggKHZhciBpdGVtIGluIGFycmF5LkVudW1lcmF0ZUFycmF5KCkpCiAgICAgICAgewogICAgICAgICAgICBpZiAoaXRlbS5WYWx1ZUtpbmQgIT0gSnNvblZhbHVlS2luZC5PYmplY3QpIGNvbnRpbnVlOwogICAgICAgICAgICBzdHJpbmcgaWQgPSBTdHIoaXRlbSwgImlkIikgPz8gIiI7CiAgICAgICAgICAgIGlmICghaWQuU3RhcnRzV2l0aCgid3JrXyIsIFN0cmluZ0NvbXBhcmlzb24uT3JkaW5hbCkpIGNvbnRpbnVlOwogICAgICAgICAgICByZXN1bHQuQWRkKChpZCwgU3RyKGl0ZW0sICJuYW1lIikgPz8gIiIpKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHJlc3VsdDsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBhc3luYyBUYXNrPEpzb25Eb2N1bWVudD4gR2V0SnNvbkFzeW5jKAogICAgICAgIHN0cmluZyBwYXRoQW5kUXVlcnksIHN0cmluZyBjb29raWUsIHN0cmluZz8gb3JnSWQsIENhbmNlbGxhdGlvblRva2VuIHRva2VuKQogICAgewogICAgICAgIHVzaW5nIHZhciByZXEgPSBuZXcgSHR0cFJlcXVlc3RNZXNzYWdlKEh0dHBNZXRob2QuR2V0LCBBcGlCYXNlICsgIi8iICsgcGF0aEFuZFF1ZXJ5KTsKICAgICAgICByZXEuSGVhZGVycy5BZGQoIkNvb2tpZSIsIGNvb2tpZSk7CiAgICAgICAgaWYgKG9yZ0lkIGlzIG5vdCBudWxsKSByZXEuSGVhZGVycy5BZGQoIngtb3JnLWlkIiwgb3JnSWQpOwogICAgICAgIHVzaW5nIHZhciByZXNwID0gYXdhaXQgSHR0cC5TZW5kQXN5bmMocmVxLCBIdHRwQ29tcGxldGlvbk9wdGlvbi5SZXNwb25zZUhlYWRlcnNSZWFkLCB0b2tlbik7CiAgICAgICAgaWYgKHJlc3AuU3RhdHVzQ29kZSBpcyBIdHRwU3RhdHVzQ29kZS5VbmF1dGhvcml6ZWQgb3IgSHR0cFN0YXR1c0NvZGUuRm9yYmlkZGVuKQogICAgICAgIHsKICAgICAgICAgICAgdGhyb3cgbmV3IENvbW1hbmRDb2RlQXBpRXhjZXB0aW9uKHJlc3AuU3RhdHVzQ29kZSwgIua1j+iniOWZqOeZu+W9leaAgeW3sui/h+acnyzor7fph43mlrDnmbvlvZUgb3BlbmNvZGUuYWkiKTsKICAgICAgICB9CiAgICAgICAgcmVzcC5FbnN1cmVTdWNjZXNzU3RhdHVzQ29kZSgpOwogICAgICAgIGF3YWl0IHVzaW5nIHZhciBzdHJlYW0gPSBhd2FpdCByZXNwLkNvbnRlbnQuUmVhZEFzU3RyZWFtQXN5bmModG9rZW4pOwogICAgICAgIHJldHVybiBhd2FpdCBKc29uRG9jdW1lbnQuUGFyc2VBc3luYyhzdHJlYW0sIGNhbmNlbGxhdGlvblRva2VuOiB0b2tlbik7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nPyBTdHIoSnNvbkVsZW1lbnQgbywgc3RyaW5nIG5hbWUpID0+CiAgICAgICAgby5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5PYmplY3QgJiYgby5UcnlHZXRQcm9wZXJ0eShuYW1lLCBvdXQgdmFyIHYpICYmIHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nCiAgICAgICAgICAgID8gdi5HZXRTdHJpbmcoKQogICAgICAgICAgICA6IG51bGw7CgogICAgcHJpdmF0ZSBzdGF0aWMgbG9uZyBMb25nKEpzb25FbGVtZW50IG8sIHN0cmluZyBuYW1lKQogICAgewogICAgICAgIGlmICghby5UcnlHZXRQcm9wZXJ0eShuYW1lLCBvdXQgdmFyIHYpKSByZXR1cm4gMDsKICAgICAgICBpZiAodi5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5OdW1iZXIgJiYgdi5UcnlHZXRJbnQ2NChvdXQgbG9uZyBuKSkgcmV0dXJuIG47CiAgICAgICAgaWYgKHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nICYmIGxvbmcuVHJ5UGFyc2Uodi5HZXRTdHJpbmcoKSwgb3V0IGxvbmcgcykpIHJldHVybiBzOwogICAgICAgIHJldHVybiAwOwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIERhdGVUaW1lT2Zmc2V0PyBQYXJzZURhdGUoc3RyaW5nPyB2YWx1ZSkgPT4KICAgICAgICBEYXRlVGltZU9mZnNldC5UcnlQYXJzZSh2YWx1ZSwgU3lzdGVtLkdsb2JhbGl6YXRpb24uQ3VsdHVyZUluZm8uSW52YXJpYW50Q3VsdHVyZSwKICAgICAgICAgICAgU3lzdGVtLkdsb2JhbGl6YXRpb24uRGF0ZVRpbWVTdHlsZXMuQXNzdW1lVW5pdmVyc2FsIHwgU3lzdGVtLkdsb2JhbGl6YXRpb24uRGF0ZVRpbWVTdHlsZXMuQWRqdXN0VG9Vbml2ZXJzYWwsCiAgICAgICAgICAgIG91dCB2YXIgcGFyc2VkKQogICAgICAgICAgICA/IHBhcnNlZAogICAgICAgICAgICA6IG51bGw7Cn0K
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>控制台(网页)给出的一个额度窗口读数。</summary>
+/// <param name="Percent">与 opencode.ai 网页**完全同一个公式**算出的整数百分比。</param>
+/// <param name="UsedUsd">已用金额(美元)。</param>
+/// <param name="LimitUsd">这个窗口的额度上限(美元)。</param>
+public sealed record OpenCodeConsoleWindow(
+    double Percent,
+    double UsedUsd,
+    double LimitUsd,
+    DateTimeOffset? ResetAt)
+{
+    /// <summary>未取整的精确百分比(如 10.63),用于界面上的细节展示。</summary>
+    public double ExactPercent => LimitUsd > 0 ? UsedUsd / LimitUsd * 100 : 0;
+}
+
+/// <summary>一个工作区(网页左上角 go1/go2 下拉里的那一项)的三个额度窗口。</summary>
+public sealed record OpenCodeConsoleMeters(
+    string WorkspaceId,
+    string WorkspaceName,
+    OpenCodeConsoleWindow? FiveHour,
+    OpenCodeConsoleWindow? Weekly,
+    OpenCodeConsoleWindow? Monthly);
+
+/// <summary>
+/// OpenCode Go 的**网页口径**额度读数——<c>GET /console/api/go/status</c>。
+///
+/// **为什么需要它**:API Key 那个端点(<c>/zen/go/v1/usage</c>)只回**向下取整**的
+/// 整数百分比,而网页(以及同门的 GoGauge)读的是 <c>access.meters</c> 里的
+/// <c>usedMicroCents / limitMicroCents</c> 微美分原值,前端再自己算百分比——
+/// 两边取整方式不同,同一个真实用量会差 1 个百分点(网页 11% / API Key 10%)。
+/// 想跟网页对得上,就只能走网页这条通道(需要浏览器登录 cookie)。
+///
+/// 百分比公式照抄网页前端,一字不差:
+/// <c>(usedMicroCents * 200 + limitMicroCents) / (limitMicroCents * 2)</c>,
+/// 整数除法 = 四舍五入(round half up)。用 <see cref="long"/> 做整数运算,
+/// 与网页的 BigInt 结果逐位一致(Go Plus 的月度上限 $240 = 2.4e10 微美分,
+/// 乘 200 之后仍远在 long 范围内)。
+///
+/// 整条通道与明细共用「浏览器会话明细」开关,默认关;读不到就安静返回 null。
+/// </summary>
+public static class OpenCodeConsoleClient
+{
+    private const string ApiBase = "https://opencode.ai/console/api";
+    private const string Origin = "https://opencode.ai";
+
+    /// <summary>微美分 → 美元。1 微美分 = 1e-6 美分 = 1e-8 美元。</summary>
+    private const double MicroCentsPerUsd = 100_000_000d;
+
+    private static readonly HttpClient Http = CreateClient();
+
+    /// <summary>上一次成功/失败的原因(界面与诊断显示用)。</summary>
+    public static string? LastStatus { get; private set; }
+
+    private static HttpClient CreateClient()
+    {
+        var client = ProxyHttp.Create(TimeSpan.FromSeconds(30));
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("PulseWin/1.0");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        client.DefaultRequestHeaders.Add("Origin", Origin);
+        client.DefaultRequestHeaders.Add("Referer", Origin + "/console/");
+        return client;
+    }
+
+    /// <summary>
+    /// 拉账号下**全部工作区**的额度读数。返回 null = 通道当前不可用(原因见
+    /// <see cref="LastStatus"/>)。开关判断在调用方(与明细共用同一个开关)。
+    /// </summary>
+    public static async Task<IReadOnlyList<OpenCodeConsoleMeters>?> TryFetchMetersAsync(
+        CancellationToken token = default)
+    {
+        string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+        if (cookie is null)
+        {
+            LastStatus = BrowserCookieStore.LastError ?? "读不到 opencode.ai 的登录 cookie";
+            return null;
+        }
+
+        try
+        {
+            var result = new List<OpenCodeConsoleMeters>();
+            using (var doc = await GetJsonAsync("orgs", cookie, null, token))
+            {
+                foreach (var (id, name) in ParseOrgs(doc.RootElement))
+                {
+                    var meters = await FetchMetersAsync(id, name, cookie, token);
+                    if (meters is not null) result.Add(meters);
+                }
+            }
+
+            if (result.Count == 0)
+            {
+                LastStatus = "账号下没有可读的工作区额度(接口返回了空列表)";
+                return null;
+            }
+
+            LastStatus = $"已从网页控制台读到 {result.Count} 个工作区的额度读数";
+            return result;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
+        {
+            BrowserCookieStore.Invalidate("opencode");
+            LastStatus = "浏览器登录态已过期,请重新登录 opencode.ai";
+            return null;
+        }
+        catch (Exception ex)
+        {
+            LastStatus = "读取网页额度失败:" + ex.Message;
+            return null;
+        }
+    }
+
+    private static async Task<OpenCodeConsoleMeters?> FetchMetersAsync(
+        string workspaceId, string workspaceName, string cookie, CancellationToken token)
+    {
+        using var doc = await GetJsonAsync("go/status", cookie, workspaceId, token);
+        return ParseStatus(doc.RootElement, workspaceId, workspaceName);
+    }
+
+    /// <summary>
+    /// 解析一段 go/status 响应。诊断自检(<c>--go-meters</c>)直接拿合成响应喂它,
+    /// 好在读不到浏览器 cookie 时也能验住「解析 + 百分比公式」这条最容易出错的路径。
+    /// </summary>
+    internal static OpenCodeConsoleMeters? ParseStatusForDiagnostics(
+        string json, string workspaceId, string workspaceName)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return ParseStatus(doc.RootElement, workspaceId, workspaceName);
+    }
+
+    private static OpenCodeConsoleMeters? ParseStatus(JsonElement root, string workspaceId, string workspaceName)
+    {
+        if (root.ValueKind != JsonValueKind.Object) return null;
+        if (!root.TryGetProperty("access", out var access) || access.ValueKind != JsonValueKind.Object)
+        {
+            // access = null 表示这个工作区没有 Go 订阅(或订阅已过期)——不是错误,跳过
+            return null;
+        }
+        if (!access.TryGetProperty("meters", out var meters) || meters.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        DateTimeOffset? periodEnd = ParseDate(Str(access, "endsAt"));
+        return new OpenCodeConsoleMeters(
+            workspaceId,
+            workspaceName,
+            ParseMeter(meters, "fiveHour", periodEnd),
+            ParseMeter(meters, "week", periodEnd),
+            ParseMeter(meters, "month", periodEnd));
+    }
+
+    private static OpenCodeConsoleWindow? ParseMeter(JsonElement meters, string name, DateTimeOffset? periodEnd)
+    {
+        if (!meters.TryGetProperty(name, out var meter) || meter.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        long limit = Long(meter, "limitMicroCents");
+        if (limit <= 0) return null;
+        long used = Long(meter, "usedMicroCents");
+
+        // 与网页前端同一个整数公式:四舍五入(round half up)
+        long percent = (used * 200 + limit) / (limit * 2);
+
+        return new OpenCodeConsoleWindow(
+            percent,
+            used / MicroCentsPerUsd,
+            limit / MicroCentsPerUsd,
+            ParseDate(Str(meter, "resetsAt")) ?? periodEnd);
+    }
+
+    private static IEnumerable<(string Id, string Name)> ParseOrgs(JsonElement root)
+    {
+        var result = new List<(string, string)>();
+        var array = root;
+        if (array.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var name in new[] { "items", "data", "orgs" })
+            {
+                if (array.TryGetProperty(name, out var inner) && inner.ValueKind == JsonValueKind.Array)
+                {
+                    array = inner;
+                    break;
+                }
+            }
+        }
+        if (array.ValueKind != JsonValueKind.Array) return result;
+
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            string id = Str(item, "id") ?? "";
+            if (!id.StartsWith("wrk_", StringComparison.Ordinal)) continue;
+            result.Add((id, Str(item, "name") ?? ""));
+        }
+        return result;
+    }
+
+    private static async Task<JsonDocument> GetJsonAsync(
+        string pathAndQuery, string cookie, string? orgId, CancellationToken token)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/" + pathAndQuery);
+        req.Headers.Add("Cookie", cookie);
+        if (orgId is not null) req.Headers.Add("x-org-id", orgId);
+        using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token);
+        if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new CommandCodeApiException(resp.StatusCode, "浏览器登录态已过期,请重新登录 opencode.ai");
+        }
+        resp.EnsureSuccessStatusCode();
+        await using var stream = await resp.Content.ReadAsStreamAsync(token);
+        return await JsonDocument.ParseAsync(stream, cancellationToken: token);
+    }
+
+    private static string? Str(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String
+            ? v.GetString()
+            : null;
+
+    private static long Long(JsonElement o, string name)
+    {
+        if (!o.TryGetProperty(name, out var v)) return 0;
+        if (v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out long n)) return n;
+        if (v.ValueKind == JsonValueKind.String && long.TryParse(v.GetString(), out long s)) return s;
+        return 0;
+    }
+
+    private static DateTimeOffset? ParseDate(string? value) =>
+        DateTimeOffset.TryParse(value, System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : null;
+}

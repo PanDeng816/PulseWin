@@ -1,1 +1,229 @@
-dXNpbmcgU3lzdGVtLkdsb2JhbGl6YXRpb247CnVzaW5nIFN5c3RlbS5JTzsKdXNpbmcgU3lzdGVtLk5ldDsKdXNpbmcgU3lzdGVtLk5ldC5IdHRwOwp1c2luZyBTeXN0ZW0uU2VjdXJpdHkuQ3J5cHRvZ3JhcGh5Owp1c2luZyBTeXN0ZW0uVGV4dDsKdXNpbmcgU3lzdGVtLlRleHQuSnNvbjsKCm5hbWVzcGFjZSBQdWxzZVdpbjsKCi8vLyA8c3VtbWFyeT4KLy8vIENvbW1hbmQgQ29kZSDnmoQqKua1j+iniOWZqOS8muivnSoq6YCa6YGT4oCU4oCU55So5p2l6K+75Y+q5pyJ55m75b2V5oCB5omN5byA5pS+55qE6YCQ5qih5Z6L5piO57uG44CCCi8vLwovLy8gKirkuLrku4DkuYjpnIDopoHlroMqKu+8mkNvbW1hbmQgQ29kZSDnmoQgQVBJIEtleSDlj6rlpJ/or7votKbmiLfnuqfmlbDlrZfvvIjpop3luqbjgIHkvZnpop3jgIHmsYfmgLvvvInjgIIKLy8vIOmAkOaooeWei+OAgemAkOaXtumXtOahtueahOaYjue7hu+8iOWQq+e8k+WtmOivuy/lhpkgdG9rZW7vvInlnKggPGM+L2ludGVybmFsL3VzYWdlL2NoYXJ0czwvYz4g5LiL77yMCi8vLyAqKkFQSSBLZXkg5YqgIE9yaWdpbi9SZWZlcmVyIOS8quijheS5n+aYryA0MDHvvIzlv4XpobvmnInmtY/op4jlmajnmbvlvZUgY29va2llKirjgIIKLy8vCi8vLyAqKueZu+W9leS8muivneS7juWTquadpSoq77yadjEuMTguMCDotbfotbDlhoXltYwgV2ViVmlldzIg55m75b2V56qXCi8vLyDvvIg8c2VlIGNyZWY9IkJyb3dzZXJMb2dpbldpbmRvdyIvPiAvIDxzZWUgY3JlZj0iQnJvd3NlckxvZ2luVGFyZ2V0cy5Db21tYW5kQ29kZSIvPu+8ie+8jAovLy8g55m75b2V5ZCOIGNvb2tpZSDnlLEgPHNlZSBjcmVmPSJCcm93c2VyQ29va2llU3RvcmUiLz4g5LulIERQQVBJIOiQveebmOOAguS7peWJjeaDsyLor7vmnKzmnLrmtY/op4jlmagKLy8vIGNvb2tpZSDlupMi77yM6YKj5p2h6Lev5bey6KKrIEVkZ2UvQ2hyb21lIOeahCB2MjAgQXBwLUJvdW5kIOWKoOWvhuWgteatu+OAggovLy8KLy8vICoq5pW05p2h6YCa6YGT5piv5Y+v6YCJ55qEKirvvJror7vkuI3liLAgY29va2llIOWwseWuiemdmeWcsOi/lOWbniBudWxs77yM55WM6Z2i55So5pys5Zyw5pWw5o2u5YWc5bqV5bm26K+05piO5Y6f5Zug44CCCi8vLyDnu53kuI3lm6DkuLrlroPorqnkuLvnlYzpnaLlh7rpl67popjjgIIKLy8vIDwvc3VtbWFyeT4KcHVibGljIHN0YXRpYyBjbGFzcyBDb21tYW5kQ29kZVdlYlNlc3Npb24KewogICAgcHJpdmF0ZSBjb25zdCBzdHJpbmcgSW50ZXJuYWxDaGFydHMgPSAiaW50ZXJuYWwvdXNhZ2UvY2hhcnRzIjsKICAgIHByaXZhdGUgY29uc3Qgc3RyaW5nIEludGVybmFsVXNhZ2UgPSAiaW50ZXJuYWwvdXNhZ2UiOwogICAgLy8vIDxzdW1tYXJ5Pua1j+iniOWZqOWPo+W+hOeahOermeeCuShPcmlnaW4gLyBSZWZlcmVyIOeUqOi/meS4qinjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGNvbnN0IHN0cmluZyBTaXRlT3JpZ2luID0gImh0dHBzOi8vY29tbWFuZGNvZGUuYWkiOwogICAgLy8vIDxzdW1tYXJ5Pioq5o6l5Y+j55yf5q2j55qE5Li75py6KirjgIIyMDI2LTEwLTEwIOWunua1izo8Yz5jb21tYW5kY29kZS5haS9pbnRlcm5hbC91c2FnZS9jaGFydHM8L2M+CiAgICAvLy8g6L+U5ZueIDQwNChOZXh0LmpzIOeahOmhtemdouWjsyksPGM+YXBpLmNvbW1hbmRjb2RlLmFpPC9jPiDlkIzot6/lvoTmiY3ov5Tlm54gMjAwICsgSlNPTuOAggogICAgLy8vIOi/meadoeS7peWJjeayoemqjOivgei/h+KAlOKAlOWboOS4uuaLv+S4jeWIsCBjb29raWUs5pW05p2h6YCa6YGT5LuO5rKh55yf5q2j6LeR6LW35p2l6L+H44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBjb25zdCBzdHJpbmcgQXBpT3JpZ2luID0gImh0dHBzOi8vYXBpLmNvbW1hbmRjb2RlLmFpIjsKCiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBIdHRwQ2xpZW50IEh0dHAgPSBDcmVhdGVDbGllbnQoKTsKCiAgICAvLy8gPHN1bW1hcnk+5LiK5LiA5qyh5aSx6LSlL+aIkOWKn+eahOWOn+WboO+8iOeVjOmdouaYvuekuueUqO+8ieOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgc3RyaW5nPyBMYXN0U3RhdHVzIHsgZ2V0OyBwcml2YXRlIHNldDsgfQoKICAgIC8vLyA8c3VtbWFyeT5jb29raWUg5piv5ZCm5Y+v55So77yIbnVsbCA9IOi/mOayoeivlei/h++8ieOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgYm9vbD8gQXZhaWxhYmxlIHsgZ2V0OyBwcml2YXRlIHNldDsgfQoKICAgIC8vLyA8c3VtbWFyeT7nvJPlrZjnmoQgY29va2llIOWktO+8iOaIkOWKn+WQjuefreaXtumXtOWGheWkjeeUqO+8jOmBv+WFjeavj+asoemDveWOu+ino+a1j+iniOWZqOW6k++8ieOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgc3RhdGljIHN0cmluZz8gX2Nvb2tpZUhlYWRlcjsKICAgIHByaXZhdGUgc3RhdGljIERhdGVUaW1lT2Zmc2V0IF9jb29raWVBdDsKCiAgICBwcml2YXRlIHN0YXRpYyBIdHRwQ2xpZW50IENyZWF0ZUNsaWVudCgpCiAgICB7CiAgICAgICAgdmFyIGNsaWVudCA9IFByb3h5SHR0cC5DcmVhdGUoVGltZVNwYW4uRnJvbVNlY29uZHMoMjUpKTsKICAgICAgICBjbGllbnQuRGVmYXVsdFJlcXVlc3RIZWFkZXJzLlVzZXJBZ2VudC5QYXJzZUFkZCgiUHVsc2VXaW4vMS4wIik7CiAgICAgICAgY2xpZW50LkRlZmF1bHRSZXF1ZXN0SGVhZGVycy5BY2NlcHQuUGFyc2VBZGQoImFwcGxpY2F0aW9uL2pzb24iKTsKICAgICAgICBjbGllbnQuRGVmYXVsdFJlcXVlc3RIZWFkZXJzLkFkZCgiT3JpZ2luIiwgU2l0ZU9yaWdpbik7CiAgICAgICAgY2xpZW50LkRlZmF1bHRSZXF1ZXN0SGVhZGVycy5BZGQoIlJlZmVyZXIiLCBTaXRlT3JpZ2luICsgIi8iKTsKICAgICAgICByZXR1cm4gY2xpZW50OwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDmi4nkuIDmrrXnqpflj6PlhoXnmoTpgJDmqKHlnovnvJPlrZjmmI7nu4bjgII8cGFyYW1yZWYgbmFtZT0iZnJvbSIvPi88cGFyYW1yZWYgbmFtZT0idG8iLz4g5piv5pys5Zyw5pe26Ze044CCCiAgICAvLy8g6L+U5ZueIG51bGwgPSDov5nmnaHpgJrpgZPlvZPliY3kuI3lj6/nlKjvvIjljp/lm6Dop4EgPHNlZSBjcmVmPSJMYXN0U3RhdHVzIi8+77yJ44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyBhc3luYyBUYXNrPExpc3Q8TW9kZWxDYWNoZUJ1Y2tldD4/PiBUcnlGZXRjaE1vZGVsQ2FjaGVBc3luYygKICAgICAgICBEYXRlVGltZU9mZnNldCBmcm9tLCBEYXRlVGltZU9mZnNldCB0bywgQ2FuY2VsbGF0aW9uVG9rZW4gdG9rZW4gPSBkZWZhdWx0KQogICAgewogICAgICAgIC8vIOm7mOiupOWFsyjop4EgQXBwU2V0dGluZ3MuVXNlQnJvd3NlclNlc3Npb25Gb3JNb2RlbERldGFpbCDnmoTor7TmmI466K+7IGNvb2tpZSDmnIkKICAgICAgICAvLyDooqsgQVYg6K+v5Yik55qE6aOO6ZmpLOS4lOa1j+iniOWZqOi/kOihjOaXtiBjb29raWUg5bqT5piv5o6S5LuW6ZSB55qE44CB5aSa5Y2K6K+75LiN5YiwKeOAggogICAgICAgIGlmICghQXBwU2V0dGluZ3MuQ3VycmVudC5Vc2VCcm93c2VyU2Vzc2lvbkZvck1vZGVsRGV0YWlsKQogICAgICAgIHsKICAgICAgICAgICAgTGFzdFN0YXR1cyA9ICLmnKrlkK/nlKgo5Y+v5Zyo5pys6aG15byA5ZCv44CM5rWP6KeI5Zmo5Lya6K+d5piO57uG44CNKSI7CiAgICAgICAgICAgIHJldHVybiBudWxsOwogICAgICAgIH0KCiAgICAgICAgc3RyaW5nPyBjb29raWUgPSBHZXRDb29raWVIZWFkZXIoZm9yY2VSZWZyZXNoOiBmYWxzZSk7CiAgICAgICAgaWYgKGNvb2tpZSBpcyBudWxsKSByZXR1cm4gbnVsbDsKCiAgICAgICAgc3RyaW5nIHF1ZXJ5ID0gJCI/ZnJvbT17VXJpLkVzY2FwZURhdGFTdHJpbmcoZnJvbS5Ub1VuaXZlcnNhbFRpbWUoKS5Ub1N0cmluZygiTyIsIEN1bHR1cmVJbmZvLkludmFyaWFudEN1bHR1cmUpKX0iCiAgICAgICAgICAgICsgJCImdG89e1VyaS5Fc2NhcGVEYXRhU3RyaW5nKHRvLlRvVW5pdmVyc2FsVGltZSgpLlRvU3RyaW5nKCJPIiwgQ3VsdHVyZUluZm8uSW52YXJpYW50Q3VsdHVyZSkpfSI7CgogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgLy8gKirlv4Xpobvnu53lr7kgVVJJKio66L+Z5LiqIEh0dHBDbGllbnQg5rKh6K6+IEJhc2VBZGRyZXNzLOe7meebuOWvuei3r+W+hOS8muebtOaOpeaKmwogICAgICAgICAgICAvLyBJbnZhbGlkT3BlcmF0aW9uRXhjZXB0aW9uKOi/meadoeS7peWJjeS7juayoei3keWIsOi/hyzmiYDku6XkuIDnm7TmsqHmmrTpnLIp44CCCiAgICAgICAgICAgIHVzaW5nIHZhciByZXEgPSBuZXcgSHR0cFJlcXVlc3RNZXNzYWdlKEh0dHBNZXRob2QuR2V0LCBBcGlPcmlnaW4gKyAiLyIgKyBJbnRlcm5hbENoYXJ0cyArIHF1ZXJ5KTsKICAgICAgICAgICAgcmVxLkhlYWRlcnMuQWRkKCJDb29raWUiLCBjb29raWUpOwogICAgICAgICAgICB1c2luZyB2YXIgcmVzcCA9IGF3YWl0IEh0dHAuU2VuZEFzeW5jKHJlcSwgSHR0cENvbXBsZXRpb25PcHRpb24uUmVzcG9uc2VIZWFkZXJzUmVhZCwgdG9rZW4pOwogICAgICAgICAgICBpZiAocmVzcC5TdGF0dXNDb2RlIGlzIEh0dHBTdGF0dXNDb2RlLlVuYXV0aG9yaXplZCBvciBIdHRwU3RhdHVzQ29kZS5Gb3JiaWRkZW4pCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgIC8vIOeZu+W9leaAgei/h+acnzrmuIXmjonnvJPlrZgs5LiL5qyh6YeN6Kej5rWP6KeI5Zmo5bqTKOeUqOaIt+mHjeaWsOeZu+W9leWQjuWNs+WPr+aBouWkjSkKICAgICAgICAgICAgICAgIEJyb3dzZXJDb29raWVTdG9yZS5JbnZhbGlkYXRlKCJjb21tYW5kY29kZSIpOwogICAgICAgICAgICAgICAgQXZhaWxhYmxlID0gZmFsc2U7CiAgICAgICAgICAgICAgICBMYXN0U3RhdHVzID0gIua1j+iniOWZqOeZu+W9leaAgeW3sui/h+acnyzor7fph43mlrDnmbvlvZUgY29tbWFuZGNvZGUuYWkiOwogICAgICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgcmVzcC5FbnN1cmVTdWNjZXNzU3RhdHVzQ29kZSgpOwogICAgICAgICAgICBhd2FpdCB1c2luZyB2YXIgc3RyZWFtID0gYXdhaXQgcmVzcC5Db250ZW50LlJlYWRBc1N0cmVhbUFzeW5jKHRva2VuKTsKICAgICAgICAgICAgdXNpbmcgdmFyIGRvYyA9IGF3YWl0IEpzb25Eb2N1bWVudC5QYXJzZUFzeW5jKHN0cmVhbSwgY2FuY2VsbGF0aW9uVG9rZW46IHRva2VuKTsKICAgICAgICAgICAgdmFyIGJ1Y2tldHMgPSBQYXJzZUNoYXJ0cyhkb2MuUm9vdEVsZW1lbnQpOwogICAgICAgICAgICBBdmFpbGFibGUgPSB0cnVlOwogICAgICAgICAgICBMYXN0U3RhdHVzID0gYnVja2V0cy5Db3VudCA+IDAKICAgICAgICAgICAgICAgID8gJCLlt7Lku47mtY/op4jlmajkvJror53or7vliLAge2J1Y2tldHMuQ291bnR9IOadoemAkOaooeWei+aYjue7hiIKICAgICAgICAgICAgICAgIDogIua1j+iniOWZqOS8muivneWPr+eUqCzkvYbov5nkuKrnqpflj6PmsqHmnInpgJDmqKHlnovmmI7nu4YiOwogICAgICAgICAgICByZXR1cm4gYnVja2V0czsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKE9wZXJhdGlvbkNhbmNlbGVkRXhjZXB0aW9uKSB7IHRocm93OyB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIEF2YWlsYWJsZSA9IGZhbHNlOwogICAgICAgICAgICBMYXN0U3RhdHVzID0gIuivu+WPlumAkOaooeWei+aYjue7huWksei0pToiICsgZXguTWVzc2FnZTsKICAgICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDop6PmnpAgPGM+L2ludGVybmFsL3VzYWdlL2NoYXJ0czwvYz4g55qE5Zue5YyF44CCKirnu5PmnoTmjIkgZ29hdC1nYXVnZSDnmoTor7vms5XlvZLkuIAqKu+8mgogICAgLy8vIOWug+aMiSDml7bpl7TmobYgw5cg5qih5Z6LIOi/lOWbniBjYWNoZVJlYWRJbnB1dFRva2VucyAvIGNhY2hlQ3JlYXRpb25JbnB1dFRva2VucyDnrYnjgIIKICAgIC8vLyDov5nph4zlr7nlrZfmrrXlkI3lgZrlrr3mnb7ljLnphY3vvIjmnI3liqHnq6/lrZfmrrXlpKflsI/lhpkv5ZG95ZCN5Lya5Y+Y77yJ77yM6Kej5p6Q5LiN5Ye65bCx6Lez6L+H6K+l6KGM44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgTGlzdDxNb2RlbENhY2hlQnVja2V0PiBQYXJzZUNoYXJ0cyhKc29uRWxlbWVudCByb290KQogICAgewogICAgICAgIHZhciByZXN1bHQgPSBuZXcgTGlzdDxNb2RlbENhY2hlQnVja2V0PigpOwogICAgICAgIC8vIOWbnuWMheWPr+iDveaYr+aVsOe7hO+8jOS5n+WPr+iDveaYryB7IGRhdGE6IFsuLi5dIH0gLyB7IGNoYXJ0czogWy4uLl0gfSAvIHsgcm93czogWy4uLl0gfQogICAgICAgIEpzb25FbGVtZW50IHJvd3MgPSByb290OwogICAgICAgIGlmIChyb290LlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk9iamVjdCkKICAgICAgICB7CiAgICAgICAgICAgIGZvcmVhY2ggKHZhciBuYW1lIGluIG5ld1tdIHsgImRhdGEiLCAiY2hhcnRzIiwgInJvd3MiLCAiYnVja2V0cyIsICJpdGVtcyIgfSkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgaWYgKHJvb3QuVHJ5R2V0UHJvcGVydHkobmFtZSwgb3V0IHZhciBpbm5lcikgJiYgaW5uZXIuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuQXJyYXkpCiAgICAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAgICAgcm93cyA9IGlubmVyOwogICAgICAgICAgICAgICAgICAgIGJyZWFrOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIGlmIChyb3dzLlZhbHVlS2luZCAhPSBKc29uVmFsdWVLaW5kLkFycmF5KSByZXR1cm4gcmVzdWx0OwoKICAgICAgICBmb3JlYWNoICh2YXIgcm93IGluIHJvd3MuRW51bWVyYXRlQXJyYXkoKSkKICAgICAgICB7CiAgICAgICAgICAgIGlmIChyb3cuVmFsdWVLaW5kICE9IEpzb25WYWx1ZUtpbmQuT2JqZWN0KSBjb250aW51ZTsKICAgICAgICAgICAgc3RyaW5nPyBtb2RlbCA9IFN0cihyb3csICJtb2RlbCIsICJtb2RlbElkIiwgIm1vZGVsX2lkIiwgIm5hbWUiKTsKICAgICAgICAgICAgaWYgKHN0cmluZy5Jc051bGxPcldoaXRlU3BhY2UobW9kZWwpKSBjb250aW51ZTsKCiAgICAgICAgICAgIC8vIOWtl+auteWQjeS7pSoq5a6e5rWL5Zue5YyFKirkuLrlh4YoMjAyNi0xMC0xMCDmi7/liLDnnJ8gY29va2llIOWQjuaguOi/h+S4gOadoeWujOaVtOWTjeW6lCk6CiAgICAgICAgICAgIC8vICAgbW9kZWwgLyBwcm92aWRlciAvIHRpbWVCdWNrZXQgLyByZXF1ZXN0cyAvIHRva2Vuc0luIC8gdG9rZW5zT3V0IC8gdG9rZW5zVG90YWwgLwogICAgICAgICAgICAvLyAgIGNhY2hlUmVhZElucHV0VG9rZW5zIC8gY2FjaGVDcmVhdGlvbklucHV0VG9rZW5zIC8gdG90YWxDb3N0IC8gaW5wdXRDb3N0IC8gLi4uCiAgICAgICAgICAgIC8vIOS7juWJjeWPquiupCBpbnB1dFRva2Vucy9vdXRwdXRUb2tlbnMvdGltZXN0YW1wLOS4juecn+WQjeWFqOmDqOWvueS4jeS4iiDih5Ig5Zub57G7IHRva2VuIOWFqCAwLAogICAgICAgICAgICAvLyDooqvkuIvpnaLpgqPmnaEi5YWoIDAg5bCx6Lez6L+HIui/h+a7pOWFiSzmmI7nu4bmsLjov5zmmK/nqbrnmoTjgILml6flkI3kv53nlZnlnKjlkI7pnaLlgZrlhbzlrrnjgIIKICAgICAgICAgICAgbG9uZyBjYWNoZVJlYWQgPSBMb25nKHJvdywgImNhY2hlUmVhZElucHV0VG9rZW5zIiwgImNhY2hlX3JlYWQiLCAiY2FjaGVSZWFkIiwgImNhY2hlUmVhZFRva2VucyIpOwogICAgICAgICAgICBsb25nIGNhY2hlV3JpdGUgPSBMb25nKHJvdywgImNhY2hlQ3JlYXRpb25JbnB1dFRva2VucyIsICJjYWNoZV93cml0ZSIsICJjYWNoZVdyaXRlIiwgImNhY2hlQ3JlYXRpb25Ub2tlbnMiKTsKICAgICAgICAgICAgbG9uZyBpbnB1dCA9IExvbmcocm93LCAidG9rZW5zSW4iLCAiaW5wdXRUb2tlbnMiLCAiaW5wdXQiLCAiaW5wdXRfdG9rZW5zIik7CiAgICAgICAgICAgIGxvbmcgb3V0cHV0ID0gTG9uZyhyb3csICJ0b2tlbnNPdXQiLCAib3V0cHV0VG9rZW5zIiwgIm91dHB1dCIsICJvdXRwdXRfdG9rZW5zIik7CiAgICAgICAgICAgIGlmIChpbnB1dCA9PSAwICYmIG91dHB1dCA9PSAwICYmIGNhY2hlUmVhZCA9PSAwICYmIGNhY2hlV3JpdGUgPT0gMCkgY29udGludWU7CgogICAgICAgICAgICBEYXRlVGltZU9mZnNldD8gYXQgPSBUaW1lKHJvdywgInRpbWVCdWNrZXQiLCAidGltZXN0YW1wIiwgInRpbWUiLCAiYnVja2V0IiwgImRhdGUiKTsKICAgICAgICAgICAgcmVzdWx0LkFkZChuZXcgTW9kZWxDYWNoZUJ1Y2tldCgKICAgICAgICAgICAgICAgIE1vZGVsUHJpY2VzLkRpc3BsYXlOYW1lKG1vZGVsKSwgYXQsIGlucHV0LCBjYWNoZVdyaXRlLCBjYWNoZVJlYWQsIG91dHB1dCkpOwogICAgICAgIH0KICAgICAgICByZXR1cm4gcmVzdWx0OwogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHN0cmluZz8gU3RyKEpzb25FbGVtZW50IG8sIHBhcmFtcyBzdHJpbmdbXSBuYW1lcykKICAgIHsKICAgICAgICBmb3JlYWNoICh2YXIgbiBpbiBuYW1lcykKICAgICAgICB7CiAgICAgICAgICAgIGlmIChvLlRyeUdldFByb3BlcnR5KG4sIG91dCB2YXIgdikgJiYgdi5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5TdHJpbmcpCiAgICAgICAgICAgICAgICByZXR1cm4gdi5HZXRTdHJpbmcoKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgbG9uZyBMb25nKEpzb25FbGVtZW50IG8sIHBhcmFtcyBzdHJpbmdbXSBuYW1lcykKICAgIHsKICAgICAgICBmb3JlYWNoICh2YXIgbiBpbiBuYW1lcykKICAgICAgICB7CiAgICAgICAgICAgIGlmICghby5UcnlHZXRQcm9wZXJ0eShuLCBvdXQgdmFyIHYpKSBjb250aW51ZTsKICAgICAgICAgICAgaWYgKHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuTnVtYmVyICYmIHYuVHJ5R2V0SW50NjQob3V0IGxvbmcgbjY0KSkgcmV0dXJuIG42NDsKICAgICAgICAgICAgaWYgKHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nICYmIGxvbmcuVHJ5UGFyc2Uodi5HZXRTdHJpbmcoKSwgb3V0IGxvbmcgcykpIHJldHVybiBzOwogICAgICAgIH0KICAgICAgICByZXR1cm4gMDsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBEYXRlVGltZU9mZnNldD8gVGltZShKc29uRWxlbWVudCBvLCBwYXJhbXMgc3RyaW5nW10gbmFtZXMpCiAgICB7CiAgICAgICAgZm9yZWFjaCAodmFyIG4gaW4gbmFtZXMpCiAgICAgICAgewogICAgICAgICAgICBpZiAoIW8uVHJ5R2V0UHJvcGVydHkobiwgb3V0IHZhciB2KSkgY29udGludWU7CiAgICAgICAgICAgIGlmICh2LlZhbHVlS2luZCA9PSBKc29uVmFsdWVLaW5kLk51bWJlciAmJiB2LlRyeUdldEludDY0KG91dCBsb25nIGVwb2NoKSkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgcmV0dXJuIGVwb2NoIDwgMTAwXzAwMF8wMDBfMDAwTAogICAgICAgICAgICAgICAgICAgID8gRGF0ZVRpbWVPZmZzZXQuRnJvbVVuaXhUaW1lU2Vjb25kcyhlcG9jaCkKICAgICAgICAgICAgICAgICAgICA6IERhdGVUaW1lT2Zmc2V0LkZyb21Vbml4VGltZU1pbGxpc2Vjb25kcyhlcG9jaCk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgaWYgKHYuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nICYmCiAgICAgICAgICAgICAgICBEYXRlVGltZU9mZnNldC5UcnlQYXJzZSh2LkdldFN0cmluZygpLCBDdWx0dXJlSW5mby5JbnZhcmlhbnRDdWx0dXJlLAogICAgICAgICAgICAgICAgICAgIERhdGVUaW1lU3R5bGVzLkFzc3VtZVVuaXZlcnNhbCwgb3V0IHZhciBwYXJzZWQpKQogICAgICAgICAgICAgICAgcmV0dXJuIHBhcnNlZDsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9CgogICAgLy8g4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCU4oCUIOa1j+iniOWZqCBjb29raWUg6K+75Y+WIOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlOKAlAoKICAgIC8vLyA8c3VtbWFyeT7mi7zlh7ogY29tbWFuZGNvZGUuYWkg55qEIENvb2tpZSDlpLQoY29va2llIOino+WvhuS4jue8k+WtmOWFseeUqAogICAgLy8vIDxzZWUgY3JlZj0iQnJvd3NlckNvb2tpZVN0b3JlIi8+KeOAguivu+S4jeWIsOi/lOWbniBudWxs44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBzdGF0aWMgc3RyaW5nPyBHZXRDb29raWVIZWFkZXIoYm9vbCBmb3JjZVJlZnJlc2gpID0+CiAgICAgICAgQnJvd3NlckNvb2tpZVN0b3JlLkdldENvb2tpZUhlYWRlcigiY29tbWFuZGNvZGUiLCBmb3JjZVJlZnJlc2gpOwp9CgovLy8gPHN1bW1hcnk+5LiA5p2hIumAkOaooeWeiyAvIOaXtumXtOahtiLnmoTnvJPlrZjmmI7nu4bvvIjmnaXoh6ogQ29tbWFuZCBDb2RlIOa1j+iniOWZqOS8muivnemAmumBk++8ieOAgjwvc3VtbWFyeT4KcHVibGljIHNlYWxlZCByZWNvcmQgTW9kZWxDYWNoZUJ1Y2tldCgKICAgIHN0cmluZyBNb2RlbCwKICAgIERhdGVUaW1lT2Zmc2V0PyBBdCwKICAgIGxvbmcgSW5wdXQsCiAgICBsb25nIENhY2hlV3JpdGUsCiAgICBsb25nIENhY2hlUmVhZCwKICAgIGxvbmcgT3V0cHV0KQp7CiAgICBwdWJsaWMgbG9uZyBUb3RhbCA9PiBJbnB1dCArIENhY2hlV3JpdGUgKyBDYWNoZVJlYWQgKyBPdXRwdXQ7CgogICAgLy8vIDxzdW1tYXJ5Pue8k+WtmOWRveS4reeOhyA9IOe8k+WtmOivuyAvIOWFqOmDqOi+k+WFpeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBkb3VibGU/IENhY2hlSGl0CiAgICB7CiAgICAgICAgZ2V0CiAgICAgICAgewogICAgICAgICAgICBsb25nIGlucHV0VG90YWwgPSBJbnB1dCArIENhY2hlV3JpdGUgKyBDYWNoZVJlYWQ7CiAgICAgICAgICAgIHJldHVybiBpbnB1dFRvdGFsID4gMCA/IChkb3VibGUpQ2FjaGVSZWFkIC8gaW5wdXRUb3RhbCA6IG51bGw7CiAgICAgICAgfQogICAgfQp9Cg==
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>
+/// Command Code 的**浏览器会话**通道——用来读只有登录态才开放的逐模型明细。
+///
+/// **为什么需要它**：Command Code 的 API Key 只够读账户级数字（额度、余额、汇总）。
+/// 逐模型、逐时间桶的明细（含缓存读/写 token）在 <c>/internal/usage/charts</c> 下，
+/// **API Key 加 Origin/Referer 伪装也是 401，必须有浏览器登录 cookie**。
+///
+/// **登录会话从哪来**：v1.18.0 起走内嵌 WebView2 登录窗
+/// （<see cref="BrowserLoginWindow"/> / <see cref="BrowserLoginTargets.CommandCode"/>），
+/// 登录后 cookie 由 <see cref="BrowserCookieStore"/> 以 DPAPI 落盘。以前想"读本机浏览器
+/// cookie 库"，那条路已被 Edge/Chrome 的 v20 App-Bound 加密堵死。
+///
+/// **整条通道是可选的**：读不到 cookie 就安静地返回 null，界面用本地数据兜底并说明原因。
+/// 绝不因为它让主界面出问题。
+/// </summary>
+public static class CommandCodeWebSession
+{
+    private const string InternalCharts = "internal/usage/charts";
+    private const string InternalUsage = "internal/usage";
+    /// <summary>浏览器口径的站点(Origin / Referer 用这个)。</summary>
+    private const string SiteOrigin = "https://commandcode.ai";
+    /// <summary>**接口真正的主机**。2026-10-10 实测:<c>commandcode.ai/internal/usage/charts</c>
+    /// 返回 404(Next.js 的页面壳),<c>api.commandcode.ai</c> 同路径才返回 200 + JSON。
+    /// 这条以前没验证过——因为拿不到 cookie,整条通道从没真正跑起来过。</summary>
+    private const string ApiOrigin = "https://api.commandcode.ai";
+
+    private static readonly HttpClient Http = CreateClient();
+
+    /// <summary>上一次失败/成功的原因（界面显示用）。</summary>
+    public static string? LastStatus { get; private set; }
+
+    /// <summary>cookie 是否可用（null = 还没试过）。</summary>
+    public static bool? Available { get; private set; }
+
+    /// <summary>缓存的 cookie 头（成功后短时间内复用，避免每次都去解浏览器库）。</summary>
+    private static string? _cookieHeader;
+    private static DateTimeOffset _cookieAt;
+
+    private static HttpClient CreateClient()
+    {
+        var client = ProxyHttp.Create(TimeSpan.FromSeconds(25));
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("PulseWin/1.0");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        client.DefaultRequestHeaders.Add("Origin", SiteOrigin);
+        client.DefaultRequestHeaders.Add("Referer", SiteOrigin + "/");
+        return client;
+    }
+
+    /// <summary>
+    /// 拉一段窗口内的逐模型缓存明细。<paramref name="from"/>/<paramref name="to"/> 是本地时间。
+    /// 返回 null = 这条通道当前不可用（原因见 <see cref="LastStatus"/>）。
+    /// </summary>
+    public static async Task<List<ModelCacheBucket>?> TryFetchModelCacheAsync(
+        DateTimeOffset from, DateTimeOffset to, CancellationToken token = default)
+    {
+        // 默认关(见 AppSettings.UseBrowserSessionForModelDetail 的说明:读 cookie 有
+        // 被 AV 误判的风险,且浏览器运行时 cookie 库是排他锁的、多半读不到)。
+        if (!AppSettings.Current.UseBrowserSessionForModelDetail)
+        {
+            LastStatus = "未启用(可在本页开启「浏览器会话明细」)";
+            return null;
+        }
+
+        string? cookie = GetCookieHeader(forceRefresh: false);
+        if (cookie is null) return null;
+
+        string query = $"?from={Uri.EscapeDataString(from.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}"
+            + $"&to={Uri.EscapeDataString(to.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}";
+
+        try
+        {
+            // **必须绝对 URI**:这个 HttpClient 没设 BaseAddress,给相对路径会直接抛
+            // InvalidOperationException(这条以前从没跑到过,所以一直没暴露)。
+            using var req = new HttpRequestMessage(HttpMethod.Get, ApiOrigin + "/" + InternalCharts + query);
+            req.Headers.Add("Cookie", cookie);
+            using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token);
+            if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                // 登录态过期:清掉缓存,下次重解浏览器库(用户重新登录后即可恢复)
+                BrowserCookieStore.Invalidate("commandcode");
+                Available = false;
+                LastStatus = "浏览器登录态已过期,请重新登录 commandcode.ai";
+                return null;
+            }
+            resp.EnsureSuccessStatusCode();
+            await using var stream = await resp.Content.ReadAsStreamAsync(token);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: token);
+            var buckets = ParseCharts(doc.RootElement);
+            Available = true;
+            LastStatus = buckets.Count > 0
+                ? $"已从浏览器会话读到 {buckets.Count} 条逐模型明细"
+                : "浏览器会话可用,但这个窗口没有逐模型明细";
+            return buckets;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            Available = false;
+            LastStatus = "读取逐模型明细失败:" + ex.Message;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 解析 <c>/internal/usage/charts</c> 的回包。**结构按 goat-gauge 的读法归一**：
+    /// 它按 时间桶 × 模型 返回 cacheReadInputTokens / cacheCreationInputTokens 等。
+    /// 这里对字段名做宽松匹配（服务端字段大小写/命名会变），解析不出就跳过该行。
+    /// </summary>
+    private static List<ModelCacheBucket> ParseCharts(JsonElement root)
+    {
+        var result = new List<ModelCacheBucket>();
+        // 回包可能是数组，也可能是 { data: [...] } / { charts: [...] } / { rows: [...] }
+        JsonElement rows = root;
+        if (root.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var name in new[] { "data", "charts", "rows", "buckets", "items" })
+            {
+                if (root.TryGetProperty(name, out var inner) && inner.ValueKind == JsonValueKind.Array)
+                {
+                    rows = inner;
+                    break;
+                }
+            }
+        }
+        if (rows.ValueKind != JsonValueKind.Array) return result;
+
+        foreach (var row in rows.EnumerateArray())
+        {
+            if (row.ValueKind != JsonValueKind.Object) continue;
+            string? model = Str(row, "model", "modelId", "model_id", "name");
+            if (string.IsNullOrWhiteSpace(model)) continue;
+
+            // 字段名以**实测回包**为准(2026-10-10 拿到真 cookie 后核过一条完整响应):
+            //   model / provider / timeBucket / requests / tokensIn / tokensOut / tokensTotal /
+            //   cacheReadInputTokens / cacheCreationInputTokens / totalCost / inputCost / ...
+            // 从前只认 inputTokens/outputTokens/timestamp,与真名全部对不上 ⇒ 四类 token 全 0,
+            // 被下面那条"全 0 就跳过"过滤光,明细永远是空的。旧名保留在后面做兼容。
+            long cacheRead = Long(row, "cacheReadInputTokens", "cache_read", "cacheRead", "cacheReadTokens");
+            long cacheWrite = Long(row, "cacheCreationInputTokens", "cache_write", "cacheWrite", "cacheCreationTokens");
+            long input = Long(row, "tokensIn", "inputTokens", "input", "input_tokens");
+            long output = Long(row, "tokensOut", "outputTokens", "output", "output_tokens");
+            if (input == 0 && output == 0 && cacheRead == 0 && cacheWrite == 0) continue;
+
+            DateTimeOffset? at = Time(row, "timeBucket", "timestamp", "time", "bucket", "date");
+            result.Add(new ModelCacheBucket(
+                ModelPrices.DisplayName(model), at, input, cacheWrite, cacheRead, output));
+        }
+        return result;
+    }
+
+    private static string? Str(JsonElement o, params string[] names)
+    {
+        foreach (var n in names)
+        {
+            if (o.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String)
+                return v.GetString();
+        }
+        return null;
+    }
+
+    private static long Long(JsonElement o, params string[] names)
+    {
+        foreach (var n in names)
+        {
+            if (!o.TryGetProperty(n, out var v)) continue;
+            if (v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out long n64)) return n64;
+            if (v.ValueKind == JsonValueKind.String && long.TryParse(v.GetString(), out long s)) return s;
+        }
+        return 0;
+    }
+
+    private static DateTimeOffset? Time(JsonElement o, params string[] names)
+    {
+        foreach (var n in names)
+        {
+            if (!o.TryGetProperty(n, out var v)) continue;
+            if (v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out long epoch))
+            {
+                return epoch < 100_000_000_000L
+                    ? DateTimeOffset.FromUnixTimeSeconds(epoch)
+                    : DateTimeOffset.FromUnixTimeMilliseconds(epoch);
+            }
+            if (v.ValueKind == JsonValueKind.String &&
+                DateTimeOffset.TryParse(v.GetString(), CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal, out var parsed))
+                return parsed;
+        }
+        return null;
+    }
+
+    // ————————— 浏览器 cookie 读取 —————————
+
+    /// <summary>拼出 commandcode.ai 的 Cookie 头(cookie 解密与缓存共用
+    /// <see cref="BrowserCookieStore"/>)。读不到返回 null。</summary>
+    private static string? GetCookieHeader(bool forceRefresh) =>
+        BrowserCookieStore.GetCookieHeader("commandcode", forceRefresh);
+}
+
+/// <summary>一条"逐模型 / 时间桶"的缓存明细（来自 Command Code 浏览器会话通道）。</summary>
+public sealed record ModelCacheBucket(
+    string Model,
+    DateTimeOffset? At,
+    long Input,
+    long CacheWrite,
+    long CacheRead,
+    long Output)
+{
+    public long Total => Input + CacheWrite + CacheRead + Output;
+
+    /// <summary>缓存命中率 = 缓存读 / 全部输入。</summary>
+    public double? CacheHit
+    {
+        get
+        {
+            long inputTotal = Input + CacheWrite + CacheRead;
+            return inputTotal > 0 ? (double)CacheRead / inputTotal : null;
+        }
+    }
+}

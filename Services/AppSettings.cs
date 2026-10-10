@@ -1,1 +1,426 @@
-77u/dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uTGlucTsKdXNpbmcgU3lzdGVtLlRleHQuSnNvbjsKdXNpbmcgU3lzdGVtLlRleHQuSnNvbi5TZXJpYWxpemF0aW9uOwoKbmFtZXNwYWNlIFB1bHNlV2luOwoKLy8vIDxzdW1tYXJ5PgovLy8g55So5oi35Y+v6LCD6aG5KOiQveebmCBEYXRhXHNldHRpbmdzLmpzb24p44CC5Lul5YmN5oql6K2m6ZiI5YC8L+WQjOatpemXtOmalOmDveaYr+e8luivkeacn+W4uOmHjywKLy8vIOiuvue9rueql+WPo+WPquiDveWhqyBBUEkgS2V54oCU4oCU5byA5pS+6L+Z5Yeg6aG55ZCO5LiN55So5pS55Luj56CB6YeN5Y+R5bCx6IO96LCD5pW06KeC5oSf44CCCi8vLyA8L3N1bW1hcnk+CnB1YmxpYyBzZWFsZWQgY2xhc3MgQXBwU2V0dGluZ3MKewogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgSnNvblNlcmlhbGl6ZXJPcHRpb25zIEpzb25PcHRpb25zID0gbmV3KCkKICAgIHsKICAgICAgICBXcml0ZUluZGVudGVkID0gdHJ1ZSwKICAgICAgICBDb252ZXJ0ZXJzID0geyBuZXcgSnNvblN0cmluZ0VudW1Db252ZXJ0ZXIoKSB9CiAgICB9OwogICAgcHJpdmF0ZSBzdGF0aWMgcmVhZG9ubHkgb2JqZWN0IEdhdGUgPSBuZXcoKTsKCiAgICAvLy8gPHN1bW1hcnk+55So6YeP5oql6K2m6ZiI5YC8KDB+MSnjgILotoXov4fljbPovaznuqLjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgZG91YmxlIEFsZXJ0VGhyZXNob2xkIHsgZ2V0OyBzZXQ7IH0gPSAwLjgwOwoKICAgIC8vLyA8c3VtbWFyeT7lkIzmraXmiJDlip/lkI7nmoTnrYnlvoXpl7TpmpQo56eSKeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBpbnQgU3luY0ludGVydmFsU2Vjb25kcyB7IGdldDsgc2V0OyB9ID0gNjA7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOe+juWFg+WFkeS6uuawkeW4geaxh+eOhyznlKjph4/nu5/orqHnmoTkvLDnrpfph5Hpop3mjInlroPmmL7npLrjgILku7fnm67ooagobW9kZWxzLmRldinmnKzouqvmmK/nvo7lhYMsCiAgICAvLy8g6L+Z6YeM5Y+q5b2x5ZON5pi+56S644CCMCA9IOaYvuekuue+juWFg+WOn+WAvCzkuI3lgZrmjaLnrpfjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgZG91YmxlIFVzZFRvQ255IHsgZ2V0OyBzZXQ7IH0gPSA3LjI7CgogICAgLy8vIDxzdW1tYXJ5PnJhaWwg6IOM5pmv5LiN6YCP5piO5bqmKDB+MSnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgZG91YmxlIFN1cmZhY2VPcGFjaXR5IHsgZ2V0OyBzZXQ7IH0gPSAwLjgwOwoKICAgIC8vLyA8c3VtbWFyeT5EZWVwU2VlayDlj6rmnInkvZnpop3jgIHmsqHmnInpop3luqYs546v55qE5YiG5q+N5LuO5ZOq5p2lKOingSBCYWxhbmNlQmFzaXMp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIEJhbGFuY2VCYXNpcyBEZWVwU2Vla0Jhc2lzIHsgZ2V0OyBzZXQ7IH0gPSBCYWxhbmNlQmFzaXMuU2luY2VUb3BVcDsKCiAgICAvLy8gPHN1bW1hcnk+QnVkZ2V0IOaooeW8j+S4i+eahCLmu6HnrrEi6YeR6aKdO+epui/pnZ7mraPmlbDop4bkuLrmnKrorr7nva7jgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgZG91YmxlPyBEZWVwU2Vla0J1ZGdldCB7IGdldDsgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5Pui0puaIt+WQjOaXtuaMgeacieWkmuenjeW4geenjeaXtiznjq/ot5/nnYDlk6rkuIDnp40756m6ID0g56ys5LiA5Liq5pyJ6ZKx55qE44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZz8gRGVlcFNlZWtDdXJyZW5jeSB7IGdldDsgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIHJhaWwg5LiK5pi+56S65ZOq5Lqb5pWw5o2u5rqQLOS7peWPiuWug+S7rOeahOmhuuW6j+OAgioq6aG65bqP5Y2z5pWw57uE6aG65bqPKirigJTigJTku47liY3ov5nph4zmmK8KICAgIC8vLyAi5LiJ5Liq5biD5bCUICsg5LiA5LiqIDYg56eN5o6S5YiX55qE5p6a5Li+5a2X56ym5LiyIizmupDkuIDlpJrlsLHmmK/pmLbkuZjniIbngrgs6ICM5LiU5Yqg5rqQ6KaB5ZCM5pe25pS5CiAgICAvLy8g5YWt5aSE44CC546w5Zyo57uf5LiA5oiQ5LiA5Liq5YiX6KGoOuWGheWuuSA9IOWPr+ingeeahOa6kCjmjInnlKjmiLfmjpLnmoTpobrluo8pLOS4jeWcqOWIl+ihqOmHjOeahOa6kAogICAgLy8vIOWwseaYr+S4jeaYvuekuuOAguingSA8c2VlIGNyZWY9IlZpc2libGVTb3VyY2VzIi8+IOS4jiA8c2VlIGNyZWY9IlNvdXJjZUNhdGFsb2ciLz7jgIIKICAgIC8vLwogICAgLy8vICoq5YW85a655pen6K6+572uKio66ICB54mI5pys55qEIFNob3dHb2F0L1Nob3dPcGVuQ29kZS9TaG93RGVlcFNlZWsvU291cmNlT3JkZXIg5LuN6IO96KKr6K+75YWlCiAgICAvLy8gKOingSA8c2VlIGNyZWY9IlNhbml0aXplZCIvPiDph4znmoTov4Hnp7spLOWtmOmHj+eUqOaIt+WNh+e6p+S4jeS4oumFjee9ruOAggogICAgLy8vCiAgICAvLy8gKirpu5jorqTnlZnnqbrjgIHnlLEgPHNlZSBjcmVmPSJOb3JtYWxpemVWaXNpYmxlU291cmNlcyIvPiDlhZzlupUqKizogIzkuI3mmK/nm7TmjqXlhpnmrbvkuInkuKrmupA6CiAgICAvLy8g6Iul6Z2e56m66buY6K6k5YC85LiN5YqoLOWPjeW6j+WIl+WMluS4gOS7veayoeacieivpeWtl+auteeahOaXp+mFjee9ruaXtuWug+S7jeaYr+m7mOiupOWAvCwKICAgIC8vLyAi5pen5a2X5q616L+B56e7IuWIhuaUr+WwseawuOi/nOi1sOS4jeWIsCjmnKzmnLrlrp7mtYvouKnov4fov5nkuKrlnZEs6KeBIC0tY2hlY2stbWlncmF0aW9uKeOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHB1YmxpYyBMaXN0PHN0cmluZz4gVmlzaWJsZVNvdXJjZXMgeyBnZXQ7IHNldDsgfSA9IG5ldygpOwoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDlj6rlnKgqKuatpOWIu+ato+WcqOiiq+eDpyoq55qE5rqQ5LiK55S75Ye65YaF5ZyIKDUg5bCP5pe2546vKTvkuI3mtLvot4PnmoTmupDlj6rnlLvlpJblnIgo5oC76aKd5bqmKeOAggogICAgLy8vCiAgICAvLy8g6buY6K6k5byAOnJhaWwg5LiK5LiA5o6SIuWPjOeOryLph4ws5LiN5rS76LeD55qE5rqQ6YKj5LiA5ZyI56m66L2o6YGT5Y+q5aKe5Yqg6KeG6KeJ5Zmq6Z+zLOS4jeW4puadpeS/oeaBr+OAggogICAgLy8vIOaYvuekuuaIkOWNleeOr+S5i+WQjiwi5ZOq5Liq5rqQ5q2j5Zyo6KKr55SoIuS4gOecvOWwseiDveeci+WHuuadpSjlhoXlnIjlh7rnjrDmnKzouqvlsLHmmK/kv6Hlj7cp44CCCiAgICAvLy8g5Yik5a6a6LWw5rS75Yqo5L+h5Y+3KOWuouaIt+err+WbnuWQiOeahOmAmumBkyks5LiN5pivIjUg5bCP5pe256qX5Y+j5pyJ5Y6G5Y+y55So6YePIuKAlOKAlOa7muWKqOeql+WPowogICAgLy8vIOS8muiuqSBVc2VkJmd0OzAg5Zyo5YGc55So5ZCO5oyC5aW95Yeg5Liq5bCP5pe2LOWGheWciOaUtuS4jei1t+adpSh2MS4xNi4xIOWJjeeahOaXp+avm+eXhSnjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBIaWRlSWRsZUlubmVyUmluZyB7IGdldDsgc2V0OyB9ID0gdHJ1ZTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5pen54mI5a2X5q61KOS7heeUqOS6juivu+WFpei/geenuyzlhpnlh7rml7bkuI3lho3kuqfnlJ8p44CC55WZ552A5piv5Zug5Li6IHNldHRpbmdzLmpzb24g6YeM5Y+v6IO96L+Y5pyJ5a6D5LusLAogICAgLy8vIOWIoOaOieWtl+auteS8muiuqeiAgemFjee9rueahOWLvumAieeKtuaAgeS4ouaOieOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIFtKc29uSWdub3JlKENvbmRpdGlvbiA9IEpzb25JZ25vcmVDb25kaXRpb24uV2hlbldyaXRpbmdOdWxsKV0KICAgIHB1YmxpYyBib29sPyBTaG93R29hdCB7IGdldDsgc2V0OyB9CiAgICBbSnNvbklnbm9yZShDb25kaXRpb24gPSBKc29uSWdub3JlQ29uZGl0aW9uLldoZW5Xcml0aW5nTnVsbCldCiAgICBwdWJsaWMgYm9vbD8gU2hvd09wZW5Db2RlIHsgZ2V0OyBzZXQ7IH0KICAgIFtKc29uSWdub3JlKENvbmRpdGlvbiA9IEpzb25JZ25vcmVDb25kaXRpb24uV2hlbldyaXRpbmdOdWxsKV0KICAgIHB1YmxpYyBib29sPyBTaG93RGVlcFNlZWsgeyBnZXQ7IHNldDsgfQogICAgW0pzb25JZ25vcmUoQ29uZGl0aW9uID0gSnNvbklnbm9yZUNvbmRpdGlvbi5XaGVuV3JpdGluZ051bGwpXQogICAgcHVibGljIHN0cmluZz8gU291cmNlT3JkZXIgeyBnZXQ7IHNldDsgfQogICAgW0pzb25JZ25vcmUoQ29uZGl0aW9uID0gSnNvbklnbm9yZUNvbmRpdGlvbi5XaGVuV3JpdGluZ051bGwpXQogICAgcHVibGljIHN0cmluZz8gR29hdFRpbnQgeyBnZXQ7IHNldDsgfQogICAgW0pzb25JZ25vcmUoQ29uZGl0aW9uID0gSnNvbklnbm9yZUNvbmRpdGlvbi5XaGVuV3JpdGluZ051bGwpXQogICAgcHVibGljIHN0cmluZz8gT3BlbkNvZGVUaW50IHsgZ2V0OyBzZXQ7IH0KICAgIFtKc29uSWdub3JlKENvbmRpdGlvbiA9IEpzb25JZ25vcmVDb25kaXRpb24uV2hlbldyaXRpbmdOdWxsKV0KICAgIHB1YmxpYyBzdHJpbmc/IERlZXBTZWVrVGludCB7IGdldDsgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PueOr+S4i+aYr+WQpuaYvuekuuivu+aVsCjnmb7liIbmr5Qv6YeR6aKdKeOAguWFs+aOieWQjueOr+mXtOi3neS4jiByYWlsIOmrmOW6puWQjOatpeaUtueqhOOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBib29sIFNob3dQZXJjZW50IHsgZ2V0OyBzZXQ7IH0gPSB0cnVlOwoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDlnIbnjq/lsLrlr7jkuInmoaM6MD1TbWFsbCjnjq8gMzZwdC/nur8gMy4yKeOAgTE9U3RhbmRhcmQoNDAvMy42LOm7mOiupCnjgIEyPUxhcmdlKDQ0LzQsdjEuNSDljp/moLcp44CCCiAgICAvLy8gcmFpbCDlrr3jgIHnjq/lv4Pot53nrYnlh6DkvZXlhajpg6jpmo/moaPogZTliqgo6KeBIE1haW5XaW5kb3cuUmluZ1NpemVUYWJsZSnjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgaW50IFJpbmdTaXplIHsgZ2V0OyBzZXQ7IH0gPSAyOwoKICAgIC8vLyA8c3VtbWFyeT7njq/kuI7njq/nmoTpl7Tot53kuInmoaM6MD1UaWdodCgycHQp44CBMT1TdGFuZGFyZCg0cHQp44CBMj1Mb29zZSgxMHB0KeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBpbnQgUmluZ1NwYWNpbmcgeyBnZXQ7IHNldDsgfSA9IDE7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOiHquWKqOmakOiXj+aXtuaUtue8qeaIkOi0tOWcqOWxj+W5lei+uee8mOeahCA2cHQg57uG5p2hKOS4iua4uCBoaWRlIHVudGlsIHBvaW50ZWQgYXQpLAogICAgLy8vIOiAjOS4jeaYr+a7keWHuuWxj+WkluOAgue7huadoeS4iuW4puacgOe0p+W8oOa6kOeahOitpuaKpeiJsjvmjIfpkojpnaDov5Hng63ljLrljbPlsZXlvIDjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBIaWRlVG9TbGl2ZXIgeyBnZXQ7IHNldDsgfSA9IGZhbHNlOwoKICAgIC8vLyA8c3VtbWFyeT7liY3lj7Dnqpflj6PmmK/lhajlsY/lupTnlKjml7boh6rliqjmioogcmFpbCDol4/otbfmnaUo55yL6KeG6aKRL+a8lOekuuS4jeiiq+aJk+aJsCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBIaWRlSW5GdWxsU2NyZWVuIHsgZ2V0OyBzZXQ7IH0gPSBmYWxzZTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5piv5ZCm5ZCv55SoICoqQ29tbWFuZCBDb2RlIOa1j+iniOWZqOS8muivnemAmumBkyoqOuivu+acrOacuua1j+iniOWZqChFZGdlL0Nocm9tZSnnmoTnmbvlvZUgY29va2llLAogICAgLy8vIOWOu+iwg+WPquacieeZu+W9leaAgeaJjeW8gOaUvueahOmAkOaooeWei+aYjue7huaOpeWPoyjnvJPlrZjor7sv5YaZIHRva2VuIOetiSnjgIIKICAgIC8vLwogICAgLy8vICoq6buY6K6k5YWzKios5pyJ5Lik5Liq56Gs55CG55SxOgogICAgLy8vIOKRoCDmnInnnJ/lrp7liY3ovabkuYvpibTigJTigJTlkIznsbvlt6XlhbcgQ29kZXhCYXItV2luIOWboCLop6Plr4bmtY/op4jlmaggY29va2llIOivu+mFjeminSLooqsKICAgIC8vLyAgICDmnYDmr5Lova/ku7blhajlrrbor6/liKTmiJAgaW5mb3N0ZWFsZXIs5pyA5ZCO5pKk5o6J5YWo6YOo5LqM6L+b5Yi244CC6K+7IGNvb2tpZSDov5nku7bkuosKICAgIC8vLyAgICDmnKzouqvlsLHkvJrop6blj5Hlronlhajova/ku7bnmoTlkK/lj5HlvI/op4TliJks5ZOq5oCV55So6YCU5q2j5b2T44CCCiAgICAvLy8g4pGhIOa1j+iniOWZqOi/kOihjOaXtiBjb29raWUg5pWw5o2u5bqT5pivKirmjpLku5bplIHlrpoqKueahCjmnKzmnLrlrp7mtYvov57lj6ror7vlhbHkuqvmiZPlvIDpg70KICAgIC8vLyAgICBXaW5FcnJvciAzMiks5omA5Lul6L+Z5p2h6YCa6YGT5Z+65pys5Y+q5Zyo5rWP6KeI5Zmo5a6M5YWo5YWz6Zet5pe25omN5pyJ5py65Lya6K+75Yiw4oCU4oCUCiAgICAvLy8gICAg5pel5bi45byA552A5rWP6KeI5Zmo5pe25a6D5aSa5Y2K5pivIuivu+S4jeWIsCIs5L2T6aqM5bm25LiN56iz5a6a44CCCiAgICAvLy8KICAgIC8vLyDmnKzlnLDmnaXmupAoWkNvZGUgLyBPcGVuQ29kZSDnmoTorrDlvZXlupMp5LiN57uZ57yT5a2Y6K+7L+WGmeS7peWklueahOS7u+S9leS4nOilv+e8uumhuSwKICAgIC8vLyDpgJDmqKHlnovpobXlnKjlroPlhbPnnYDnmoTml7blgJnkuZ/lrozmlbTlj6/nlKjjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBVc2VCcm93c2VyU2Vzc2lvbkZvck1vZGVsRGV0YWlsIHsgZ2V0OyBzZXQ7IH0gPSBmYWxzZTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g572R57uc5Luj55CGOjA96Lef6ZqP57O757ufKOm7mOiupCnjgIExPeebtOi/nuOAgTI95omL5YqoIEhUVFAg5Luj55CGKOWcsOWdgOingSBQcm94eUFkZHJlc3Mp44CCCiAgICAvLy8g5L+u5pS55ZCO6YeN5ZCv56iL5bqP55Sf5pWIKEh0dHBDbGllbnQg5piv5ZCv5Yqo5pe25Yib5bu655qE6ZW/55Sf5ZG95ZGo5pyf5a+56LGhKeOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHB1YmxpYyBpbnQgUHJveHlNb2RlIHsgZ2V0OyBzZXQ7IH0gPSAwOwoKICAgIC8vLyA8c3VtbWFyeT7miYvliqjku6PnkIblnLDlnYAs5aaCIGh0dHA6Ly8xMjcuMC4wLjE6Nzg5MOOAglNPQ0tTNSDlrqLmiLfnq6/or7floavlroPnmoQgSFRUUCDnq6/lj6PjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RyaW5nPyBQcm94eUFkZHJlc3MgeyBnZXQ7IHNldDsgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyBCaWdNb2RlbCDljIXmnIjnmoTmnIjpooTnrpco5Lq65rCR5biBKeOAgkJpZ01vZGVsIOayoeaciemFjemineaOpeWPo+OAgeWPquacieWMheaciOi0uSzloavkuoblroMsCiAgICAvLy8g55So6YeP56qX5Y+j55qE6aKd5bqm5p2h5omN5pi+56S6IuacrOaciOS8sOeulyAvIOmihOeulyLov5vluqbkuI7mnIjlupXpooTmtYvjgILnqbogPSDlj6rmmL7npLrmnKzmnIjkvLDnrpfjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgZG91YmxlPyBCaWdNb2RlbE1vbnRobHlCdWRnZXRDbnkgeyBnZXQ7IHNldDsgfQoKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyBPcGVuQ29kZSBHbyDnmoQqKumZhOWKoOi0puWPtyoqKOW3peS9nOWMuinmuIXljZU65a6e5L6L57yW5Y+3ICsg5pi+56S65qCH562+44CCCiAgICAvLy8gS2V5IOacrOS9k+WcqCBEUEFQSSDliqDlr4bnmoQgb3BlbmNvZGUtZ28tYWNjb3VudHMuYmluIOmHjCwqKue7neS4jei/m+i/meS4quaYjuaWh+aWh+S7tioq44CCCiAgICAvLy8g5Li76LSm5Y+35LiN6L+b5YiX6KGo4oCU4oCU5a6D5rK/55SoIGF1dGguanNvbi/njq/looPlj5jph48v5omL5YqoIEtleSDnmoTml6LmnInpk77ot68s5rKh5pyJ57yW5Y+344CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHVibGljIExpc3Q8T3BlbkNvZGVBY2NvdW50SW5mbz4gT3BlbkNvZGVBY2NvdW50cyB7IGdldDsgc2V0OyB9ID0gbmV3KCk7CgogICAgLy8vIDxzdW1tYXJ5PuafkOmZhOWKoOi0puWPt+eahOaYvuekuuagh+etvjvmsqHmnInlsLHnu5ki6LSm5Y+3IG4i44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZyBPcGVuQ29kZUFjY291bnRMYWJlbChpbnQgaW5zdGFuY2UpID0+CiAgICAgICAgT3BlbkNvZGVBY2NvdW50cy5GaXJzdE9yRGVmYXVsdChhID0+IGEuSWQgPT0gaW5zdGFuY2UpPy5MYWJlbCBpcyB7IH0gbGFiZWwgJiYgbGFiZWwuTGVuZ3RoID4gMAogICAgICAgICAgICA/IGxhYmVsCiAgICAgICAgICAgIDogJCLotKblj7cge2luc3RhbmNlfSI7CgogICAgcHVibGljIGJvb2wgSGFzT3BlbkNvZGVBY2NvdW50KGludCBpbnN0YW5jZSkgPT4gT3BlbkNvZGVBY2NvdW50cy5BbnkoYSA9PiBhLklkID09IGluc3RhbmNlKTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5q+P5Liq5p2l5rqQ6Ieq5a6a5LmJ546v6ImyKCNSUkdHQkIp44CC56m6ID0g5oyJ55So6YeP552A6ImyKOe7v+KGkue6oinjgIIKICAgIC8vLyDnjq/oibIqKum7mOiupOaMieeUqOmHjyoqLOi/meaYr+WIu+aEj+eahDrnjq/nmoTpopzoibLooajnpLoi56a75LiK6ZmQ6L+Y5pyJ5aSa6L+cIiwKICAgIC8vLyDkuI3mmK8i6L+Z5piv5ZOq5Liq5Lqn5ZOBIijkuqflk4HnlLHnjq/lv4Plm77moIfooajnpLop44CC5oOz5Zu65a6a5oiQ5ZOB54mM6Imy5piv5Y+v6YCJ6KGM5Li644CCCiAgICAvLy8gPC9zdW1tYXJ5PgoKICAgIC8vLyA8c3VtbWFyeT7mnKzmnLrmn5DkuKrmupDlvZPliY3mmK/lkKbmmL7npLrjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBJc1NvdXJjZVZpc2libGUoc3RyaW5nIGtleSkgPT4gVmlzaWJsZVNvdXJjZXMuQ29udGFpbnMoa2V5KTsKCiAgICAvLy8gPHN1bW1hcnk+5p+Q5Liq5rqQ55qE546v6ImyKCNSUkdHQkI7bnVsbCA9IOaMieeUqOmHj+iHquWKqOedgOiJsinjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RyaW5nPyBUaW50Rm9yKHN0cmluZyBzb3VyY2VLZXkpID0+CiAgICAgICAgU291cmNlVGludHMuVHJ5R2V0VmFsdWUoc291cmNlS2V5LCBvdXQgdmFyIHRpbnQpID8gdGludCA6IG51bGw7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOavj+S4quadpea6kOiHquWumuS5ieeOr+iJsuOAgioq55So5a2X5YW46ICM5LiN5piv5LiJ5Liq5a2X5q61Kio65Yqg5rqQ5LiN55So5YaN5Yqg5bGe5oCnLAogICAgLy8vIOiAjOS4lCBKU09OIOmHjOWwseaYryB7ICJnb2F0IjogIiMuLiIsICJkZWVwc2VlayI6ICIjLi4iIH0g5LiA55uu5LqG54S244CCCiAgICAvLy8g56m65YC85LiN5YaZKOingSA8c2VlIGNyZWY9IlNhbml0aXplZCIvPinjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgRGljdGlvbmFyeTxzdHJpbmcsIHN0cmluZz4gU291cmNlVGludHMgeyBnZXQ7IHNldDsgfSA9IG5ldygpOwoKICAgIHByaXZhdGUgc3RhdGljIEFwcFNldHRpbmdzPyBfY3VycmVudDsKICAgIHByaXZhdGUgc3RhdGljIEFwcERhdGFQYXRocz8gX3BhdGhzOwoKICAgIHB1YmxpYyBzdGF0aWMgQXBwU2V0dGluZ3MgQ3VycmVudAogICAgewogICAgICAgIGdldAogICAgICAgIHsKICAgICAgICAgICAgaWYgKF9jdXJyZW50IGlzIG5vdCBudWxsKSByZXR1cm4gX2N1cnJlbnQ7CiAgICAgICAgICAgIGxvY2sgKEdhdGUpIHJldHVybiBfY3VycmVudCA/Pz0gTG9hZCgpOwogICAgICAgIH0KICAgIH0KCiAgICBwdWJsaWMgc3RhdGljIHZvaWQgQXR0YWNoKEFwcERhdGFQYXRocyBwYXRocykgPT4gX3BhdGhzID0gcGF0aHM7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOS7juS4gOautSBKU09OKOWPr+iDveaYr+aXp+agvOW8jynop6PmnpDlh7rlvZLkuIDlkI7nmoTorr7nva7jgIIqKueLrOeri+S6juWNleS+i+S4juejgeebmCoq4oCU4oCUCiAgICAvLy8g5Y2H57qn6L+B56e755qE5q2j56Gu5oCn6Z2gIDxjPi0tY2hlY2stbWlncmF0aW9uPC9jPiDov5nmoLflnKjkuLTml7bmlofku7bkuIrmoLjlr7ksCiAgICAvLy8g6ICM5LiN5piv5Y675Yqo55So5oi355yf5a6e55qEIHNldHRpbmdzLmpzb27jgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgc3RhdGljIEFwcFNldHRpbmdzPyBQYXJzZUZvclRlc3Qoc3RyaW5nIGpzb24pCiAgICB7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICB2YXIgbG9hZGVkID0gSnNvblNlcmlhbGl6ZXIuRGVzZXJpYWxpemU8QXBwU2V0dGluZ3M+KGpzb24sIEpzb25PcHRpb25zKTsKICAgICAgICAgICAgcmV0dXJuIGxvYWRlZD8uU2FuaXRpemVkKCk7CiAgICAgICAgfQogICAgICAgIGNhdGNoCiAgICAgICAgewogICAgICAgICAgICByZXR1cm4gbnVsbDsKICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgQXBwU2V0dGluZ3MgTG9hZCgpCiAgICB7CiAgICAgICAgdHJ5CiAgICAgICAgewogICAgICAgICAgICBpZiAoX3BhdGhzIGlzIHsgfSBwICYmIEZpbGUuRXhpc3RzKHAuU2V0dGluZ3NGaWxlKSkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgdmFyIGxvYWRlZCA9IEpzb25TZXJpYWxpemVyLkRlc2VyaWFsaXplPEFwcFNldHRpbmdzPigKICAgICAgICAgICAgICAgICAgICBGaWxlLlJlYWRBbGxUZXh0KHAuU2V0dGluZ3NGaWxlKSwgSnNvbk9wdGlvbnMpOwogICAgICAgICAgICAgICAgaWYgKGxvYWRlZCBpcyBub3QgbnVsbCkgcmV0dXJuIGxvYWRlZC5TYW5pdGl6ZWQoKTsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBjYXRjaCAoRXhjZXB0aW9uIGV4KQogICAgICAgIHsKICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgi6K+75Y+W6K6+572u5aSx6LSlLOS9v+eUqOm7mOiupOWAvCIsIGV4KTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIG5ldyBBcHBTZXR0aW5ncygpOwogICAgfQoKICAgIHB1YmxpYyB2b2lkIFNhdmUoKQogICAgewogICAgICAgIHZhciBjbGVhbiA9IFNhbml0aXplZCgpOwogICAgICAgIEFsZXJ0VGhyZXNob2xkID0gY2xlYW4uQWxlcnRUaHJlc2hvbGQ7CiAgICAgICAgU3luY0ludGVydmFsU2Vjb25kcyA9IGNsZWFuLlN5bmNJbnRlcnZhbFNlY29uZHM7CiAgICAgICAgVXNkVG9DbnkgPSBjbGVhbi5Vc2RUb0NueTsKICAgICAgICBTdXJmYWNlT3BhY2l0eSA9IGNsZWFuLlN1cmZhY2VPcGFjaXR5OwogICAgICAgIERlZXBTZWVrQmFzaXMgPSBjbGVhbi5EZWVwU2Vla0Jhc2lzOwogICAgICAgIERlZXBTZWVrQnVkZ2V0ID0gY2xlYW4uRGVlcFNlZWtCdWRnZXQ7CiAgICAgICAgRGVlcFNlZWtDdXJyZW5jeSA9IGNsZWFuLkRlZXBTZWVrQ3VycmVuY3k7CiAgICAgICAgVmlzaWJsZVNvdXJjZXMgPSBjbGVhbi5WaXNpYmxlU291cmNlczsKICAgICAgICBTaG93R29hdCA9IG51bGw7ICAgICAgICAgICAgLy8g5pen5a2X5q61Oui/geenu+WujOaIkOWQjuS4jeWGjeWGmeWHugogICAgICAgIFNob3dPcGVuQ29kZSA9IG51bGw7CiAgICAgICAgU2hvd0RlZXBTZWVrID0gbnVsbDsKICAgICAgICBTb3VyY2VPcmRlciA9IG51bGw7CiAgICAgICAgR29hdFRpbnQgPSBudWxsOwogICAgICAgIE9wZW5Db2RlVGludCA9IG51bGw7CiAgICAgICAgRGVlcFNlZWtUaW50ID0gbnVsbDsKICAgICAgICBTaG93UGVyY2VudCA9IGNsZWFuLlNob3dQZXJjZW50OwogICAgICAgIEhpZGVJZGxlSW5uZXJSaW5nID0gY2xlYW4uSGlkZUlkbGVJbm5lclJpbmc7CiAgICAgICAgUmluZ1NpemUgPSBjbGVhbi5SaW5nU2l6ZTsKICAgICAgICBSaW5nU3BhY2luZyA9IGNsZWFuLlJpbmdTcGFjaW5nOwogICAgICAgIEhpZGVUb1NsaXZlciA9IGNsZWFuLkhpZGVUb1NsaXZlcjsKICAgICAgICBIaWRlSW5GdWxsU2NyZWVuID0gY2xlYW4uSGlkZUluRnVsbFNjcmVlbjsKICAgICAgICBVc2VCcm93c2VyU2Vzc2lvbkZvck1vZGVsRGV0YWlsID0gY2xlYW4uVXNlQnJvd3NlclNlc3Npb25Gb3JNb2RlbERldGFpbDsKICAgICAgICBQcm94eU1vZGUgPSBjbGVhbi5Qcm94eU1vZGU7CiAgICAgICAgUHJveHlBZGRyZXNzID0gY2xlYW4uUHJveHlBZGRyZXNzOwogICAgICAgIEJpZ01vZGVsTW9udGhseUJ1ZGdldENueSA9IGNsZWFuLkJpZ01vZGVsTW9udGhseUJ1ZGdldENueTsKICAgICAgICBPcGVuQ29kZUFjY291bnRzID0gY2xlYW4uT3BlbkNvZGVBY2NvdW50czsKICAgICAgICBTb3VyY2VUaW50cyA9IGNsZWFuLlNvdXJjZVRpbnRzOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgaWYgKF9wYXRocyBpcyB7IH0gcCkKICAgICAgICAgICAgICAgIEF0b21pY0ZpbGUuV3JpdGVUZXh0KHAuU2V0dGluZ3NGaWxlLCBKc29uU2VyaWFsaXplci5TZXJpYWxpemUodGhpcywgSnNvbk9wdGlvbnMpKTsKICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEV4Y2VwdGlvbiBleCkKICAgICAgICB7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoIuS/neWtmOiuvue9ruWksei0pSIsIGV4KTsKICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSBBcHBTZXR0aW5ncyBTYW5pdGl6ZWQoKSA9PiBuZXcoKQogICAgewogICAgICAgIEFsZXJ0VGhyZXNob2xkID0gTWF0aC5DbGFtcChBbGVydFRocmVzaG9sZCwgMC41LCAwLjk5KSwKICAgICAgICBTeW5jSW50ZXJ2YWxTZWNvbmRzID0gTWF0aC5DbGFtcChTeW5jSW50ZXJ2YWxTZWNvbmRzLCAxNSwgNjAwKSwKICAgICAgICBVc2RUb0NueSA9IE1hdGguQ2xhbXAoVXNkVG9DbnksIDAsIDEwMCksCiAgICAgICAgU3VyZmFjZU9wYWNpdHkgPSBNYXRoLkNsYW1wKFN1cmZhY2VPcGFjaXR5LCAwLjMsIDEuMCksCiAgICAgICAgRGVlcFNlZWtCYXNpcyA9IEVudW0uSXNEZWZpbmVkKERlZXBTZWVrQmFzaXMpID8gRGVlcFNlZWtCYXNpcyA6IEJhbGFuY2VCYXNpcy5TaW5jZVRvcFVwLAogICAgICAgIC8vIOaciemZkOeahOOAgeato+aVsOaJjeeul+aVsCzlkKbliJnlvZPkvZwi5rKh6K6+IgogICAgICAgIERlZXBTZWVrQnVkZ2V0ID0gRGVlcFNlZWtCdWRnZXQgaXMgeyB9IGJ1ZGdldCAmJiBkb3VibGUuSXNGaW5pdGUoYnVkZ2V0KSAmJiBidWRnZXQgPiAwCiAgICAgICAgICAgID8gYnVkZ2V0CiAgICAgICAgICAgIDogbnVsbCwKICAgICAgICBEZWVwU2Vla0N1cnJlbmN5ID0gc3RyaW5nLklzTnVsbE9yV2hpdGVTcGFjZShEZWVwU2Vla0N1cnJlbmN5KQogICAgICAgICAgICA/IG51bGwKICAgICAgICAgICAgOiBEZWVwU2Vla0N1cnJlbmN5LlRyaW0oKS5Ub1VwcGVySW52YXJpYW50KCksCiAgICAgICAgVmlzaWJsZVNvdXJjZXMgPSBOb3JtYWxpemVWaXNpYmxlU291cmNlcygpLAogICAgICAgIE9wZW5Db2RlQWNjb3VudHMgPSAoT3BlbkNvZGVBY2NvdW50cyA/PyBuZXcoKSkKICAgICAgICAgICAgLldoZXJlKGEgPT4gYS5JZCA+PSAyKQogICAgICAgICAgICAuR3JvdXBCeShhID0+IGEuSWQpCiAgICAgICAgICAgIC5TZWxlY3QoZyA9PiBnLkZpcnN0KCkpCiAgICAgICAgICAgIC5TZWxlY3QoYSA9PiBhIHdpdGggeyBMYWJlbCA9IChhLkxhYmVsID8/ICIiKS5UcmltKCkgfSkKICAgICAgICAgICAgLlRvTGlzdCgpLAogICAgICAgIFNob3dQZXJjZW50ID0gU2hvd1BlcmNlbnQsCiAgICAgICAgSGlkZUlkbGVJbm5lclJpbmcgPSBIaWRlSWRsZUlubmVyUmluZywKICAgICAgICBSaW5nU2l6ZSA9IE1hdGguQ2xhbXAoUmluZ1NpemUsIDAsIDIpLAogICAgICAgIFJpbmdTcGFjaW5nID0gTWF0aC5DbGFtcChSaW5nU3BhY2luZywgMCwgMiksCiAgICAgICAgSGlkZVRvU2xpdmVyID0gSGlkZVRvU2xpdmVyLAogICAgICAgIEhpZGVJbkZ1bGxTY3JlZW4gPSBIaWRlSW5GdWxsU2NyZWVuLAogICAgICAgIFVzZUJyb3dzZXJTZXNzaW9uRm9yTW9kZWxEZXRhaWwgPSBVc2VCcm93c2VyU2Vzc2lvbkZvck1vZGVsRGV0YWlsLAogICAgICAgIFByb3h5TW9kZSA9IE1hdGguQ2xhbXAoUHJveHlNb2RlLCAwLCAyKSwKICAgICAgICBQcm94eUFkZHJlc3MgPSBzdHJpbmcuSXNOdWxsT3JXaGl0ZVNwYWNlKFByb3h5QWRkcmVzcykgPyBudWxsIDogUHJveHlBZGRyZXNzLlRyaW0oKSwKICAgICAgICAvLyDmnInpmZDnmoTjgIHmraPmlbDmiY3nrpfmlbAs5ZCm5YiZ5b2T5L2cIuayoeiuviIo5LiOIERlZXBTZWVrQnVkZ2V0IOWQjOS4gOadoeinhOWImSkKICAgICAgICBCaWdNb2RlbE1vbnRobHlCdWRnZXRDbnkgPSBCaWdNb2RlbE1vbnRobHlCdWRnZXRDbnkgaXMgeyB9IGIgJiYgZG91YmxlLklzRmluaXRlKGIpICYmIGIgPiAwCiAgICAgICAgICAgID8gYgogICAgICAgICAgICA6IG51bGwsCiAgICAgICAgU291cmNlVGludHMgPSBOb3JtYWxpemVUaW50cygpLAogICAgfTsKCiAgICAvLy8gPHN1bW1hcnk+CiAgICAvLy8g5b2S5LiA5Y+v6KeB5rqQ5YiX6KGoOuS4ouaOieacquefpemUruOAgeWOu+mHjeOAgeS/neivgeiHs+WwkeS4gOS4qijlhajnqbrml7bpgIDlm57pu5jorqTlhajmmL7npLop44CCCiAgICAvLy8gKirlhYjnnIvmlrDlrZfmrrUs5YaN5Zue6JC95Yiw5pen5a2X5q61KirigJTigJTlrZjph4/nlKjmiLfnmoQgc2V0dGluZ3MuanNvbiDph4zlj6rmnIkKICAgIC8vLyBTaG93R29hdC9TaG93T3BlbkNvZGUvU2hvd0RlZXBTZWVrL1NvdXJjZU9yZGVyLOebtOaOpeivu+aWsOWtl+auteS8muW+l+WIsOepuuWIl+ihqCwKICAgIC8vLyDooajnjrDkuLoi5Y2H57qn5ZCO5omA5pyJ546v6YO95LiN6KeB5LqGIuOAggogICAgLy8vCiAgICAvLy8g6L+H5ruk55SoIDxzZWUgY3JlZj0iU291cmNlS2V5cy5Jc0tub3duIi8+KOa6kOmUrioq5oiW5a6e5L6L6ZSuKirpg73nrpflt7Lnn6UpOgogICAgLy8vIOmZhOWKoOi0puWPt+eahOmUrihvcGVuY29kZToyKeS9j+WcqOi/memHjCzmlLbntKfmiJDmupDplK7ov4fmu6TkvJrmiorlroPku6zpnZnpu5jkuKLmjok7CiAgICAvLy8g5L2G5a6e5L6L6ZSu6L+Y6KaB5a+55bqUKirmuIXljZXph4zov5jlrZjlnKjnmoTotKblj7cqKuKAlOKAlOWIoOaOiei0puWPt+WQjuaui+eVmeeahOmUruS4jeiDveiuqQogICAgLy8vIOW5veeBteeOr+Wkjea0u+OAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHByaXZhdGUgTGlzdDxzdHJpbmc+IE5vcm1hbGl6ZVZpc2libGVTb3VyY2VzKCkKICAgIHsKICAgICAgICB2YXIga2V5cyA9IFNvdXJjZUNhdGFsb2cuS2V5czsKICAgICAgICB2YXIgcmVzdWx0ID0gKFZpc2libGVTb3VyY2VzID8/IG5ldygpKQogICAgICAgICAgICAuV2hlcmUoU291cmNlS2V5cy5Jc0tub3duKQogICAgICAgICAgICAuV2hlcmUoSW5zdGFuY2VBY2NvdW50RXhpc3RzKQogICAgICAgICAgICAuRGlzdGluY3QoU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCkKICAgICAgICAgICAgLlRvTGlzdCgpOwoKICAgICAgICAvLyDov4Hnp7s65paw5a2X5q615Li656m6KOiAgemFjee9ruaIlummluasoei/kOihjCnml7Ys5LuO5pen5a2X5q616YeN5bu6CiAgICAgICAgaWYgKHJlc3VsdC5Db3VudCA9PSAwICYmIE1pZ3JhdGVkRnJvbUxlZ2FjeVNvdXJjZXMoKSBpcyB7IENvdW50OiA+IDAgfSBsZWdhY3kpCiAgICAgICAgICAgIHJlc3VsdCA9IGxlZ2FjeTsKCiAgICAgICAgcmV0dXJuIHJlc3VsdC5Db3VudCA+IDAgPyByZXN1bHQgOiBrZXlzLlRvTGlzdCgpOwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT7lrp7kvovplK4ob3BlbmNvZGU6Minlv4XpobvlnKjotKblj7fmuIXljZXph4zov5jmnInov5nkuKrotKblj7c75Li75rqQ6ZSu5oGS6YCa6L+H44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBib29sIEluc3RhbmNlQWNjb3VudEV4aXN0cyhzdHJpbmcga2V5KSA9PgogICAgICAgIFNvdXJjZUtleXMuVHJ5UGFyc2Uoa2V5KSBpcyBub3QgeyB9IHBhcnNlZAogICAgICAgIHx8IHBhcnNlZC5JbnN0YW5jZSA8PSAxCiAgICAgICAgfHwgKHBhcnNlZC5CYXNlS2V5ID09IFNvdXJjZUtleXMuT3BlbkNvZGUgJiYgSGFzT3BlbkNvZGVBY2NvdW50KHBhcnNlZC5JbnN0YW5jZSkpOwoKICAgIC8vLyA8c3VtbWFyeT7ml6forr7nva4o5LiJ5Liq5Yu+6YCJICsg5o6S5YiX5a2X56ym5LiyKei/mOWOn+aIkCLlj6/op4HkuJTmnInluo8i55qE5rqQ5YiX6KGo44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBMaXN0PHN0cmluZz4/IE1pZ3JhdGVkRnJvbUxlZ2FjeVNvdXJjZXMoKQogICAgewogICAgICAgIC8vIOS4ieS4quaXp+W4g+WwlOWFqOS4uiBudWxsID0gc2V0dGluZ3MuanNvbiDph4zmoLnmnKzmsqHmnInml6flrZfmrrUo5YWo5paw5a6J6KOFKSwKICAgICAgICAvLyDkuqTnu5nkuIrlsYLnlKjpu5jorqTlgLws5LiN6KaB5Zyo6L+Z6YeM5Yet56m66YCg5LiA5LiqIuWPquaYvuekuiBnb2F0IueahOmFjee9ruOAggogICAgICAgIGlmIChTaG93R29hdCBpcyBudWxsICYmIFNob3dPcGVuQ29kZSBpcyBudWxsICYmIFNob3dEZWVwU2VlayBpcyBudWxsKSByZXR1cm4gbnVsbDsKCiAgICAgICAgdmFyIHZpc2libGUgPSBuZXcgTGlzdDxzdHJpbmc+KCk7CiAgICAgICAgaWYgKFNob3dHb2F0ICE9IGZhbHNlKSB2aXNpYmxlLkFkZCgiZ29hdCIpOwogICAgICAgIGlmIChTaG93T3BlbkNvZGUgIT0gZmFsc2UpIHZpc2libGUuQWRkKCJvcGVuY29kZSIpOwogICAgICAgIGlmIChTaG93RGVlcFNlZWsgIT0gZmFsc2UpIHZpc2libGUuQWRkKCJkZWVwc2VlayIpOwoKICAgICAgICAvLyDml6cgU291cmNlT3JkZXIg6YeM5Ye6546w6L+H55qE6ZSu5oyJ5a6D5o6S5YmNLOWFtuS9meS/neaMgem7mOiupOmhuuW6jwogICAgICAgIGlmICghc3RyaW5nLklzTnVsbE9yV2hpdGVTcGFjZShTb3VyY2VPcmRlcikpCiAgICAgICAgewogICAgICAgICAgICB2YXIgb3JkZXIgPSBTb3VyY2VPcmRlci5TcGxpdCgnLCcpLlNlbGVjdChrID0+IGsuVHJpbSgpKS5Ub0xpc3QoKTsKICAgICAgICAgICAgdmFyIGtub3duID0gU291cmNlQ2F0YWxvZy5LZXlzOwogICAgICAgICAgICB2aXNpYmxlID0gdmlzaWJsZS5PcmRlckJ5KGsgPT4gb3JkZXIuSW5kZXhPZihrKSBpcyB2YXIgaSAmJiBpID49IDAgPyBpIDogOTkpCiAgICAgICAgICAgICAgICAuVGhlbkJ5KGsgPT4ga25vd24uVG9MaXN0KCkuSW5kZXhPZihrKSkKICAgICAgICAgICAgICAgIC5Ub0xpc3QoKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHZpc2libGUuQ291bnQgPiAwID8gdmlzaWJsZSA6IG51bGw7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PueOr+iJsuWtl+WFuDrlj6rnlZnlt7Lnn6XmupDjgIHlkIjms5XoibLlgLw756m66Imy5YC85LiN5YaZKOWFjeW+lyBKU09OIOmHjOS4gOWghiBudWxsKeOAggogICAgLy8vIOmhuuaJi+aKiuaXp+eJiOS4ieS4queLrOeri+eOr+iJsuWtl+autei/gei/m+adpeOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgRGljdGlvbmFyeTxzdHJpbmcsIHN0cmluZz4gTm9ybWFsaXplVGludHMoKQogICAgewogICAgICAgIHZhciByZXN1bHQgPSBuZXcgRGljdGlvbmFyeTxzdHJpbmcsIHN0cmluZz4oKTsKICAgICAgICBmb3JlYWNoICh2YXIgKGtleSwgdmFsdWUpIGluIFNvdXJjZVRpbnRzID8/IG5ldygpKQogICAgICAgIHsKICAgICAgICAgICAgaWYgKCFTb3VyY2VDYXRhbG9nLklzS25vd25LZXkoa2V5KSkgY29udGludWU7CiAgICAgICAgICAgIGlmIChOb3JtYWxpemVUaW50KHZhbHVlKSBpcyB7IH0gdGludCkgcmVzdWx0W2tleV0gPSB0aW50OwogICAgICAgIH0KICAgICAgICAvLyDov4Hnp7vml6flrZfmrrUo5LuF5b2T5a2X5YW46YeM6L+Y5rKh5pyJ6L+Z5Liq6ZSu5pe2LOaWsOWAvOS8mOWFiCkKICAgICAgICBmb3JlYWNoICh2YXIgKGtleSwgbGVnYWN5KSBpbiBuZXdbXQogICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICAgKCJnb2F0IiwgR29hdFRpbnQpLCAoIm9wZW5jb2RlIiwgT3BlbkNvZGVUaW50KSwgKCJkZWVwc2VlayIsIERlZXBTZWVrVGludCksCiAgICAgICAgICAgICAgICAgfSkKICAgICAgICB7CiAgICAgICAgICAgIGlmIChyZXN1bHQuQ29udGFpbnNLZXkoa2V5KSkgY29udGludWU7CiAgICAgICAgICAgIGlmIChOb3JtYWxpemVUaW50KGxlZ2FjeSkgaXMgeyB9IHRpbnQpIHJlc3VsdFtrZXldID0gdGludDsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHJlc3VsdDsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+546v6Imy5Y+q5o6l5Y+XICNSUkdHQkIgLyAjQUFSUkdHQkI75Yir55qE5YaZ5rOV5b2T5L2cIuayoeiuviIs5LiN6K6p5a6D5oqK55WM6Z2i55S75Z2P44CCCiAgICAvLy8gKFRpbnRQaWNrZXIg55qE5omL6L6T5qGG5Lmf6LWw6L+Z5LiA5p2h6KeE5YiZLOaJgOS7peagoemqjOWPquatpOS4gOS7veOAgik8L3N1bW1hcnk+CiAgICBpbnRlcm5hbCBzdGF0aWMgc3RyaW5nPyBOb3JtYWxpemVUaW50KHN0cmluZz8gdGV4dCkKICAgIHsKICAgICAgICBpZiAoc3RyaW5nLklzTnVsbE9yV2hpdGVTcGFjZSh0ZXh0KSkgcmV0dXJuIG51bGw7CiAgICAgICAgc3RyaW5nIHZhbHVlID0gdGV4dC5UcmltKCk7CiAgICAgICAgaWYgKCF2YWx1ZS5TdGFydHNXaXRoKCcjJykpIHZhbHVlID0gIiMiICsgdmFsdWU7CiAgICAgICAgaWYgKHZhbHVlLkxlbmd0aCBpcyBub3QgKDcgb3IgOSkpIHJldHVybiBudWxsOwogICAgICAgIGZvciAoaW50IGkgPSAxOyBpIDwgdmFsdWUuTGVuZ3RoOyBpKyspCiAgICAgICAgewogICAgICAgICAgICBpZiAoIVVyaS5Jc0hleERpZ2l0KHZhbHVlW2ldKSkgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgICAgIHJldHVybiB2YWx1ZS5Ub1VwcGVySW52YXJpYW50KCk7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PuaKiuiuvue9ruWbnuWGmeaIkOW9k+WJjeWAvOeahOWJr+acrCjkvpsgVUkg5pi+56S6KeOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBBcHBTZXR0aW5ncyBDbG9uZSgpID0+IG5ldygpCiAgICB7CiAgICAgICAgQWxlcnRUaHJlc2hvbGQgPSBBbGVydFRocmVzaG9sZCwKICAgICAgICBTeW5jSW50ZXJ2YWxTZWNvbmRzID0gU3luY0ludGVydmFsU2Vjb25kcywKICAgICAgICBVc2RUb0NueSA9IFVzZFRvQ255LAogICAgICAgIFN1cmZhY2VPcGFjaXR5ID0gU3VyZmFjZU9wYWNpdHksCiAgICAgICAgRGVlcFNlZWtCYXNpcyA9IERlZXBTZWVrQmFzaXMsCiAgICAgICAgRGVlcFNlZWtCdWRnZXQgPSBEZWVwU2Vla0J1ZGdldCwKICAgICAgICBEZWVwU2Vla0N1cnJlbmN5ID0gRGVlcFNlZWtDdXJyZW5jeSwKICAgICAgICBWaXNpYmxlU291cmNlcyA9IG5ldyBMaXN0PHN0cmluZz4oVmlzaWJsZVNvdXJjZXMpLAogICAgICAgIFNob3dQZXJjZW50ID0gU2hvd1BlcmNlbnQsCiAgICAgICAgSGlkZUlkbGVJbm5lclJpbmcgPSBIaWRlSWRsZUlubmVyUmluZywKICAgICAgICBSaW5nU2l6ZSA9IFJpbmdTaXplLAogICAgICAgIFJpbmdTcGFjaW5nID0gUmluZ1NwYWNpbmcsCiAgICAgICAgSGlkZVRvU2xpdmVyID0gSGlkZVRvU2xpdmVyLAogICAgICAgIEhpZGVJbkZ1bGxTY3JlZW4gPSBIaWRlSW5GdWxsU2NyZWVuLAogICAgICAgIFVzZUJyb3dzZXJTZXNzaW9uRm9yTW9kZWxEZXRhaWwgPSBVc2VCcm93c2VyU2Vzc2lvbkZvck1vZGVsRGV0YWlsLAogICAgICAgIFByb3h5TW9kZSA9IFByb3h5TW9kZSwKICAgICAgICBQcm94eUFkZHJlc3MgPSBQcm94eUFkZHJlc3MsCiAgICAgICAgQmlnTW9kZWxNb250aGx5QnVkZ2V0Q255ID0gQmlnTW9kZWxNb250aGx5QnVkZ2V0Q255LAogICAgICAgIE9wZW5Db2RlQWNjb3VudHMgPSBuZXcgTGlzdDxPcGVuQ29kZUFjY291bnRJbmZvPihPcGVuQ29kZUFjY291bnRzKSwKICAgICAgICBTb3VyY2VUaW50cyA9IG5ldyBEaWN0aW9uYXJ5PHN0cmluZywgc3RyaW5nPihTb3VyY2VUaW50cyksCiAgICB9Owp9CgovLy8gPHN1bW1hcnk+T3BlbkNvZGUgR28g6ZmE5Yqg6LSm5Y+355qE6K6+572u5L6n5p2h55uuKOe8luWPtyArIOagh+etvjtLZXkg5ZyoIERQQVBJIOaWh+S7tumHjCnjgII8L3N1bW1hcnk+CnB1YmxpYyBzZWFsZWQgcmVjb3JkIE9wZW5Db2RlQWNjb3VudEluZm8oaW50IElkLCBzdHJpbmcgTGFiZWwpOwo=
+﻿using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace PulseWin;
+
+/// <summary>
+/// 用户可调项(落盘 Data\settings.json)。以前报警阈值/同步间隔都是编译期常量,
+/// 设置窗口只能填 API Key——开放这几项后不用改代码重发就能调整观感。
+/// </summary>
+public sealed class AppSettings
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+    private static readonly object Gate = new();
+
+    /// <summary>用量报警阈值(0~1)。超过即转红。</summary>
+    public double AlertThreshold { get; set; } = 0.80;
+
+    /// <summary>同步成功后的等待间隔(秒)。</summary>
+    public int SyncIntervalSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// 美元兑人民币汇率,用量统计的估算金额按它显示。价目表(models.dev)本身是美元,
+    /// 这里只影响显示。0 = 显示美元原值,不做换算。
+    /// </summary>
+    public double UsdToCny { get; set; } = 7.2;
+
+    /// <summary>rail 背景不透明度(0~1)。</summary>
+    public double SurfaceOpacity { get; set; } = 0.80;
+
+    /// <summary>DeepSeek 只有余额、没有额度,环的分母从哪来(见 BalanceBasis)。</summary>
+    public BalanceBasis DeepSeekBasis { get; set; } = BalanceBasis.SinceTopUp;
+
+    /// <summary>Budget 模式下的"满箱"金额;空/非正数视为未设置。</summary>
+    public double? DeepSeekBudget { get; set; }
+
+    /// <summary>账户同时持有多种币种时,环跟着哪一种;空 = 第一个有钱的。</summary>
+    public string? DeepSeekCurrency { get; set; }
+
+    /// <summary>
+    /// rail 上显示哪些数据源,以及它们的顺序。**顺序即数组顺序**——从前这里是
+    /// "三个布尔 + 一个 6 种排列的枚举字符串",源一多就是阶乘爆炸,而且加源要同时改
+    /// 六处。现在统一成一个列表:内容 = 可见的源(按用户排的顺序),不在列表里的源
+    /// 就是不显示。见 <see cref="VisibleSources"/> 与 <see cref="SourceCatalog"/>。
+    ///
+    /// **兼容旧设置**:老版本的 ShowGoat/ShowOpenCode/ShowDeepSeek/SourceOrder 仍能被读入
+    /// (见 <see cref="Sanitized"/> 里的迁移),存量用户升级不丢配置。
+    ///
+    /// **默认留空、由 <see cref="NormalizeVisibleSources"/> 兜底**,而不是直接写死三个源:
+    /// 若非空默认值不动,反序列化一份没有该字段的旧配置时它仍是默认值,
+    /// "旧字段迁移"分支就永远走不到(本机实测踩过这个坑,见 --check-migration)。
+    /// </summary>
+    public List<string> VisibleSources { get; set; } = new();
+
+    /// <summary>
+    /// 只在**此刻正在被烧**的源上画出内圈(5 小时环);不活跃的源只画外圈(总额度)。
+    ///
+    /// 默认开:rail 上一排"双环"里,不活跃的源那一圈空轨道只增加视觉噪音,不带来信息。
+    /// 显示成单环之后,"哪个源正在被用"一眼就能看出来(内圈出现本身就是信号)。
+    /// 判定走活动信号(客户端回合的通道),不是"5 小时窗口有历史用量"——滚动窗口
+    /// 会让 Used&gt;0 在停用后挂好几个小时,内圈收不起来(v1.16.1 前的旧毛病)。
+    /// </summary>
+    public bool HideIdleInnerRing { get; set; } = true;
+
+    /// <summary>
+    /// 旧版字段(仅用于读入迁移,写出时不再产生)。留着是因为 settings.json 里可能还有它们,
+    /// 删掉字段会让老配置的勾选状态丢掉。
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowGoat { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowOpenCode { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowDeepSeek { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SourceOrder { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GoatTint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OpenCodeTint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DeepSeekTint { get; set; }
+
+    /// <summary>环下是否显示读数(百分比/金额)。关掉后环间距与 rail 高度同步收窄。</summary>
+    public bool ShowPercent { get; set; } = true;
+
+    /// <summary>
+    /// 圆环尺寸三档:0=Small(环 36pt/线 3.2)、1=Standard(40/3.6,默认)、2=Large(44/4,v1.5 原样)。
+    /// rail 宽、环心距等几何全部随档联动(见 MainWindow.RingSizeTable)。
+    /// </summary>
+    public int RingSize { get; set; } = 2;
+
+    /// <summary>环与环的间距三档:0=Tight(2pt)、1=Standard(4pt)、2=Loose(10pt)。</summary>
+    public int RingSpacing { get; set; } = 1;
+
+    /// <summary>
+    /// 自动隐藏时收缩成贴在屏幕边缘的 6pt 细条(上游 hide until pointed at),
+    /// 而不是滑出屏外。细条上带最紧张源的警报色;指针靠近热区即展开。
+    /// </summary>
+    public bool HideToSliver { get; set; } = false;
+
+    /// <summary>前台窗口是全屏应用时自动把 rail 藏起来(看视频/演示不被打扰)。</summary>
+    public bool HideInFullScreen { get; set; } = false;
+
+    /// <summary>
+    /// 是否启用 **Command Code 浏览器会话通道**:读本机浏览器(Edge/Chrome)的登录 cookie,
+    /// 去调只有登录态才开放的逐模型明细接口(缓存读/写 token 等)。
+    ///
+    /// **默认关**,有两个硬理由:
+    /// ① 有真实前车之鉴——同类工具 CodexBar-Win 因"解密浏览器 cookie 读配额"被
+    ///    杀毒软件全家误判成 infostealer,最后撤掉全部二进制。读 cookie 这件事
+    ///    本身就会触发安全软件的启发式规则,哪怕用途正当。
+    /// ② 浏览器运行时 cookie 数据库是**排他锁定**的(本机实测连只读共享打开都
+    ///    WinError 32),所以这条通道基本只在浏览器完全关闭时才有机会读到——
+    ///    日常开着浏览器时它多半是"读不到",体验并不稳定。
+    ///
+    /// 本地来源(ZCode / OpenCode 的记录库)不给缓存读/写以外的任何东西缺项,
+    /// 逐模型页在它关着的时候也完整可用。
+    /// </summary>
+    public bool UseBrowserSessionForModelDetail { get; set; } = false;
+
+    /// <summary>
+    /// 网络代理:0=跟随系统(默认)、1=直连、2=手动 HTTP 代理(地址见 ProxyAddress)。
+    /// 修改后重启程序生效(HttpClient 是启动时创建的长生命周期对象)。
+    /// </summary>
+    public int ProxyMode { get; set; } = 0;
+
+    /// <summary>手动代理地址,如 http://127.0.0.1:7890。SOCKS5 客户端请填它的 HTTP 端口。</summary>
+    public string? ProxyAddress { get; set; }
+
+    /// <summary>
+    /// BigModel 包月的月预算(人民币)。BigModel 没有配额接口、只有包月费,填了它,
+    /// 用量窗口的额度条才显示"本月估算 / 预算"进度与月底预测。空 = 只显示本月估算。
+    /// </summary>
+    public double? BigModelMonthlyBudgetCny { get; set; }
+
+    /// <summary>
+    /// OpenCode Go 的**附加账号**(工作区)清单:实例编号 + 显示标签。
+    /// Key 本体在 DPAPI 加密的 opencode-go-accounts.bin 里,**绝不进这个明文文件**。
+    /// 主账号不进列表——它沿用 auth.json/环境变量/手动 Key 的既有链路,没有编号。
+    /// </summary>
+    public List<OpenCodeAccountInfo> OpenCodeAccounts { get; set; } = new();
+
+    /// <summary>某附加账号的显示标签;没有就给"账号 n"。</summary>
+    public string OpenCodeAccountLabel(int instance) =>
+        OpenCodeAccounts.FirstOrDefault(a => a.Id == instance)?.Label is { } label && label.Length > 0
+            ? label
+            : $"账号 {instance}";
+
+    public bool HasOpenCodeAccount(int instance) => OpenCodeAccounts.Any(a => a.Id == instance);
+
+    /// <summary>
+    /// 每个来源自定义环色(#RRGGBB)。空 = 按用量着色(绿→红)。
+    /// 环色**默认按用量**,这是刻意的:环的颜色表示"离上限还有多远",
+    /// 不是"这是哪个产品"(产品由环心图标表示)。想固定成品牌色是可选行为。
+    /// </summary>
+
+    /// <summary>本机某个源当前是否显示。</summary>
+    public bool IsSourceVisible(string key) => VisibleSources.Contains(key);
+
+    /// <summary>某个源的环色(#RRGGBB;null = 按用量自动着色)。</summary>
+    public string? TintFor(string sourceKey) =>
+        SourceTints.TryGetValue(sourceKey, out var tint) ? tint : null;
+
+    /// <summary>
+    /// 每个来源自定义环色。**用字典而不是三个字段**:加源不用再加属性,
+    /// 而且 JSON 里就是 { "goat": "#..", "deepseek": "#.." } 一目了然。
+    /// 空值不写(见 <see cref="Sanitized"/>)。
+    /// </summary>
+    public Dictionary<string, string> SourceTints { get; set; } = new();
+
+    private static AppSettings? _current;
+    private static AppDataPaths? _paths;
+
+    public static AppSettings Current
+    {
+        get
+        {
+            if (_current is not null) return _current;
+            lock (Gate) return _current ??= Load();
+        }
+    }
+
+    public static void Attach(AppDataPaths paths) => _paths = paths;
+
+    /// <summary>
+    /// 从一段 JSON(可能是旧格式)解析出归一后的设置。**独立于单例与磁盘**——
+    /// 升级迁移的正确性靠 <c>--check-migration</c> 这样在临时文件上核对,
+    /// 而不是去动用户真实的 settings.json。
+    /// </summary>
+    public static AppSettings? ParseForTest(string json)
+    {
+        try
+        {
+            var loaded = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
+            return loaded?.Sanitized();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static AppSettings Load()
+    {
+        try
+        {
+            if (_paths is { } p && File.Exists(p.SettingsFile))
+            {
+                var loaded = JsonSerializer.Deserialize<AppSettings>(
+                    File.ReadAllText(p.SettingsFile), JsonOptions);
+                if (loaded is not null) return loaded.Sanitized();
+            }
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("读取设置失败,使用默认值", ex);
+        }
+        return new AppSettings();
+    }
+
+    public void Save()
+    {
+        var clean = Sanitized();
+        AlertThreshold = clean.AlertThreshold;
+        SyncIntervalSeconds = clean.SyncIntervalSeconds;
+        UsdToCny = clean.UsdToCny;
+        SurfaceOpacity = clean.SurfaceOpacity;
+        DeepSeekBasis = clean.DeepSeekBasis;
+        DeepSeekBudget = clean.DeepSeekBudget;
+        DeepSeekCurrency = clean.DeepSeekCurrency;
+        VisibleSources = clean.VisibleSources;
+        ShowGoat = null;            // 旧字段:迁移完成后不再写出
+        ShowOpenCode = null;
+        ShowDeepSeek = null;
+        SourceOrder = null;
+        GoatTint = null;
+        OpenCodeTint = null;
+        DeepSeekTint = null;
+        ShowPercent = clean.ShowPercent;
+        HideIdleInnerRing = clean.HideIdleInnerRing;
+        RingSize = clean.RingSize;
+        RingSpacing = clean.RingSpacing;
+        HideToSliver = clean.HideToSliver;
+        HideInFullScreen = clean.HideInFullScreen;
+        UseBrowserSessionForModelDetail = clean.UseBrowserSessionForModelDetail;
+        ProxyMode = clean.ProxyMode;
+        ProxyAddress = clean.ProxyAddress;
+        BigModelMonthlyBudgetCny = clean.BigModelMonthlyBudgetCny;
+        OpenCodeAccounts = clean.OpenCodeAccounts;
+        SourceTints = clean.SourceTints;
+        try
+        {
+            if (_paths is { } p)
+                AtomicFile.WriteText(p.SettingsFile, JsonSerializer.Serialize(this, JsonOptions));
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("保存设置失败", ex);
+        }
+    }
+
+    private AppSettings Sanitized() => new()
+    {
+        AlertThreshold = Math.Clamp(AlertThreshold, 0.5, 0.99),
+        SyncIntervalSeconds = Math.Clamp(SyncIntervalSeconds, 15, 600),
+        UsdToCny = Math.Clamp(UsdToCny, 0, 100),
+        SurfaceOpacity = Math.Clamp(SurfaceOpacity, 0.3, 1.0),
+        DeepSeekBasis = Enum.IsDefined(DeepSeekBasis) ? DeepSeekBasis : BalanceBasis.SinceTopUp,
+        // 有限的、正数才算数,否则当作"没设"
+        DeepSeekBudget = DeepSeekBudget is { } budget && double.IsFinite(budget) && budget > 0
+            ? budget
+            : null,
+        DeepSeekCurrency = string.IsNullOrWhiteSpace(DeepSeekCurrency)
+            ? null
+            : DeepSeekCurrency.Trim().ToUpperInvariant(),
+        VisibleSources = NormalizeVisibleSources(),
+        OpenCodeAccounts = (OpenCodeAccounts ?? new())
+            .Where(a => a.Id >= 2)
+            .GroupBy(a => a.Id)
+            .Select(g => g.First())
+            .Select(a => a with { Label = (a.Label ?? "").Trim() })
+            .ToList(),
+        ShowPercent = ShowPercent,
+        HideIdleInnerRing = HideIdleInnerRing,
+        RingSize = Math.Clamp(RingSize, 0, 2),
+        RingSpacing = Math.Clamp(RingSpacing, 0, 2),
+        HideToSliver = HideToSliver,
+        HideInFullScreen = HideInFullScreen,
+        UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
+        ProxyMode = Math.Clamp(ProxyMode, 0, 2),
+        ProxyAddress = string.IsNullOrWhiteSpace(ProxyAddress) ? null : ProxyAddress.Trim(),
+        // 有限的、正数才算数,否则当作"没设"(与 DeepSeekBudget 同一条规则)
+        BigModelMonthlyBudgetCny = BigModelMonthlyBudgetCny is { } b && double.IsFinite(b) && b > 0
+            ? b
+            : null,
+        SourceTints = NormalizeTints(),
+    };
+
+    /// <summary>
+    /// 归一可见源列表:丢掉未知键、去重、保证至少一个(全空时退回默认全显示)。
+    /// **先看新字段,再回落到旧字段**——存量用户的 settings.json 里只有
+    /// ShowGoat/ShowOpenCode/ShowDeepSeek/SourceOrder,直接读新字段会得到空列表,
+    /// 表现为"升级后所有环都不见了"。
+    ///
+    /// 过滤用 <see cref="SourceKeys.IsKnown"/>(源键**或实例键**都算已知):
+    /// 附加账号的键(opencode:2)住在这里,收紧成源键过滤会把它们静默丢掉;
+    /// 但实例键还要对应**清单里还存在的账号**——删掉账号后残留的键不能让
+    /// 幽灵环复活。
+    /// </summary>
+    private List<string> NormalizeVisibleSources()
+    {
+        var keys = SourceCatalog.Keys;
+        var result = (VisibleSources ?? new())
+            .Where(SourceKeys.IsKnown)
+            .Where(InstanceAccountExists)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        // 迁移:新字段为空(老配置或首次运行)时,从旧字段重建
+        if (result.Count == 0 && MigratedFromLegacySources() is { Count: > 0 } legacy)
+            result = legacy;
+
+        return result.Count > 0 ? result : keys.ToList();
+    }
+
+    /// <summary>实例键(opencode:2)必须在账号清单里还有这个账号;主源键恒通过。</summary>
+    private bool InstanceAccountExists(string key) =>
+        SourceKeys.TryParse(key) is not { } parsed
+        || parsed.Instance <= 1
+        || (parsed.BaseKey == SourceKeys.OpenCode && HasOpenCodeAccount(parsed.Instance));
+
+    /// <summary>旧设置(三个勾选 + 排列字符串)还原成"可见且有序"的源列表。</summary>
+    private List<string>? MigratedFromLegacySources()
+    {
+        // 三个旧布尔全为 null = settings.json 里根本没有旧字段(全新安装),
+        // 交给上层用默认值,不要在这里凭空造一个"只显示 goat"的配置。
+        if (ShowGoat is null && ShowOpenCode is null && ShowDeepSeek is null) return null;
+
+        var visible = new List<string>();
+        if (ShowGoat != false) visible.Add("goat");
+        if (ShowOpenCode != false) visible.Add("opencode");
+        if (ShowDeepSeek != false) visible.Add("deepseek");
+
+        // 旧 SourceOrder 里出现过的键按它排前,其余保持默认顺序
+        if (!string.IsNullOrWhiteSpace(SourceOrder))
+        {
+            var order = SourceOrder.Split(',').Select(k => k.Trim()).ToList();
+            var known = SourceCatalog.Keys;
+            visible = visible.OrderBy(k => order.IndexOf(k) is var i && i >= 0 ? i : 99)
+                .ThenBy(k => known.ToList().IndexOf(k))
+                .ToList();
+        }
+        return visible.Count > 0 ? visible : null;
+    }
+
+    /// <summary>环色字典:只留已知源、合法色值;空色值不写(免得 JSON 里一堆 null)。
+    /// 顺手把旧版三个独立环色字段迁进来。</summary>
+    private Dictionary<string, string> NormalizeTints()
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var (key, value) in SourceTints ?? new())
+        {
+            if (!SourceCatalog.IsKnownKey(key)) continue;
+            if (NormalizeTint(value) is { } tint) result[key] = tint;
+        }
+        // 迁移旧字段(仅当字典里还没有这个键时,新值优先)
+        foreach (var (key, legacy) in new[]
+                 {
+                     ("goat", GoatTint), ("opencode", OpenCodeTint), ("deepseek", DeepSeekTint),
+                 })
+        {
+            if (result.ContainsKey(key)) continue;
+            if (NormalizeTint(legacy) is { } tint) result[key] = tint;
+        }
+        return result;
+    }
+
+    /// <summary>环色只接受 #RRGGBB / #AARRGGBB;别的写法当作"没设",不让它把界面画坏。
+    /// (TintPicker 的手输框也走这一条规则,所以校验只此一份。)</summary>
+    internal static string? NormalizeTint(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        string value = text.Trim();
+        if (!value.StartsWith('#')) value = "#" + value;
+        if (value.Length is not (7 or 9)) return null;
+        for (int i = 1; i < value.Length; i++)
+        {
+            if (!Uri.IsHexDigit(value[i])) return null;
+        }
+        return value.ToUpperInvariant();
+    }
+
+    /// <summary>把设置回写成当前值的副本(供 UI 显示)。</summary>
+    public AppSettings Clone() => new()
+    {
+        AlertThreshold = AlertThreshold,
+        SyncIntervalSeconds = SyncIntervalSeconds,
+        UsdToCny = UsdToCny,
+        SurfaceOpacity = SurfaceOpacity,
+        DeepSeekBasis = DeepSeekBasis,
+        DeepSeekBudget = DeepSeekBudget,
+        DeepSeekCurrency = DeepSeekCurrency,
+        VisibleSources = new List<string>(VisibleSources),
+        ShowPercent = ShowPercent,
+        HideIdleInnerRing = HideIdleInnerRing,
+        RingSize = RingSize,
+        RingSpacing = RingSpacing,
+        HideToSliver = HideToSliver,
+        HideInFullScreen = HideInFullScreen,
+        UseBrowserSessionForModelDetail = UseBrowserSessionForModelDetail,
+        ProxyMode = ProxyMode,
+        ProxyAddress = ProxyAddress,
+        BigModelMonthlyBudgetCny = BigModelMonthlyBudgetCny,
+        OpenCodeAccounts = new List<OpenCodeAccountInfo>(OpenCodeAccounts),
+        SourceTints = new Dictionary<string, string>(SourceTints),
+    };
+}
+
+/// <summary>OpenCode Go 附加账号的设置侧条目(编号 + 标签;Key 在 DPAPI 文件里)。</summary>
+public sealed record OpenCodeAccountInfo(int Id, string Label);

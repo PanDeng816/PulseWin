@@ -1,1 +1,143 @@
-dXNpbmcgU3lzdGVtLklPOwp1c2luZyBTeXN0ZW0uTmV0OwoKbmFtZXNwYWNlIFB1bHNlV2luOwoKcHVibGljIGVudW0gUXVvdGFLaW5kCnsKICAgIEZpdmVIb3VyLAogICAgV2Vla2x5LAogICAgTW9udGhseSwKICAgIC8vLyA8c3VtbWFyeT7pooTku5jkvZnpop0oRGVlcFNlZWsp44CC5LiN5piv6aKd5bqm5rGgOuayoeacieS4iumZkOOAgeayoeaciemHjee9ruWRqOacn+OAgjwvc3VtbWFyeT4KICAgIEJhbGFuY2UKfQoKcHVibGljIGVudW0gTW9uaXRvclNvdXJjZQp7CiAgICBDb21tYW5kQ29kZUdvYXQsCiAgICBPcGVuQ29kZUdvLAogICAgRGVlcFNlZWsKfQoKLy8vIDxzdW1tYXJ5PgovLy8g5L2Z6aKd5Z6L5pWw5o2u5rqQKERlZXBTZWVrKeeahCLliIbmr40i5LuO5ZOq5p2l44CCRGVlcFNlZWsg5Y+q5Y+R5L2Z6aKd6YeR6aKdLOS4jeWPkeS7u+S9lemineW6piwKLy8vIOaJgOS7peeOr+imgeeUu+eZvuWIhuavlOWwseW/hemhu+iHquW3semAieS4gOS4quWfuuWHhuOAggovLy8gPC9zdW1tYXJ5PgpwdWJsaWMgZW51bSBCYWxhbmNlQmFzaXMKewogICAgLy8vIDxzdW1tYXJ5PuS7peacrOeoi+W6j+inguWvn+WIsOeahOWOhuWPsuacgOmrmOS9memineS4uua7oeWIhijkvZnpop3kuIrmtqjlj6rlj6/og73mmK/lhYXlgLwp44CCPC9zdW1tYXJ5PgogICAgU2luY2VUb3BVcCwKICAgIC8vLyA8c3VtbWFyeT7kuI3nlLvnmb7liIbmr5Qs55u05o6l5Zyo546v5LiK5pi+56S65L2Z6aKd6YeR6aKd44CCPC9zdW1tYXJ5PgogICAgQmFsYW5jZU9ubHksCiAgICAvLy8gPHN1bW1hcnk+5Lul55So5oi36Ieq5bex5aGr55qE6aKE566X5Li65ruh5YiG44CCPC9zdW1tYXJ5PgogICAgQnVkZ2V0Cn0KCnB1YmxpYyBlbnVtIENyZWRlbnRpYWxTb3VyY2UKewogICAgRW52aXJvbm1lbnQsCiAgICBDbGlBdXRoRmlsZSwKICAgIE9wZW5Db2RlQXV0aEZpbGUsCiAgICBQcm90ZWN0ZWRTdG9yZSwKICAgIE1hbnVhbEVudHJ5Cn0KCnB1YmxpYyBzZWFsZWQgcmVjb3JkIENyZWRlbnRpYWxDYW5kaWRhdGUoQ3JlZGVudGlhbFNvdXJjZSBTb3VyY2UsIHN0cmluZyBBcGlLZXkpCnsKICAgIHB1YmxpYyBzdHJpbmcgU291cmNlTGFiZWwgPT4gU291cmNlIHN3aXRjaAogICAgewogICAgICAgIENyZWRlbnRpYWxTb3VyY2UuRW52aXJvbm1lbnQgPT4gIueOr+Wig+WPmOmHjyIsCiAgICAgICAgQ3JlZGVudGlhbFNvdXJjZS5DbGlBdXRoRmlsZSA9PiAiQ29tbWFuZCBDb2RlIENMSSIsCiAgICAgICAgQ3JlZGVudGlhbFNvdXJjZS5PcGVuQ29kZUF1dGhGaWxlID0+ICJPcGVuQ29kZSIsCiAgICAgICAgQ3JlZGVudGlhbFNvdXJjZS5Qcm90ZWN0ZWRTdG9yZSA9PiAiV2luZG93cyDliqDlr4blrZjlgqgiLAogICAgICAgIENyZWRlbnRpYWxTb3VyY2UuTWFudWFsRW50cnkgPT4gIuaJi+WKqOi+k+WFpSIsCiAgICAgICAgXyA9PiAi5pyq55+l5p2l5rqQIgogICAgfTsKfQoKcHVibGljIHNlYWxlZCByZWNvcmQgUXVvdGFXaW5kb3coCiAgICBRdW90YUtpbmQgS2luZCwKICAgIHN0cmluZyBMYWJlbCwKICAgIGRvdWJsZT8gVXNlZCwKICAgIGRvdWJsZT8gQ2FwLAogICAgRGF0ZVRpbWVPZmZzZXQ/IFJlc2V0QXQsCiAgICBib29sIElzQXZhaWxhYmxlLAogICAgc3RyaW5nPyBOb3RlID0gbnVsbCwKICAgIHN0cmluZyBVbml0ID0gIiQiLAogICAgLy8vIDxzdW1tYXJ5PuivpeaxoOeahOW9k+WJjemHkemineivu+aVsCjkvZnpop3lnovmlbDmja7mupDnlKgp44CC5LiOIFVzZWQvQ2FwIOaXoOWFsyzljZXni6zmkLrluKbjgII8L3N1bW1hcnk+CiAgICBkb3VibGU/IEFtb3VudCA9IG51bGwsCiAgICAvLy8gPHN1bW1hcnk+5YiG5q+N5piv5Lyw566X5Ye65p2l55qEKOS9memineWei+aVsOaNrua6kCks5Y2h54mH6KaB5qCH5piO5a6D5p2l6Ieq5ZOq6YeM44CCPC9zdW1tYXJ5PgogICAgc3RyaW5nPyBFc3RpbWF0ZUZyb20gPSBudWxsLAogICAgLy8vIDxzdW1tYXJ5Pui1oOmAgeS9meminShEZWVwU2VlayDlm57ljIXph4znmoQgZ3JhbnRlZF9iYWxhbmNlKeOAgjwvc3VtbWFyeT4KICAgIGRvdWJsZT8gR3JhbnRlZEFtb3VudCA9IG51bGwsCiAgICAvLy8gPHN1bW1hcnk+6Ieq5bex5YWF5YC855qE5L2Z6aKdKERlZXBTZWVrIOWbnuWMhemHjOeahCB0b3BwZWRfdXBfYmFsYW5jZSnjgII8L3N1bW1hcnk+CiAgICBkb3VibGU/IFRvcHBlZFVwQW1vdW50ID0gbnVsbCwKICAgIC8vLyA8c3VtbWFyeT4KICAgIC8vLyDov5nkuKror7vmlbDmnaXoh6rlk6rkuKrlj6PlvoTjgILpnZ7nqbogPSDotbDnmoTmmK/nvZHpobXmjqfliLblj7DpgqPmnaHpgJrpgZMo5LiOIG9wZW5jb2RlLmFpCiAgICAvLy8g572R6aG15ZCM5LiA5Liq5YWs5byPLOaJgOS7peaVsOWtl+iDveWvueS4iik7bnVsbCA9IOm7mOiupOeahCBBUEkgS2V5IOaOpeWPoyjmlbTmlbDjgIHlkJHkuIvlj5bmlbQp44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgc3RyaW5nPyBSZWFkaW5nRnJvbSA9IG51bGwsCiAgICAvLy8gPHN1bW1hcnk+5bey55So6YeR6aKdKOe9kemhteWPo+W+hOaJjeaciTptZXRlcnMg55qEIHVzZWRNaWNyb0NlbnRzKeOAgjwvc3VtbWFyeT4KICAgIGRvdWJsZT8gVXNlZEFtb3VudCA9IG51bGwsCiAgICAvLy8gPHN1bW1hcnk+6aKd5bqm5LiK6ZmQ6YeR6aKdKOe9kemhteWPo+W+hOaJjeaciTptZXRlcnMg55qEIGxpbWl0TWljcm9DZW50cynjgII8L3N1bW1hcnk+CiAgICBkb3VibGU/IExpbWl0QW1vdW50ID0gbnVsbCkKewogICAgcHVibGljIGRvdWJsZT8gUmVtYWluaW5nID0+IFVzZWQgaXMgbm90IG51bGwgJiYgQ2FwIGlzIG5vdCBudWxsCiAgICAgICAgPyBNYXRoLk1heCgwLCBDYXAuVmFsdWUgLSBVc2VkLlZhbHVlKQogICAgICAgIDogbnVsbDsKCiAgICBwdWJsaWMgZG91YmxlPyBQZXJjZW50ID0+IFVzZWQgaXMgbm90IG51bGwgJiYgQ2FwIGlzID4gMAogICAgICAgID8gTWF0aC5DbGFtcChVc2VkLlZhbHVlIC8gQ2FwLlZhbHVlICogMTAwZCwgMGQsIDEwMGQpCiAgICAgICAgOiBudWxsOwoKICAgIC8vLyA8c3VtbWFyeT7ov5nkuIDmsaDmmK/lkKbmnInlj6/nlKjor7vmlbAo5pyJ55m+5YiG5q+ULOaIluiHs+WwkeacieS4gOS4qumHkeminSnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBIYXNSZWFkaW5nID0+IElzQXZhaWxhYmxlICYmIChQZXJjZW50IGlzIG5vdCBudWxsIHx8IEFtb3VudCBpcyBub3QgbnVsbCk7Cn0KCnB1YmxpYyBzZWFsZWQgcmVjb3JkIFVzYWdlU25hcHNob3QoCiAgICBzdHJpbmcgUGxhbklkLAogICAgc3RyaW5nIFBsYW5OYW1lLAogICAgc3RyaW5nIEFjY291bnRMYWJlbCwKICAgIENyZWRlbnRpYWxTb3VyY2UgQ3JlZGVudGlhbFNvdXJjZSwKICAgIExpc3Q8UXVvdGFXaW5kb3c+IFdpbmRvd3MsCiAgICBkb3VibGUgUHVyY2hhc2VkQ3JlZGl0cywKICAgIGRvdWJsZSBGcmVlQ3JlZGl0cywKICAgIGRvdWJsZT8gUGVyaW9kQ29zdCwKICAgIGxvbmc/IFBlcmlvZFJlcXVlc3RzLAogICAgbG9uZz8gUGVyaW9kVG9rZW5zLAogICAgRGF0ZVRpbWVPZmZzZXQgRmV0Y2hlZEF0LAogICAgc3RyaW5nIFN0dWRpb1VzYWdlVXJsKQp7CiAgICBwdWJsaWMgZG91YmxlIEV4dHJhQ3JlZGl0cyA9PiBNYXRoLk1heCgwLCBQdXJjaGFzZWRDcmVkaXRzKSArIE1hdGguTWF4KDAsIEZyZWVDcmVkaXRzKTsKCiAgICBwdWJsaWMgUXVvdGFXaW5kb3c/IEZpbmQoUXVvdGFLaW5kIGtpbmQpID0+IFdpbmRvd3MuRmlyc3RPckRlZmF1bHQod2luZG93ID0+IHdpbmRvdy5LaW5kID09IGtpbmQpOwp9CgpwdWJsaWMgc2VhbGVkIHJlY29yZCBBcGlJZGVudGl0eShzdHJpbmcgQWNjb3VudExhYmVsLCBzdHJpbmc/IE9yZ2FuaXphdGlvbklkLCBzdHJpbmcgU3R1ZGlvU2x1Zyk7CgpwdWJsaWMgc2VhbGVkIHJlY29yZCBDcmVkZW50aWFsVmFsaWRhdGlvblJlc3VsdChib29sIElzVmFsaWQsIEFwaUlkZW50aXR5PyBJZGVudGl0eSwgc3RyaW5nPyBFcnJvck1lc3NhZ2UpCnsKICAgIHB1YmxpYyBzdGF0aWMgQ3JlZGVudGlhbFZhbGlkYXRpb25SZXN1bHQgVmFsaWQoQXBpSWRlbnRpdHkgaWRlbnRpdHkpID0+IG5ldyh0cnVlLCBpZGVudGl0eSwgbnVsbCk7CiAgICBwdWJsaWMgc3RhdGljIENyZWRlbnRpYWxWYWxpZGF0aW9uUmVzdWx0IEludmFsaWQoc3RyaW5nIG1lc3NhZ2UpID0+IG5ldyhmYWxzZSwgbnVsbCwgbWVzc2FnZSk7Cn0KCnB1YmxpYyBzZWFsZWQgY2xhc3MgQ29tbWFuZENvZGVBcGlFeGNlcHRpb24gOiBFeGNlcHRpb24KewogICAgcHVibGljIENvbW1hbmRDb2RlQXBpRXhjZXB0aW9uKEh0dHBTdGF0dXNDb2RlPyBzdGF0dXNDb2RlLCBzdHJpbmcgbWVzc2FnZSwgRXhjZXB0aW9uPyBpbm5lckV4Y2VwdGlvbiA9IG51bGwpCiAgICAgICAgOiBiYXNlKG1lc3NhZ2UsIGlubmVyRXhjZXB0aW9uKQogICAgewogICAgICAgIFN0YXR1c0NvZGUgPSBzdGF0dXNDb2RlOwogICAgfQoKICAgIHB1YmxpYyBIdHRwU3RhdHVzQ29kZT8gU3RhdHVzQ29kZSB7IGdldDsgfQogICAgcHVibGljIGJvb2wgSXNBdXRoZW50aWNhdGlvbkVycm9yID0+IFN0YXR1c0NvZGUgaXMgSHR0cFN0YXR1c0NvZGUuVW5hdXRob3JpemVkIG9yIEh0dHBTdGF0dXNDb2RlLkZvcmJpZGRlbjsKfQoKcHVibGljIGVudW0gQ29ubmVjdGlvblN0YXRlCnsKICAgIExvYWRpbmcsCiAgICBDb25uZWN0ZWQsCiAgICBTdGFsZSwKICAgIEF1dGhlbnRpY2F0aW9uUmVxdWlyZWQsCiAgICBFcnJvcgp9Cg==
+using System.IO;
+using System.Net;
+
+namespace PulseWin;
+
+public enum QuotaKind
+{
+    FiveHour,
+    Weekly,
+    Monthly,
+    /// <summary>预付余额(DeepSeek)。不是额度池:没有上限、没有重置周期。</summary>
+    Balance
+}
+
+public enum MonitorSource
+{
+    CommandCodeGoat,
+    OpenCodeGo,
+    DeepSeek
+}
+
+/// <summary>
+/// 余额型数据源(DeepSeek)的"分母"从哪来。DeepSeek 只发余额金额,不发任何额度,
+/// 所以环要画百分比就必须自己选一个基准。
+/// </summary>
+public enum BalanceBasis
+{
+    /// <summary>以本程序观察到的历史最高余额为满分(余额上涨只可能是充值)。</summary>
+    SinceTopUp,
+    /// <summary>不画百分比,直接在环上显示余额金额。</summary>
+    BalanceOnly,
+    /// <summary>以用户自己填的预算为满分。</summary>
+    Budget
+}
+
+public enum CredentialSource
+{
+    Environment,
+    CliAuthFile,
+    OpenCodeAuthFile,
+    ProtectedStore,
+    ManualEntry
+}
+
+public sealed record CredentialCandidate(CredentialSource Source, string ApiKey)
+{
+    public string SourceLabel => Source switch
+    {
+        CredentialSource.Environment => "环境变量",
+        CredentialSource.CliAuthFile => "Command Code CLI",
+        CredentialSource.OpenCodeAuthFile => "OpenCode",
+        CredentialSource.ProtectedStore => "Windows 加密存储",
+        CredentialSource.ManualEntry => "手动输入",
+        _ => "未知来源"
+    };
+}
+
+public sealed record QuotaWindow(
+    QuotaKind Kind,
+    string Label,
+    double? Used,
+    double? Cap,
+    DateTimeOffset? ResetAt,
+    bool IsAvailable,
+    string? Note = null,
+    string Unit = "$",
+    /// <summary>该池的当前金额读数(余额型数据源用)。与 Used/Cap 无关,单独携带。</summary>
+    double? Amount = null,
+    /// <summary>分母是估算出来的(余额型数据源),卡片要标明它来自哪里。</summary>
+    string? EstimateFrom = null,
+    /// <summary>赠送余额(DeepSeek 回包里的 granted_balance)。</summary>
+    double? GrantedAmount = null,
+    /// <summary>自己充值的余额(DeepSeek 回包里的 topped_up_balance)。</summary>
+    double? ToppedUpAmount = null,
+    /// <summary>
+    /// 这个读数来自哪个口径。非空 = 走的是网页控制台那条通道(与 opencode.ai
+    /// 网页同一个公式,所以数字能对上);null = 默认的 API Key 接口(整数、向下取整)。
+    /// </summary>
+    string? ReadingFrom = null,
+    /// <summary>已用金额(网页口径才有:meters 的 usedMicroCents)。</summary>
+    double? UsedAmount = null,
+    /// <summary>额度上限金额(网页口径才有:meters 的 limitMicroCents)。</summary>
+    double? LimitAmount = null)
+{
+    public double? Remaining => Used is not null && Cap is not null
+        ? Math.Max(0, Cap.Value - Used.Value)
+        : null;
+
+    public double? Percent => Used is not null && Cap is > 0
+        ? Math.Clamp(Used.Value / Cap.Value * 100d, 0d, 100d)
+        : null;
+
+    /// <summary>这一池是否有可用读数(有百分比,或至少有一个金额)。</summary>
+    public bool HasReading => IsAvailable && (Percent is not null || Amount is not null);
+}
+
+public sealed record UsageSnapshot(
+    string PlanId,
+    string PlanName,
+    string AccountLabel,
+    CredentialSource CredentialSource,
+    List<QuotaWindow> Windows,
+    double PurchasedCredits,
+    double FreeCredits,
+    double? PeriodCost,
+    long? PeriodRequests,
+    long? PeriodTokens,
+    DateTimeOffset FetchedAt,
+    string StudioUsageUrl)
+{
+    public double ExtraCredits => Math.Max(0, PurchasedCredits) + Math.Max(0, FreeCredits);
+
+    public QuotaWindow? Find(QuotaKind kind) => Windows.FirstOrDefault(window => window.Kind == kind);
+}
+
+public sealed record ApiIdentity(string AccountLabel, string? OrganizationId, string StudioSlug);
+
+public sealed record CredentialValidationResult(bool IsValid, ApiIdentity? Identity, string? ErrorMessage)
+{
+    public static CredentialValidationResult Valid(ApiIdentity identity) => new(true, identity, null);
+    public static CredentialValidationResult Invalid(string message) => new(false, null, message);
+}
+
+public sealed class CommandCodeApiException : Exception
+{
+    public CommandCodeApiException(HttpStatusCode? statusCode, string message, Exception? innerException = null)
+        : base(message, innerException)
+    {
+        StatusCode = statusCode;
+    }
+
+    public HttpStatusCode? StatusCode { get; }
+    public bool IsAuthenticationError => StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden;
+}
+
+public enum ConnectionState
+{
+    Loading,
+    Connected,
+    Stale,
+    AuthenticationRequired,
+    Error
+}

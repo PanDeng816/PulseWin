@@ -1,1 +1,51 @@
-bmFtZXNwYWNlIFB1bHNlV2luOwoKLy8vIDxzdW1tYXJ5PgovLy8g5rqQ6ZSu5LiO44CM6LSm5Y+35a6e5L6L6ZSu44CN55qE6Kej5p6Q44CCCi8vLwovLy8g5LiA5Liq5rqQ5Y+v5Lul5oyCKirlpJrkuKrotKblj7cqKjpPcGVuQ29kZSBHbyDnmoTmr4/kuKrlt6XkvZzljLood29ya3NwYWNlKeaYr+S4gOaKiueLrOeri+eahAovLy8gQVBJIEtleeOAgeS4gOS4queLrOeri+eahOmineW6puaxoCjlrpjmlrnmjqfliLblj7Dph4zlsLHmmK8gZ28xL2dvMiDpgqPkuKrkuIvmi4kp44CC5Li76LSm5Y+35rK/55SoCi8vLyDmupDplK4ob3BlbmNvZGUpLOmZhOWKoOi0puWPt+eUqOOAjOa6kOmUrjrnvJblj7fjgI0ob3BlbmNvZGU6MuOAgW9wZW5jb2RlOjPigKYp44CCCi8vLyDnvJblj7fmmK8qKueos+Wumuagh+ivhioq4oCU4oCUS2V5IOmHjeaWsOeUn+aIkOOAgeagh+etvuaUueWQjeS5i+WQjiznjq/pobrluo/kuI7mmL7npLrnirbmgIHku43ot5/nnYDlroPjgIIKLy8vIOWFtuS9mea6kOWPquacieS4u+i0puWPtyzplK7lsLHmmK/mupDplK7mnKzouqvjgIIKLy8vCi8vLyDms6jmhI/plK7nmoTliIbpmpTnrKbmmK/jgIw644CN4oCU4oCU6K6+572u44CB5b+r54Wn5paH5Lu25ZCN44CB5omY55uY5ZGK6K2m6ZSu6YeM6YO95piv5a6D44CCCi8vLyA8L3N1bW1hcnk+CnB1YmxpYyBzdGF0aWMgY2xhc3MgU291cmNlS2V5cwp7CiAgICBwdWJsaWMgY29uc3QgY2hhciBTZXBhcmF0b3IgPSAnOic7CgogICAgLy8vIDxzdW1tYXJ5Pk9wZW5Db2RlIEdvIOeahOa6kOmUrijllK/kuIDmlK/mjIHlpJrotKblj7fnmoTmupAp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIGNvbnN0IHN0cmluZyBPcGVuQ29kZSA9ICJvcGVuY29kZSI7CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOaLhuWHuiAo5rqQ6ZSuLCDlrp7kvovlj7cp44CC5Li76LSm5Y+35a6e5L6L5Y+3ID0gMTvkuI3mmK/lkIjms5XplK4o5pyq55+l5rqQ44CB57yW5Y+3ICZsdDsgMinov5Tlm54gbnVsbOOAggogICAgLy8vIDwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgKHN0cmluZyBCYXNlS2V5LCBpbnQgSW5zdGFuY2UpPyBUcnlQYXJzZShzdHJpbmc/IGtleSkKICAgIHsKICAgICAgICBpZiAoc3RyaW5nLklzTnVsbE9yRW1wdHkoa2V5KSkgcmV0dXJuIG51bGw7CiAgICAgICAgaW50IGNvbG9uID0ga2V5LkluZGV4T2YoU2VwYXJhdG9yKTsKICAgICAgICBpZiAoY29sb24gPCAwKQogICAgICAgICAgICByZXR1cm4gU291cmNlQ2F0YWxvZy5Jc0tub3duS2V5KGtleSkgPyAoa2V5LCAxKSA6IG51bGw7CgogICAgICAgIHN0cmluZyBiYXNlS2V5ID0ga2V5Wy4uY29sb25dOwogICAgICAgIGlmICghU291cmNlQ2F0YWxvZy5Jc0tub3duS2V5KGJhc2VLZXkpKSByZXR1cm4gbnVsbDsKICAgICAgICBpZiAoIWludC5UcnlQYXJzZShrZXlbKGNvbG9uICsgMSkuLl0sIG91dCBpbnQgaW5zdGFuY2UpIHx8IGluc3RhbmNlIDwgMikgcmV0dXJuIG51bGw7CiAgICAgICAgcmV0dXJuIChiYXNlS2V5LCBpbnN0YW5jZSk7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PuWunuS+i+mUrjrkuLvotKblj7flsLHmmK/mupDplK4s6ZmE5Yqg6LSm5Y+35bimIDpuIOWQjue8gOOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdGF0aWMgc3RyaW5nIEluc3RhbmNlS2V5KHN0cmluZyBiYXNlS2V5LCBpbnQgaW5zdGFuY2UpID0+CiAgICAgICAgaW5zdGFuY2UgPD0gMSA/IGJhc2VLZXkgOiAkIntiYXNlS2V5fXtTZXBhcmF0b3J9e2luc3RhbmNlfSI7CgogICAgLy8vIDxzdW1tYXJ5PuWJpeWbnua6kOmUrijlt7Lnu4/mmK/mupDplK7liJnljp/moLfov5Tlm54p44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyBzdHJpbmcgQmFzZUtleShzdHJpbmcga2V5KQogICAgewogICAgICAgIGludCBjb2xvbiA9IGtleS5JbmRleE9mKFNlcGFyYXRvcik7CiAgICAgICAgcmV0dXJuIGNvbG9uIDwgMCA/IGtleSA6IGtleVsuLmNvbG9uXTsKICAgIH0KCiAgICAvLy8gPHN1bW1hcnk+5rqQ6ZSu5oiW5a6e5L6L6ZSu6YO9566X44CM5bey55+l44CN4oCU4oCU5Y+v6KeB5oCn5YiX6KGo5LiO546v6aG65bqP55qE6L+H5ruk55So6L+Z5p2hLAogICAgLy8vIOS4jeiDveWGjeaUtue0p+aIkCA8c2VlIGNyZWY9IlNvdXJjZUNhdGFsb2cuSXNLbm93bktleSIvPijpgqPkvJrmiorpmYTliqDotKblj7fpnZnpu5jkuKLmjokp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0YXRpYyBib29sIElzS25vd24oc3RyaW5nPyBrZXkpID0+IFRyeVBhcnNlKGtleSkgaXMgbm90IG51bGw7Cn0K
+namespace PulseWin;
+
+/// <summary>
+/// 源键与「账号实例键」的解析。
+///
+/// 一个源可以挂**多个账号**:OpenCode Go 的每个工作区(workspace)是一把独立的
+/// API Key、一个独立的额度池(官方控制台里就是 go1/go2 那个下拉)。主账号沿用
+/// 源键(opencode),附加账号用「源键:编号」(opencode:2、opencode:3…)。
+/// 编号是**稳定标识**——Key 重新生成、标签改名之后,环顺序与显示状态仍跟着它。
+/// 其余源只有主账号,键就是源键本身。
+///
+/// 注意键的分隔符是「:」——设置、快照文件名、托盘告警键里都是它。
+/// </summary>
+public static class SourceKeys
+{
+    public const char Separator = ':';
+
+    /// <summary>OpenCode Go 的源键(唯一支持多账号的源)。</summary>
+    public const string OpenCode = "opencode";
+
+    /// <summary>
+    /// 拆出 (源键, 实例号)。主账号实例号 = 1;不是合法键(未知源、编号 &lt; 2)返回 null。
+    /// </summary>
+    public static (string BaseKey, int Instance)? TryParse(string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return null;
+        int colon = key.IndexOf(Separator);
+        if (colon < 0)
+            return SourceCatalog.IsKnownKey(key) ? (key, 1) : null;
+
+        string baseKey = key[..colon];
+        if (!SourceCatalog.IsKnownKey(baseKey)) return null;
+        if (!int.TryParse(key[(colon + 1)..], out int instance) || instance < 2) return null;
+        return (baseKey, instance);
+    }
+
+    /// <summary>实例键:主账号就是源键,附加账号带 :n 后缀。</summary>
+    public static string InstanceKey(string baseKey, int instance) =>
+        instance <= 1 ? baseKey : $"{baseKey}{Separator}{instance}";
+
+    /// <summary>剥回源键(已经是源键则原样返回)。</summary>
+    public static string BaseKey(string key)
+    {
+        int colon = key.IndexOf(Separator);
+        return colon < 0 ? key : key[..colon];
+    }
+
+    /// <summary>源键或实例键都算「已知」——可见性列表与环顺序的过滤用这条,
+    /// 不能再收紧成 <see cref="SourceCatalog.IsKnownKey"/>(那会把附加账号静默丢掉)。</summary>
+    public static bool IsKnown(string? key) => TryParse(key) is not null;
+}

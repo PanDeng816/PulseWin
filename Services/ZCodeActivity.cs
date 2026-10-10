@@ -1,1 +1,325 @@
-dXNpbmcgU3lzdGVtLkdsb2JhbGl6YXRpb247CnVzaW5nIFN5c3RlbS5JTzsKdXNpbmcgU3lzdGVtLlRleHQ7CnVzaW5nIFN5c3RlbS5UZXh0Lkpzb247CgpuYW1lc3BhY2UgUHVsc2VXaW47CgovLy8gPHN1bW1hcnk+Ci8vLyBaQ29kZSDmraTliLvmmK/kuI3mmK/mraPlnKjot5HkuIDova7jgILor7vnmoTmmK/lroPoh6rlt7HnmoTlupTnlKjml6Xlv5cKLy8vIDxjPn4vLnpjb2RlL2NsaS9sb2cvemNvZGUtJmx0O+aXpeacnyZndDsuanNvbmw8L2M+LOmFjeWvuSA8Yz50dXJuLnN0YXJ0ZWQ8L2M+IOS4jgovLy8gPGM+dHVybi5jb21wbGV0ZWQvZmFpbGVkPC9jPuOAggovLy8KLy8vICoq5Li65LuA5LmI5LiN55yL55So6YeP5bqTKio6WkNvZGUg55qEIDxjPnR1cm5fdXNhZ2U8L2M+LzxjPm1vZGVsX3VzYWdlPC9jPiDlj6rlnKjlm57lkIgqKue7k+adn+aXtioqCi8vLyDmiY3okL3lupMs5YWo5bqT5rKh5pyJ5LiA6KGMIHJ1bm5pbmco5a6e5rWLKSzmn6XkuI3lh7oi6L+b6KGM5LitIjs8Yz50b29sX3VzYWdlPC9jPiDnmoQgcnVubmluZyDooYwKLy8vIOWAkuaYr+WunuaXtueahCzkvYbltKnmuoPmrovnlZnnmoTlg7XlsLjooYzog73mjILlh6DlpKko5a6e5rWL6KeB6L+HIDQwIOWwj+aXtuWSjCAyOCDlpKnnmoQp44CCCi8vLwovLy8gKirkuZ/kuI3nnIvmlofku7bkv67mlLnml7bpl7QqKuOAgiLmnIDov5EgTiDnp5LmnInlhpnlhaUi5Lik5Liq5pa55ZCR6YO95Lya6ZSZOuaFouW3peWFt+i3keWHoOWIhumSn+S4jeWGmeS4gOS4quWtlywKLy8vIOiAjOWbnuWQiOe7k+adn+WQjuWuouaIt+err+i/mOS8mue7p+e7reW+gOWQjOS4gOS7veiusOW9leWGmeiusOi0puS/oeaBryjmoIfpopjjgIHmqKHlvI8pLG10aW1lIOS4gOebtOaWsOmynOKAlOKAlAovLy8g5LiA5Liq5bey57uP5q275o6J55qE5Zue5ZCI5Lya5rC46L+c5pi+56S65Zyo6L2sKOS4iua4uOS4k+mXqOi4qei/h+i/meS4quWdkSnjgIIKLy8vCi8vLyDnrYnlvoXotoXml7bmjIki6L+Z5LiA6L2u5Zyo562J5LuA5LmIIuWIhuahoyjkuIrmuLjop4TmoLwpOuetieW3peWFtyA1IOWIhumSnyjnvJbor5Ev5rWL6K+V5pyf6Ze05LiN5YaZ5pel5b+XKSwKLy8vIOetieaooeWeiyA5MCDnp5Io5LiK5ri45a6e5rWL5Lit5L2N5pWwIDcg56eS44CBOTklIOWcqCA3MCDnp5LlhoUp44CC6K6h5pe25LiA5b6L55SoKirorrDlvZXoh6rluKbnmoTml7bpl7TmiLMqKiwKLy8vIOS4jeeUqOaWh+S7tuaXtumXtOOAggovLy8KLy8vIOmZpOS6hiLlnKjkuI3lnKjot5EiLOi/mOi/vei4qioq5Zyo54On5ZOq5p2h6YCa6YGTKio65pel5b+X55qE5qih5Z6L6K+35rGC57O75LqL5Lu2KG1vZGVsLnJlcXVlc3QuY29tcGxldGVk44CBCi8vLyBtb2RlbC5yZXNwb25zZS5kaWFnbm9zdGljcyDnrYkp5bimIDxjPmNvbnRleHQucHJvdmlkZXJJZDwvYz4s5oyJ5Zue5ZCI6K6w5LiL5p2lLOiBmuWQiOWcqAovLy8gPHNlZSBjcmVmPSJBY3RpdmVQcm92aWRlcnMiLz7jgIJaQ29kZSDkvJrlnKjlpJrmnaHpgJrpgZPpl7TliIfmjaIoQmlnTW9kZWwg55u06L+eL0dPQVQvT3BlbkNvZGUgR28pLAovLy8gIuWuouaIt+err+WcqOi3kSLkuI3lho3nrYnkuo4iR09BVCDlnKjooqvng6ci4oCU4oCU5ZG85ZC45LiO5YaF5ZyI55qE5Yik5a6a5b+F6aG755yL6YCa6YGTLOS4jeiDveWPqueci+WcqOi3keOAggovLy8gPC9zdW1tYXJ5PgpwdWJsaWMgc2VhbGVkIGNsYXNzIFpDb2RlQWN0aXZpdHkKewogICAgLy8vIDxzdW1tYXJ5PuetieW3peWFtzrmhaLmnoTlu7rjgIHplb/mtYvor5XmnJ/pl7Tml6Xlv5fmmK/lronpnZnnmoTjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBUaW1lU3BhbiBUb29sR3JhY2UgPSBUaW1lU3Bhbi5Gcm9tTWludXRlcyg1KTsKCiAgICAvLy8gPHN1bW1hcnk+562J5qih5Z6LOuWunua1i+S4reS9jeaVsCA3IOenkiw5OSUg5ZyoIDcwIOenkuWGhSw5MCDnp5LotrPlpJ/jgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyByZWFkb25seSBUaW1lU3BhbiBNb2RlbEdyYWNlID0gVGltZVNwYW4uRnJvbVNlY29uZHMoOTApOwoKICAgIC8vLyA8c3VtbWFyeT7pppbmrKHmiZPlvIAo5oiW5o2i5pelKeaXtuW+gOWbnuivu+WkmuWwkeWtl+iKguadpei/mOWOnyLmraTliLvlt7Lnu4/lnKjot5HnmoTlm57lkIgi44CCPC9zdW1tYXJ5PgogICAgcHJpdmF0ZSBjb25zdCBpbnQgSW5pdGlhbFRhaWxCeXRlcyA9IDEgPDwgMjA7CgogICAgLy8vIDxzdW1tYXJ5PuS4gOasoeacgOWkmuivu+WkmuWwkeWtl+iKgizpmLLmraLml6Xlv5fooqvov73lhpnml7bkuIDlj6PmsJTor7vov5vmnaXjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGNvbnN0IGludCBNYXhDaHVua0J5dGVzID0gOCA8PCAyMDsKCiAgICBwcml2YXRlIHJlYWRvbmx5IHN0cmluZyBfbG9nRGlyZWN0b3J5OwogICAgcHJpdmF0ZSByZWFkb25seSBNZW1vcnlTdHJlYW0gX3BlbmRpbmcgPSBuZXcoKTsKICAgIHByaXZhdGUgcmVhZG9ubHkgRGljdGlvbmFyeTxzdHJpbmcsIFR1cm5TdGF0ZT4gX29wZW4gPSBuZXcoU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CiAgICBwcml2YXRlIHJlYWRvbmx5IERpY3Rpb25hcnk8c3RyaW5nLCBzdHJpbmc+IF9sYXN0UHJvdmlkZXJCeVNlc3Npb24gPSBuZXcoU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CgogICAgcHJpdmF0ZSBzdHJpbmcgX3BhdGggPSAiIjsKICAgIHByaXZhdGUgbG9uZyBfb2Zmc2V0OwogICAgcHJpdmF0ZSBib29sIF9kcm9wVW50aWxOZXdsaW5lOwogICAgcHJpdmF0ZSBEYXRlVGltZU9mZnNldD8gX2xhc3RNaXNzaW5nTm90ZTsKCiAgICBwdWJsaWMgWkNvZGVBY3Rpdml0eShzdHJpbmc/IGxvZ0RpcmVjdG9yeSA9IG51bGwpCiAgICB7CiAgICAgICAgX2xvZ0RpcmVjdG9yeSA9IGxvZ0RpcmVjdG9yeQogICAgICAgICAgICA/PyBQYXRoLkNvbWJpbmUoRW52aXJvbm1lbnQuR2V0Rm9sZGVyUGF0aChFbnZpcm9ubWVudC5TcGVjaWFsRm9sZGVyLlVzZXJQcm9maWxlKSwKICAgICAgICAgICAgICAgICIuemNvZGUiLCAiY2xpIiwgImxvZyIpOwogICAgfQoKICAgIC8vLyA8c3VtbWFyeT5aQ29kZSDmmK/lkKbmraPlnKjot5HkuIDova7jgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBJc1dvcmtpbmcgeyBnZXQ7IHByaXZhdGUgc2V0OyB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOW9k+WJjea0u+edgO+8iOacqui2heWuvemZkO+8ieeahOWbnuWQiOWcqOeDp+eahOmAmumBk+mbhuWQiO+8iHByb3ZpZGVySWQg5Y6f5YC877yM5aaCCiAgICAvLy8gPGM+M2VkODhhYzct4oCmPC9jPu+8nUdPQVTjgIE8Yz5vcGVuY29kZS1nby1jaGF0PC9jPuOAgTxjPmFjY291bnQ6YmlnbW9kZWwtc3RhcnQtcGxhbjwvYz7vvInjgIIKICAgIC8vLyDnqbrpm4YgPSDlnKjot5HnmoTlm57lkIjov5jmsqHkuqfnlJ/ov4fmqKHlnovor7fmsYLjgIHmiJblhajpg6jotoXml7bjgILmmKDlsITliLAgcmFpbCDmupDnlKgKICAgIC8vLyA8Yz5DaGFubmVsUmVnaXN0cnkuU291cmNlS2V5T2Y8L2M+44CCCiAgICAvLy8gPC9zdW1tYXJ5PgogICAgcHVibGljIElSZWFkT25seVNldDxzdHJpbmc+IEFjdGl2ZVByb3ZpZGVycyB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0gPQogICAgICAgIG5ldyBIYXNoU2V0PHN0cmluZz4oU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CgogICAgLy8vIDxzdW1tYXJ5PuWunumZheivu+eahOaXpeW/l+ebruW9lSjor4rmlq3lhaXlj6PopoHmmL7npLrlh7rmnaUp44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZyBMb2dEaXJlY3RvcnkgPT4gX2xvZ0RpcmVjdG9yeTsKCiAgICAvLy8gPHN1bW1hcnk+5LuK5aSp6YKj5Lu95pel5b+X55qE5a6M5pW06Lev5b6E44CCPC9zdW1tYXJ5PgogICAgcHVibGljIHN0cmluZyBUb2RheUxvZ1BhdGggPT4gUGF0aC5Db21iaW5lKF9sb2dEaXJlY3RvcnksICQiemNvZGUte0RhdGVUaW1lLk5vdzp5eXl5LU1NLWRkfS5qc29ubCIpOwoKICAgIC8vLyA8c3VtbWFyeT7kuIrkuIDmrKHml6Xlv5for7vlj5blpLHotKXnmoTljp/lm6Ao6K+K5pat55SoKSzmiJDlip/ml7bkuLogbnVsbOOAgjwvc3VtbWFyeT4KICAgIHB1YmxpYyBzdHJpbmc/IExhc3RFcnJvciB7IGdldDsgcHJpdmF0ZSBzZXQ7IH0KCiAgICAvLy8gPHN1bW1hcnk+5b2T5YmN5pyq6Zet5ZCI55qE5Zue5ZCI5pWwKOiviuaWreeUqCnjgII8L3N1bW1hcnk+CiAgICBwdWJsaWMgaW50IE9wZW5UdXJucyA9PiBfb3Blbi5Db3VudDsKCiAgICBwcml2YXRlIHNlYWxlZCBjbGFzcyBUdXJuU3RhdGUKICAgIHsKICAgICAgICBwdWJsaWMgc3RyaW5nPyBMYXN0RXZlbnQgeyBnZXQ7IHNldDsgfQogICAgICAgIHB1YmxpYyBEYXRlVGltZU9mZnNldCBMYXN0QXQgeyBnZXQ7IHNldDsgfQoKICAgICAgICAvLy8gPHN1bW1hcnk+6L+Z5LiA6L2u5pyA6L+R5LiA5qyh5qih5Z6L6K+35rGC6LWw55qE6YCa6YGT77yI5pel5b+XIG1vZGVsIOezu+S6i+S7tueahCBjb250ZXh0LnByb3ZpZGVySWTvvInjgII8L3N1bW1hcnk+CiAgICAgICAgcHVibGljIHN0cmluZz8gUHJvdmlkZXJJZCB7IGdldDsgc2V0OyB9CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PgogICAgLy8vIOivu+S4gOasoeaWsOWinueahOaXpeW/l+W5tumHjeeul+eKtuaAgeOAgueUseS4u+W+queOr+aMieenkuiKgua1geiwg+eUqCzor7vkuI3liLDkuJzopb/ml7blvIDplIDlj6rmnInkuIDmrKEKICAgIC8vLyDmlofku7bplb/luqbmo4Dmn6XjgILov5Tlm57nirbmgIHmmK/lkKblj5HnlJ/kuoblj5jljJYo55WM6Z2i5o2u5q2k5Yaz5a6a6KaB5LiN6KaB6YeN55S7KeKAlOKAlAogICAgLy8vICLlnKjot5Ei55qE57+76L2s5LiOIuWcqOeDp+WTquS6m+mAmumBkyLnmoTpm4blkIjlj5jljJbpg73nrpfjgIIKICAgIC8vLyA8L3N1bW1hcnk+CiAgICBwdWJsaWMgYm9vbCBQb2xsKCkKICAgIHsKICAgICAgICBib29sIGJlZm9yZSA9IElzV29ya2luZzsKICAgICAgICB2YXIgYmVmb3JlUHJvdmlkZXJzID0gQWN0aXZlUHJvdmlkZXJzOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgU3dpdGNoRmlsZUlmTmVlZGVkKCk7CiAgICAgICAgICAgIFJlYWROZXdMaW5lcygpOwogICAgICAgICAgICBJc1dvcmtpbmcgPSBFdmFsdWF0ZShEYXRlVGltZU9mZnNldC5VdGNOb3cpOwogICAgICAgICAgICBMYXN0RXJyb3IgPSBudWxsOwogICAgICAgIH0KICAgICAgICBjYXRjaCAoRXhjZXB0aW9uIGV4KQogICAgICAgIHsKICAgICAgICAgICAgLy8g5pel5b+X6K+75LiN5LqG5LiN6K+l5b2x5ZON5rWu56qXOuW9k+S9nCLkuI3lnKjlt6XkvZwiLOW5tuWPquWcqOmUmeivr+WGheWuueWPmOWMluaXtuiusOS4gOadoQogICAgICAgICAgICBMYXN0RXJyb3IgPSBleC5NZXNzYWdlOwogICAgICAgICAgICBpZiAoX2xhc3RFcnJvclRleHQgIT0gZXguTWVzc2FnZSkKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgX2xhc3RFcnJvclRleHQgPSBleC5NZXNzYWdlOwogICAgICAgICAgICAgICAgRGlhZ25vc3RpY3MuTm90ZSgi6K+75Y+WIFpDb2RlIOa0u+WKqOaXpeW/l+Wksei0pSIsIGV4KTsKICAgICAgICAgICAgfQogICAgICAgICAgICBJc1dvcmtpbmcgPSBmYWxzZTsKICAgICAgICAgICAgQWN0aXZlUHJvdmlkZXJzID0gbmV3IEhhc2hTZXQ8c3RyaW5nPihTdHJpbmdDb21wYXJlci5PcmRpbmFsKTsKICAgICAgICB9CgogICAgICAgIGJvb2wgY2hhbmdlZCA9IGJlZm9yZSAhPSBJc1dvcmtpbmcgfHwgIVNhbWVTZXQoYmVmb3JlUHJvdmlkZXJzLCBBY3RpdmVQcm92aWRlcnMpOwogICAgICAgIGlmIChiZWZvcmUgIT0gSXNXb3JraW5nKQogICAgICAgICAgICBEaWFnbm9zdGljcy5Ob3RlKCQiWkNvZGUg5rS75Yqo54q25oCBOiB7KElzV29ya2luZwogICAgICAgICAgICAgICAgPyAkIuW8gOWni+W3peS9nCjmnKrpl63lkIjlm57lkIgge19vcGVuLkNvdW50fSzpgJrpgZMgW3tzdHJpbmcuSm9pbigiLCAiLCBBY3RpdmVQcm92aWRlcnMpfV0pIgogICAgICAgICAgICAgICAgOiAkIuepuumXsijmnKrpl63lkIjlm57lkIgge19vcGVuLkNvdW50fSkiKX0iKTsKICAgICAgICByZXR1cm4gY2hhbmdlZDsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyBib29sIFNhbWVTZXQoSVJlYWRPbmx5U2V0PHN0cmluZz4gYSwgSVJlYWRPbmx5U2V0PHN0cmluZz4gYikgPT4KICAgICAgICBhLkNvdW50ID09IGIuQ291bnQgJiYgYS5BbGwoYi5Db250YWlucyk7CgogICAgcHJpdmF0ZSBzdHJpbmc/IF9sYXN0RXJyb3JUZXh0OwoKICAgIC8vLyA8c3VtbWFyeT7mnKzlnLDml6XmnJ/lj5jkuoblsLHmjaLmlofku7Y75o2i5LmL5YmN5YWI5oqK5pen5paH5Lu26K+75Yiw5bC+LOWFjeW+l+i3qOWNiOWknOmCo+WHoOadoeS6i+S7tuS4ouaOieOAgjwvc3VtbWFyeT4KICAgIHByaXZhdGUgdm9pZCBTd2l0Y2hGaWxlSWZOZWVkZWQoKQogICAgewogICAgICAgIHN0cmluZyB0b2RheSA9IFRvZGF5TG9nUGF0aDsKICAgICAgICBpZiAodG9kYXkgPT0gX3BhdGgpIHJldHVybjsKCiAgICAgICAgaWYgKF9wYXRoLkxlbmd0aCA+IDApIFJlYWROZXdMaW5lcygpOyAgICAgIC8vIOaXp+aWh+S7tuivu+W5suWHgOWGjei1sAoKICAgICAgICBfcGF0aCA9IHRvZGF5OwogICAgICAgIF9wZW5kaW5nLlNldExlbmd0aCgwKTsKICAgICAgICBfZHJvcFVudGlsTmV3bGluZSA9IGZhbHNlOwogICAgICAgIF9vZmZzZXQgPSAwOwoKICAgICAgICB2YXIgaW5mbyA9IG5ldyBGaWxlSW5mbyh0b2RheSk7CiAgICAgICAgaWYgKGluZm8uRXhpc3RzKQogICAgICAgIHsKICAgICAgICAgICAgLy8g5LuO5bC+6YOo5b6A5YmN6K+75LiA5q61LOaKiiLmraTliLvlt7Lnu4/lnKjot5HnmoTpgqPkuIDova4i55u05o6l6K6k5Ye65p2l44CC6LW354K55aSn5qaC546H6JC95ZyoCiAgICAgICAgICAgIC8vIOS4gOihjOS4remXtCzmiYDku6XnrKzkuIDooYzkuKLlvIMo6KeBIFJlYWROZXdMaW5lcyDnmoQgX2Ryb3BVbnRpbE5ld2xpbmUp44CCCiAgICAgICAgICAgIF9vZmZzZXQgPSBNYXRoLk1heCgwLCBpbmZvLkxlbmd0aCAtIEluaXRpYWxUYWlsQnl0ZXMpOwogICAgICAgICAgICBfZHJvcFVudGlsTmV3bGluZSA9IF9vZmZzZXQgPiAwOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChfbGFzdE1pc3NpbmdOb3RlIGlzIG51bGwgfHwgRGF0ZVRpbWVPZmZzZXQuTm93IC0gX2xhc3RNaXNzaW5nTm90ZSA+IFRpbWVTcGFuLkZyb21Ib3Vycyg2KSkKICAgICAgICB7CiAgICAgICAgICAgIF9sYXN0TWlzc2luZ05vdGUgPSBEYXRlVGltZU9mZnNldC5Ob3c7CiAgICAgICAgICAgIERpYWdub3N0aWNzLk5vdGUoJCJaQ29kZSDmtLvliqjml6Xlv5fkuI3lrZjlnKgoe3RvZGF5fSks5rS75Yqo5oyH56S65oyJ56m66Zey5aSE55CGIik7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgdm9pZCBSZWFkTmV3TGluZXMoKQogICAgewogICAgICAgIGlmIChfcGF0aC5MZW5ndGggPT0gMCkgcmV0dXJuOwogICAgICAgIHVzaW5nIHZhciBzdHJlYW0gPSBuZXcgRmlsZVN0cmVhbSgKICAgICAgICAgICAgX3BhdGgsIEZpbGVNb2RlLk9wZW4sIEZpbGVBY2Nlc3MuUmVhZCwgRmlsZVNoYXJlLlJlYWRXcml0ZSB8IEZpbGVTaGFyZS5EZWxldGUpOwoKICAgICAgICBpZiAoc3RyZWFtLkxlbmd0aCA8IF9vZmZzZXQpCiAgICAgICAgewogICAgICAgICAgICAvLyDmlofku7booqvph43lu7rmiJbova7ovawo6ZW/5bqm5Y+N6ICM5Y+Y5bCPKTrku47lpLTph43or7sKICAgICAgICAgICAgX29mZnNldCA9IDA7CiAgICAgICAgICAgIF9wZW5kaW5nLlNldExlbmd0aCgwKTsKICAgICAgICB9CiAgICAgICAgaWYgKHN0cmVhbS5MZW5ndGggPD0gX29mZnNldCkgcmV0dXJuOwoKICAgICAgICBzdHJlYW0uU2Vlayhfb2Zmc2V0LCBTZWVrT3JpZ2luLkJlZ2luKTsKICAgICAgICBpbnQgY291bnQgPSAoaW50KU1hdGguTWluKHN0cmVhbS5MZW5ndGggLSBfb2Zmc2V0LCBNYXhDaHVua0J5dGVzKTsKICAgICAgICB2YXIgYnVmZmVyID0gbmV3IGJ5dGVbY291bnRdOwogICAgICAgIGludCByZWFkID0gc3RyZWFtLlJlYWQoYnVmZmVyLCAwLCBjb3VudCk7CiAgICAgICAgX29mZnNldCArPSByZWFkOwogICAgICAgIGlmIChyZWFkIDw9IDApIHJldHVybjsKCiAgICAgICAgaWYgKF9kcm9wVW50aWxOZXdsaW5lKQogICAgICAgIHsKICAgICAgICAgICAgaW50IG5ld2xpbmUgPSBBcnJheS5JbmRleE9mKGJ1ZmZlciwgKGJ5dGUpJ1xuJywgMCwgcmVhZCk7CiAgICAgICAgICAgIGlmIChuZXdsaW5lIDwgMCkgcmV0dXJuOyAgICAgICAgICAgICAgICAgLy8g6L+Z5LiA5Z2X6L+Y5rKh5pyJ5o2i6KGMLOaVtOWdl+S4ouaOiQogICAgICAgICAgICBfcGVuZGluZy5Xcml0ZShidWZmZXIsIG5ld2xpbmUgKyAxLCByZWFkIC0gbmV3bGluZSAtIDEpOwogICAgICAgICAgICBfZHJvcFVudGlsTmV3bGluZSA9IGZhbHNlOwogICAgICAgIH0KICAgICAgICBlbHNlCiAgICAgICAgewogICAgICAgICAgICBfcGVuZGluZy5Xcml0ZShidWZmZXIsIDAsIHJlYWQpOwogICAgICAgIH0KCiAgICAgICAgLy8g5oyJ5a2X6IqC5om+5o2i6KGMLOWPquWcqOWujOaVtOeahOihjOS4iuWBmiBVVEYtOCDop6PnoIE65aSa5a2X6IqC5a2X56ym6KKr5Z2X6L6555WM5YiH5byA5pe2CiAgICAgICAgLy8g5omN5LiN5Lya6Kej5Ye65pu/5o2i5a2X56ymCiAgICAgICAgYnl0ZVtdIGRhdGEgPSBfcGVuZGluZy5HZXRCdWZmZXIoKTsKICAgICAgICBpbnQgbGVuZ3RoID0gKGludClfcGVuZGluZy5MZW5ndGg7CiAgICAgICAgaW50IHN0YXJ0ID0gMDsKICAgICAgICBmb3IgKGludCBpID0gMDsgaSA8IGxlbmd0aDsgaSsrKQogICAgICAgIHsKICAgICAgICAgICAgaWYgKGRhdGFbaV0gIT0gKGJ5dGUpJ1xuJykgY29udGludWU7CiAgICAgICAgICAgIEhhbmRsZUxpbmUoRW5jb2RpbmcuVVRGOC5HZXRTdHJpbmcoZGF0YSwgc3RhcnQsIGkgLSBzdGFydCkpOwogICAgICAgICAgICBzdGFydCA9IGkgKyAxOwogICAgICAgIH0KICAgICAgICBpZiAoc3RhcnQgPiAwKQogICAgICAgIHsKICAgICAgICAgICAgaW50IHJlbWFpbiA9IGxlbmd0aCAtIHN0YXJ0OwogICAgICAgICAgICBCdWZmZXIuQmxvY2tDb3B5KGRhdGEsIHN0YXJ0LCBkYXRhLCAwLCByZW1haW4pOwogICAgICAgICAgICBfcGVuZGluZy5TZXRMZW5ndGgocmVtYWluKTsKICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSB2b2lkIEhhbmRsZUxpbmUoc3RyaW5nIGxpbmUpCiAgICB7CiAgICAgICAgaW50IGJyYWNlID0gbGluZS5JbmRleE9mKCd7Jyk7CiAgICAgICAgaWYgKGJyYWNlIDwgMCkgcmV0dXJuOyAgICAgICAgICAgICAgICAgICAgICAgLy8g56m66KGM5oiW6Z2eIEpTT04g6KGMCiAgICAgICAgc3RyaW5nPyBldiwgdHVybklkLCBzdGFtcCwgc2Vzc2lvbklkLCBwcm92aWRlcklkOwogICAgICAgIHRyeQogICAgICAgIHsKICAgICAgICAgICAgdXNpbmcgdmFyIGRvYyA9IEpzb25Eb2N1bWVudC5QYXJzZShsaW5lW2JyYWNlLi5dKTsKICAgICAgICAgICAgdmFyIHJvb3QgPSBkb2MuUm9vdEVsZW1lbnQ7CiAgICAgICAgICAgIGlmIChyb290LlZhbHVlS2luZCAhPSBKc29uVmFsdWVLaW5kLk9iamVjdCkgcmV0dXJuOwogICAgICAgICAgICBldiA9IFN0cihyb290LCAiZXZlbnQiKTsKICAgICAgICAgICAgdHVybklkID0gU3RyKHJvb3QsICJ0dXJuSWQiKTsKICAgICAgICAgICAgc3RhbXAgPSBTdHIocm9vdCwgInRpbWVzdGFtcCIpOwogICAgICAgICAgICBzZXNzaW9uSWQgPSBTdHIocm9vdCwgInNlc3Npb25JZCIpOwoKICAgICAgICAgICAgLy8g6YCa6YGTOuaooeWei+ivt+axguezu+S6i+S7tihtb2RlbC5yZXF1ZXN0L25ldHdvcmsuY29tcGxldGVk44CBcmVzcG9uc2UuZGlhZ25vc3RpY3Mg562JKQogICAgICAgICAgICAvLyDnmoQgY29udGV4dC5wcm92aWRlcklkIOivtOaYjui/meS4gOi9rueDp+eahOaYr+WTquadoemAmumBk+OAgnR1cm4uc3RhcnRlZCDmnKzouqvkuI3luKYsCiAgICAgICAgICAgIC8vIOaJgOS7peWbnuWQiOaJk+W8gOaXtuWFiOe7p+aJv+ivpeS8muivneS4iuS4gOWbnuWQiOeahOmAmumBkyznrKzkuIDkuKrmqKHlnovkuovku7bliLDkuoblho3moKHmraPigJTigJQKICAgICAgICAgICAgLy8g5ZCM5LiA5Lya6K+d5Lit6YCU5o2iIHByb3ZpZGVyIOaYr+e9leingeaTjeS9nCznu6fmib/lgLzlnKjnqbrnqpfmnJ/otrPlpJ/lh4bjgIIKICAgICAgICAgICAgaWYgKHJvb3QuVHJ5R2V0UHJvcGVydHkoImNvbnRleHQiLCBvdXQgdmFyIGN0eCkKICAgICAgICAgICAgICAgICYmIGN0eC5WYWx1ZUtpbmQgPT0gSnNvblZhbHVlS2luZC5PYmplY3QKICAgICAgICAgICAgICAgICYmIFN0cihjdHgsICJwcm92aWRlcklkIikgaXMgeyBMZW5ndGg6ID4gMCB9IHByb3ZpZGVyKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICBwcm92aWRlcklkID0gcHJvdmlkZXI7CiAgICAgICAgICAgICAgICBpZiAoX2xhc3RQcm92aWRlckJ5U2Vzc2lvbi5Db3VudCA+IDUxMikgX2xhc3RQcm92aWRlckJ5U2Vzc2lvbi5DbGVhcigpOwogICAgICAgICAgICAgICAgaWYgKHNlc3Npb25JZCBpcyBub3QgbnVsbCkgX2xhc3RQcm92aWRlckJ5U2Vzc2lvbltzZXNzaW9uSWRdID0gcHJvdmlkZXI7CiAgICAgICAgICAgICAgICBpZiAodHVybklkIGlzIG5vdCBudWxsICYmIF9vcGVuLlRyeUdldFZhbHVlKHR1cm5JZCwgb3V0IHZhciBvcGVuVHVybikpCiAgICAgICAgICAgICAgICAgICAgb3BlblR1cm4uUHJvdmlkZXJJZCA9IHByb3ZpZGVyOwogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsc2UKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgcHJvdmlkZXJJZCA9IG51bGw7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgY2F0Y2ggKEpzb25FeGNlcHRpb24pCiAgICAgICAgewogICAgICAgICAgICByZXR1cm47ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAvLyDljYrooYwv5Z2P6KGMOui3s+i/hyzkuI3lm6DmraTkuK3mlq3mlbTku73ml6Xlv5cKICAgICAgICB9CiAgICAgICAgaWYgKHN0cmluZy5Jc051bGxPckVtcHR5KGV2KSkgcmV0dXJuOwoKICAgICAgICBEYXRlVGltZU9mZnNldCBhdCA9IERhdGVUaW1lT2Zmc2V0LlRyeVBhcnNlKHN0YW1wLCBDdWx0dXJlSW5mby5JbnZhcmlhbnRDdWx0dXJlLAogICAgICAgICAgICBEYXRlVGltZVN0eWxlcy5Sb3VuZHRyaXBLaW5kLCBvdXQgdmFyIHBhcnNlZCkgPyBwYXJzZWQgOiBEYXRlVGltZU9mZnNldC5VdGNOb3c7CgogICAgICAgIGlmIChldiA9PSAidHVybi5zdGFydGVkIikKICAgICAgICB7CiAgICAgICAgICAgIGlmICh0dXJuSWQgaXMgbm90IG51bGwpCiAgICAgICAgICAgICAgICBfb3Blblt0dXJuSWRdID0gbmV3IFR1cm5TdGF0ZQogICAgICAgICAgICAgICAgewogICAgICAgICAgICAgICAgICAgIExhc3RFdmVudCA9IGV2LAogICAgICAgICAgICAgICAgICAgIExhc3RBdCA9IGF0LAogICAgICAgICAgICAgICAgICAgIFByb3ZpZGVySWQgPSBzZXNzaW9uSWQgaXMgbm90IG51bGwKICAgICAgICAgICAgICAgICAgICAgICAgPyBfbGFzdFByb3ZpZGVyQnlTZXNzaW9uLkdldFZhbHVlT3JEZWZhdWx0KHNlc3Npb25JZCkKICAgICAgICAgICAgICAgICAgICAgICAgOiBudWxsLAogICAgICAgICAgICAgICAgfTsKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KICAgICAgICBpZiAoZXYgaXMgInR1cm4uY29tcGxldGVkIiBvciAidHVybi5mYWlsZWQiIG9yICJ0dXJuLmNhbmNlbGxlZCIpCiAgICAgICAgewogICAgICAgICAgICBpZiAodHVybklkIGlzIG5vdCBudWxsKSBfb3Blbi5SZW1vdmUodHVybklkKTsKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KICAgICAgICAvLyDlupTnlKjph43lkK866YeN5ZCv5YmN6YKj5Lqb5Zue5ZCI5rC46L+c5LiN5Lya5YaN5p2lIGNvbXBsZXRlZCDkuoYs5riF5o6J6YeN5p2lCiAgICAgICAgaWYgKGV2LlN0YXJ0c1dpdGgoImJvb3RzdHJhcC4iLCBTdHJpbmdDb21wYXJpc29uLk9yZGluYWwpKQogICAgICAgIHsKICAgICAgICAgICAgX29wZW4uQ2xlYXIoKTsKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KICAgICAgICAvLyDlhbbkvZnkuovku7blj6rmm7TmlrAi6L+Z5LiA6L2u5pyA5ZCO55qE5Yqo6Z2ZIjrlnKjnrYnku4DkuYjlhrPlrprkuoblroPov5jog73nrpflpJrkuYUKICAgICAgICBpZiAodHVybklkIGlzIG5vdCBudWxsICYmIF9vcGVuLlRyeUdldFZhbHVlKHR1cm5JZCwgb3V0IHZhciBzdGF0ZSkpCiAgICAgICAgewogICAgICAgICAgICBzdGF0ZS5MYXN0RXZlbnQgPSBldjsKICAgICAgICAgICAgc3RhdGUuTGFzdEF0ID0gYXQ7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgc3RhdGljIHN0cmluZz8gU3RyKEpzb25FbGVtZW50IHJvb3QsIHN0cmluZyBuYW1lKSA9PgogICAgICAgIHJvb3QuVHJ5R2V0UHJvcGVydHkobmFtZSwgb3V0IHZhciB2YWx1ZSkgJiYgdmFsdWUuVmFsdWVLaW5kID09IEpzb25WYWx1ZUtpbmQuU3RyaW5nCiAgICAgICAgICAgID8gdmFsdWUuR2V0U3RyaW5nKCkKICAgICAgICAgICAgOiBudWxsOwoKICAgIC8vLyA8c3VtbWFyeT7ov5jmnInmsqHmnIki5rS7552AIueahOWbnuWQiOOAgumhuuW4puaKiui2heaXtueahOa4heaOiSzlhY3lvpflrZflhbjotornp6/otorlpJrjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIGJvb2wgRXZhbHVhdGUoRGF0ZVRpbWVPZmZzZXQgbm93KQogICAgewogICAgICAgIExpc3Q8c3RyaW5nPj8gZXhwaXJlZCA9IG51bGw7CiAgICAgICAgYm9vbCB3b3JraW5nID0gZmFsc2U7CiAgICAgICAgdmFyIHByb3ZpZGVycyA9IG5ldyBIYXNoU2V0PHN0cmluZz4oU3RyaW5nQ29tcGFyZXIuT3JkaW5hbCk7CiAgICAgICAgZm9yZWFjaCAodmFyIChpZCwgc3RhdGUpIGluIF9vcGVuKQogICAgICAgIHsKICAgICAgICAgICAgaWYgKG5vdyAtIHN0YXRlLkxhc3RBdCA8PSBHcmFjZUZvcihzdGF0ZS5MYXN0RXZlbnQpKQogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICB3b3JraW5nID0gdHJ1ZTsKICAgICAgICAgICAgICAgIGlmIChzdGF0ZS5Qcm92aWRlcklkIGlzIG5vdCBudWxsKSBwcm92aWRlcnMuQWRkKHN0YXRlLlByb3ZpZGVySWQpOwogICAgICAgICAgICAgICAgY29udGludWU7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgKGV4cGlyZWQgPz89IFtdKS5BZGQoaWQpOwogICAgICAgIH0KICAgICAgICBpZiAoZXhwaXJlZCBpcyBub3QgbnVsbCkKICAgICAgICB7CiAgICAgICAgICAgIGZvcmVhY2ggKHN0cmluZyBpZCBpbiBleHBpcmVkKSBfb3Blbi5SZW1vdmUoaWQpOwogICAgICAgIH0KICAgICAgICBBY3RpdmVQcm92aWRlcnMgPSBwcm92aWRlcnM7CiAgICAgICAgcmV0dXJuIHdvcmtpbmc7CiAgICB9CgogICAgLy8vIDxzdW1tYXJ5PuetieW3peWFt+e7mSA1IOWIhumSnyzlhbbkvZko562J5qih5Z6L44CB5Yia5byA5aeLKee7mSA5MCDnp5LjgII8L3N1bW1hcnk+CiAgICBwcml2YXRlIHN0YXRpYyBUaW1lU3BhbiBHcmFjZUZvcihzdHJpbmc/IGxhc3RFdmVudCkgPT4KICAgICAgICBsYXN0RXZlbnQgaXMgbm90IG51bGwgJiYgbGFzdEV2ZW50LlN0YXJ0c1dpdGgoInRvb2wuIiwgU3RyaW5nQ29tcGFyaXNvbi5PcmRpbmFsKQogICAgICAgICAgICA/IFRvb2xHcmFjZQogICAgICAgICAgICA6IE1vZGVsR3JhY2U7Cn0K
+using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Text.Json;
+
+namespace PulseWin;
+
+/// <summary>
+/// ZCode 此刻是不是正在跑一轮。读的是它自己的应用日志
+/// <c>~/.zcode/cli/log/zcode-&lt;日期&gt;.jsonl</c>,配对 <c>turn.started</c> 与
+/// <c>turn.completed/failed</c>。
+///
+/// **为什么不看用量库**:ZCode 的 <c>turn_usage</c>/<c>model_usage</c> 只在回合**结束时**
+/// 才落库,全库没有一行 running(实测),查不出"进行中";<c>tool_usage</c> 的 running 行
+/// 倒是实时的,但崩溃残留的僵尸行能挂几天(实测见过 40 小时和 28 天的)。
+///
+/// **也不看文件修改时间**。"最近 N 秒有写入"两个方向都会错:慢工具跑几分钟不写一个字,
+/// 而回合结束后客户端还会继续往同一份记录写记账信息(标题、模式),mtime 一直新鲜——
+/// 一个已经死掉的回合会永远显示在转(上游专门踩过这个坑)。
+///
+/// 等待超时按"这一轮在等什么"分档(上游规格):等工具 5 分钟(编译/测试期间不写日志),
+/// 等模型 90 秒(上游实测中位数 7 秒、99% 在 70 秒内)。计时一律用**记录自带的时间戳**,
+/// 不用文件时间。
+///
+/// 除了"在不在跑",还追踪**在烧哪条通道**:日志的模型请求系事件(model.request.completed、
+/// model.response.diagnostics 等)带 <c>context.providerId</c>,按回合记下来,聚合在
+/// <see cref="ActiveProviders"/>。ZCode 会在多条通道间切换(BigModel 直连/GOAT/OpenCode Go),
+/// "客户端在跑"不再等于"GOAT 在被烧"——呼吸与内圈的判定必须看通道,不能只看在跑。
+/// </summary>
+public sealed class ZCodeActivity
+{
+    /// <summary>等工具:慢构建、长测试期间日志是安静的。</summary>
+    private static readonly TimeSpan ToolGrace = TimeSpan.FromMinutes(5);
+
+    /// <summary>等模型:实测中位数 7 秒,99% 在 70 秒内,90 秒足够。</summary>
+    private static readonly TimeSpan ModelGrace = TimeSpan.FromSeconds(90);
+
+    /// <summary>首次打开(或换日)时往回读多少字节来还原"此刻已经在跑的回合"。</summary>
+    private const int InitialTailBytes = 1 << 20;
+
+    /// <summary>一次最多读多少字节,防止日志被追写时一口气读进来。</summary>
+    private const int MaxChunkBytes = 8 << 20;
+
+    private readonly string _logDirectory;
+    private readonly MemoryStream _pending = new();
+    private readonly Dictionary<string, TurnState> _open = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _lastProviderBySession = new(StringComparer.Ordinal);
+
+    private string _path = "";
+    private long _offset;
+    private bool _dropUntilNewline;
+    private DateTimeOffset? _lastMissingNote;
+
+    public ZCodeActivity(string? logDirectory = null)
+    {
+        _logDirectory = logDirectory
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".zcode", "cli", "log");
+    }
+
+    /// <summary>ZCode 是否正在跑一轮。</summary>
+    public bool IsWorking { get; private set; }
+
+    /// <summary>
+    /// 当前活着（未超宽限）的回合在烧的通道集合（providerId 原值，如
+    /// <c>3ed88ac7-…</c>＝GOAT、<c>opencode-go-chat</c>、<c>account:bigmodel-start-plan</c>）。
+    /// 空集 = 在跑的回合还没产生过模型请求、或全部超时。映射到 rail 源用
+    /// <c>ChannelRegistry.SourceKeyOf</c>。
+    /// </summary>
+    public IReadOnlySet<string> ActiveProviders { get; private set; } =
+        new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>实际读的日志目录(诊断入口要显示出来)。</summary>
+    public string LogDirectory => _logDirectory;
+
+    /// <summary>今天那份日志的完整路径。</summary>
+    public string TodayLogPath => Path.Combine(_logDirectory, $"zcode-{DateTime.Now:yyyy-MM-dd}.jsonl");
+
+    /// <summary>上一次日志读取失败的原因(诊断用),成功时为 null。</summary>
+    public string? LastError { get; private set; }
+
+    /// <summary>当前未闭合的回合数(诊断用)。</summary>
+    public int OpenTurns => _open.Count;
+
+    private sealed class TurnState
+    {
+        public string? LastEvent { get; set; }
+        public DateTimeOffset LastAt { get; set; }
+
+        /// <summary>这一轮最近一次模型请求走的通道（日志 model 系事件的 context.providerId）。</summary>
+        public string? ProviderId { get; set; }
+    }
+
+    /// <summary>
+    /// 读一次新增的日志并重算状态。由主循环按秒节流调用,读不到东西时开销只有一次
+    /// 文件长度检查。返回状态是否发生了变化(界面据此决定要不要重画)——
+    /// "在跑"的翻转与"在烧哪些通道"的集合变化都算。
+    /// </summary>
+    public bool Poll()
+    {
+        bool before = IsWorking;
+        var beforeProviders = ActiveProviders;
+        try
+        {
+            SwitchFileIfNeeded();
+            ReadNewLines();
+            IsWorking = Evaluate(DateTimeOffset.UtcNow);
+            LastError = null;
+        }
+        catch (Exception ex)
+        {
+            // 日志读不了不该影响浮窗:当作"不在工作",并只在错误内容变化时记一条
+            LastError = ex.Message;
+            if (_lastErrorText != ex.Message)
+            {
+                _lastErrorText = ex.Message;
+                Diagnostics.Note("读取 ZCode 活动日志失败", ex);
+            }
+            IsWorking = false;
+            ActiveProviders = new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        bool changed = before != IsWorking || !SameSet(beforeProviders, ActiveProviders);
+        if (before != IsWorking)
+            Diagnostics.Note($"ZCode 活动状态: {(IsWorking
+                ? $"开始工作(未闭合回合 {_open.Count},通道 [{string.Join(", ", ActiveProviders)}])"
+                : $"空闲(未闭合回合 {_open.Count})")}");
+        return changed;
+    }
+
+    private static bool SameSet(IReadOnlySet<string> a, IReadOnlySet<string> b) =>
+        a.Count == b.Count && a.All(b.Contains);
+
+    private string? _lastErrorText;
+
+    /// <summary>本地日期变了就换文件;换之前先把旧文件读到尾,免得跨午夜那几条事件丢掉。</summary>
+    private void SwitchFileIfNeeded()
+    {
+        string today = TodayLogPath;
+        if (today == _path) return;
+
+        if (_path.Length > 0) ReadNewLines();      // 旧文件读干净再走
+
+        _path = today;
+        _pending.SetLength(0);
+        _dropUntilNewline = false;
+        _offset = 0;
+
+        var info = new FileInfo(today);
+        if (info.Exists)
+        {
+            // 从尾部往前读一段,把"此刻已经在跑的那一轮"直接认出来。起点大概率落在
+            // 一行中间,所以第一行丢弃(见 ReadNewLines 的 _dropUntilNewline)。
+            _offset = Math.Max(0, info.Length - InitialTailBytes);
+            _dropUntilNewline = _offset > 0;
+        }
+        else if (_lastMissingNote is null || DateTimeOffset.Now - _lastMissingNote > TimeSpan.FromHours(6))
+        {
+            _lastMissingNote = DateTimeOffset.Now;
+            Diagnostics.Note($"ZCode 活动日志不存在({today}),活动指示按空闲处理");
+        }
+    }
+
+    private void ReadNewLines()
+    {
+        if (_path.Length == 0) return;
+        using var stream = new FileStream(
+            _path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+        if (stream.Length < _offset)
+        {
+            // 文件被重建或轮转(长度反而变小):从头重读
+            _offset = 0;
+            _pending.SetLength(0);
+        }
+        if (stream.Length <= _offset) return;
+
+        stream.Seek(_offset, SeekOrigin.Begin);
+        int count = (int)Math.Min(stream.Length - _offset, MaxChunkBytes);
+        var buffer = new byte[count];
+        int read = stream.Read(buffer, 0, count);
+        _offset += read;
+        if (read <= 0) return;
+
+        if (_dropUntilNewline)
+        {
+            int newline = Array.IndexOf(buffer, (byte)'\n', 0, read);
+            if (newline < 0) return;                 // 这一块还没有换行,整块丢掉
+            _pending.Write(buffer, newline + 1, read - newline - 1);
+            _dropUntilNewline = false;
+        }
+        else
+        {
+            _pending.Write(buffer, 0, read);
+        }
+
+        // 按字节找换行,只在完整的行上做 UTF-8 解码:多字节字符被块边界切开时
+        // 才不会解出替换字符
+        byte[] data = _pending.GetBuffer();
+        int length = (int)_pending.Length;
+        int start = 0;
+        for (int i = 0; i < length; i++)
+        {
+            if (data[i] != (byte)'\n') continue;
+            HandleLine(Encoding.UTF8.GetString(data, start, i - start));
+            start = i + 1;
+        }
+        if (start > 0)
+        {
+            int remain = length - start;
+            Buffer.BlockCopy(data, start, data, 0, remain);
+            _pending.SetLength(remain);
+        }
+    }
+
+    private void HandleLine(string line)
+    {
+        int brace = line.IndexOf('{');
+        if (brace < 0) return;                       // 空行或非 JSON 行
+        string? ev, turnId, stamp, sessionId, providerId;
+        try
+        {
+            using var doc = JsonDocument.Parse(line[brace..]);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return;
+            ev = Str(root, "event");
+            turnId = Str(root, "turnId");
+            stamp = Str(root, "timestamp");
+            sessionId = Str(root, "sessionId");
+
+            // 通道:模型请求系事件(model.request/network.completed、response.diagnostics 等)
+            // 的 context.providerId 说明这一轮烧的是哪条通道。turn.started 本身不带,
+            // 所以回合打开时先继承该会话上一回合的通道,第一个模型事件到了再校正——
+            // 同一会话中途换 provider 是罕见操作,继承值在空窗期足够准。
+            if (root.TryGetProperty("context", out var ctx)
+                && ctx.ValueKind == JsonValueKind.Object
+                && Str(ctx, "providerId") is { Length: > 0 } provider)
+            {
+                providerId = provider;
+                if (_lastProviderBySession.Count > 512) _lastProviderBySession.Clear();
+                if (sessionId is not null) _lastProviderBySession[sessionId] = provider;
+                if (turnId is not null && _open.TryGetValue(turnId, out var openTurn))
+                    openTurn.ProviderId = provider;
+            }
+            else
+            {
+                providerId = null;
+            }
+        }
+        catch (JsonException)
+        {
+            return;                                   // 半行/坏行:跳过,不因此中断整份日志
+        }
+        if (string.IsNullOrEmpty(ev)) return;
+
+        DateTimeOffset at = DateTimeOffset.TryParse(stamp, CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind, out var parsed) ? parsed : DateTimeOffset.UtcNow;
+
+        if (ev == "turn.started")
+        {
+            if (turnId is not null)
+                _open[turnId] = new TurnState
+                {
+                    LastEvent = ev,
+                    LastAt = at,
+                    ProviderId = sessionId is not null
+                        ? _lastProviderBySession.GetValueOrDefault(sessionId)
+                        : null,
+                };
+            return;
+        }
+        if (ev is "turn.completed" or "turn.failed" or "turn.cancelled")
+        {
+            if (turnId is not null) _open.Remove(turnId);
+            return;
+        }
+        // 应用重启:重启前那些回合永远不会再来 completed 了,清掉重来
+        if (ev.StartsWith("bootstrap.", StringComparison.Ordinal))
+        {
+            _open.Clear();
+            return;
+        }
+        // 其余事件只更新"这一轮最后的动静":在等什么决定了它还能算多久
+        if (turnId is not null && _open.TryGetValue(turnId, out var state))
+        {
+            state.LastEvent = ev;
+            state.LastAt = at;
+        }
+    }
+
+    private static string? Str(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    /// <summary>还有没有"活着"的回合。顺带把超时的清掉,免得字典越积越多。</summary>
+    private bool Evaluate(DateTimeOffset now)
+    {
+        List<string>? expired = null;
+        bool working = false;
+        var providers = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (id, state) in _open)
+        {
+            if (now - state.LastAt <= GraceFor(state.LastEvent))
+            {
+                working = true;
+                if (state.ProviderId is not null) providers.Add(state.ProviderId);
+                continue;
+            }
+            (expired ??= []).Add(id);
+        }
+        if (expired is not null)
+        {
+            foreach (string id in expired) _open.Remove(id);
+        }
+        ActiveProviders = providers;
+        return working;
+    }
+
+    /// <summary>等工具给 5 分钟,其余(等模型、刚开始)给 90 秒。</summary>
+    private static TimeSpan GraceFor(string? lastEvent) =>
+        lastEvent is not null && lastEvent.StartsWith("tool.", StringComparison.Ordinal)
+            ? ToolGrace
+            : ModelGrace;
+}
