@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -31,7 +31,12 @@ public sealed class DeepSeekLedger
     };
 
     private readonly string _file;
-    private readonly object _gate = new();
+
+    /// <summary>
+    /// 静态锁：同一份账本文件可能被多个实例（主窗口与独立的用量窗）同时写，
+    /// 各持一把实例锁等于没锁——撞上就会丢那一小时的采样点。
+    /// </summary>
+    private static readonly object Gate = new();
 
     public DeepSeekLedger(AppDataPaths paths) => _file = paths.DeepSeekLedgerFile;
 
@@ -40,7 +45,7 @@ public sealed class DeepSeekLedger
     {
         if (string.IsNullOrWhiteSpace(currency)) return;
 
-        lock (_gate)
+        lock (Gate)
         {
             var all = LoadAll();
             if (!all.TryGetValue(currency, out var hours))
@@ -74,7 +79,7 @@ public sealed class DeepSeekLedger
         var result = new double[24];
         if (string.IsNullOrWhiteSpace(currency)) return result;
 
-        lock (_gate)
+        lock (Gate)
         {
             if (!LoadAll().TryGetValue(currency, out var hours)) return result;
 
@@ -111,7 +116,7 @@ public sealed class DeepSeekLedger
         {
             if (!File.Exists(_file)) return new Dictionary<string, Dictionary<string, double>>();
             return JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, double>>>(
-                File.ReadAllText(_file), JsonOptions)
+                AtomicFile.ReadAllTextShared(_file), JsonOptions)
                 ?? new Dictionary<string, Dictionary<string, double>>();
         }
         catch (Exception ex)

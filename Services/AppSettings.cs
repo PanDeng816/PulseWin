@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -146,13 +146,58 @@ public sealed class AppSettings
     /// </summary>
     public List<OpenCodeAccountInfo> OpenCodeAccounts { get; set; } = new();
 
-    /// <summary>某附加账号的显示标签;没有就给"账号 n"。</summary>
-    public string OpenCodeAccountLabel(int instance) =>
-        OpenCodeAccounts.FirstOrDefault(a => a.Id == instance)?.Label is { } label && label.Length > 0
-            ? label
-            : $"账号 {instance}";
+    /// <summary>
+    /// 附加账号的**快照**（后台同步线程枚举用）。UI 增删与同步线程读同一个 List
+    /// 不加锁会抛 InvalidOperationException 或漏读；统一走锁内 ToArray。
+    /// </summary>
+    public OpenCodeAccountInfo[] AccountsSnapshot()
+    {
+        lock (Gate) return OpenCodeAccounts.ToArray();
+    }
 
-    public bool HasOpenCodeAccount(int instance) => OpenCodeAccounts.Any(a => a.Id == instance);
+    /// <summary>下一个附加账号编号（锁内读，避免与增删竞争）。</summary>
+    public int NextOpenCodeAccountId()
+    {
+        lock (Gate) return OpenCodeAccounts.Count == 0 ? 2 : OpenCodeAccounts.Max(a => a.Id) + 1;
+    }
+
+    public void AddOpenCodeAccount(OpenCodeAccountInfo account)
+    {
+        lock (Gate) OpenCodeAccounts.Add(account);
+    }
+
+    public bool RemoveOpenCodeAccount(int id)
+    {
+        lock (Gate) return OpenCodeAccounts.RemoveAll(a => a.Id == id) > 0;
+    }
+
+    public bool RenameOpenCodeAccount(int id, string label)
+    {
+        lock (Gate)
+        {
+            int index = OpenCodeAccounts.FindIndex(a => a.Id == id);
+            if (index < 0) return false;
+            OpenCodeAccounts[index] = OpenCodeAccounts[index] with { Label = label.Trim() };
+            return true;
+        }
+    }
+
+    /// <summary>某附加账号的显示标签;没有就给"账号 n"。</summary>
+    public string OpenCodeAccountLabel(int instance)
+    {
+        lock (Gate)
+        {
+            return OpenCodeAccounts.FirstOrDefault(a => a.Id == instance)?.Label is { } label
+                   && label.Length > 0
+                ? label
+                : $"账号 {instance}";
+        }
+    }
+
+    public bool HasOpenCodeAccount(int instance)
+    {
+        lock (Gate) return OpenCodeAccounts.Any(a => a.Id == instance);
+    }
 
     /// <summary>
     /// 每个来源自定义环色(#RRGGBB)。空 = 按用量着色(绿→红)。

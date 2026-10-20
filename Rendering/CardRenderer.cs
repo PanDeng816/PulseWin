@@ -60,8 +60,11 @@ public static class CardRenderer
     /// <summary>末行之后到 body 底的留白(与顶部留白相称:Pad 减去行尾自带的间隔)。</summary>
     public static readonly double TailBlock = Pt.P(18) - Pt.P(RowGapAfterDetail);
 
-    /// <summary>数据陈旧提示占的高度(与上一块的间隔 + 一行文字)。</summary>
-    public static readonly double StaleBlock = Pt.P(2) + MeasureLine(Pt.P(10.5));
+    /// <summary>
+    /// 数据陈旧提示占的高度(间隔 + 两行文字)。第二行是"为什么停更"—
+    /// 高度固定预留,免得卡片在"有错/没错"之间跳动。
+    /// </summary>
+    public static readonly double StaleBlock = Pt.P(2) + MeasureLine(Pt.P(10.5)) * 2 + Pt.P(1);
 
     /// <summary>"今日消耗"区块(标题 + 柱图 + 脚注)的高度。</summary>
     public static readonly double ChartBlock = Pt.P(12.5 + ChartGapAfterTitle)
@@ -126,6 +129,16 @@ public static class CardRenderer
             var staleFt = Text("⚠ " + text + " · 未能刷新", Pt.P(10.5), FontWeights.Normal,
                 Solid(UsageTint.Alarm), dpi);
             dc.DrawText(staleFt, new Point(px, cursorY + Pt.P(2)));
+
+            // 第二行:为什么停更。没有原因时留空(高度已预留,不跳)。
+            if (!string.IsNullOrWhiteSpace(sub.LastError))
+            {
+                string reason = sub.LastError!;
+                if (reason.Length > 30) reason = reason[..30] + "…";
+                var reasonFt = Text((sub.NeedsAuth ? "需重新登录:" : "") + reason,
+                    Pt.P(10), FontWeights.Normal, Solid(PanelPalette.Dim), dpi);
+                dc.DrawText(reasonFt, new Point(px, cursorY + Pt.P(2) + staleFt.Height + Pt.P(1)));
+            }
         }
     }
 

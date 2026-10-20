@@ -393,7 +393,7 @@ public sealed class SpendSummary
             .Where(e => e.Timestamp >= from && e.Timestamp < to)
             .ToList();
 
-        long totalTokens = 0, unclassified = 0, unpricedTokens = 0;
+        long totalTokens = 0, unclassified = 0, unpricedTokens = 0, requests = 0;
         var tally = TokenTally.Zero;
         var cost = TokenCost.Zero;
         var unpricedModels = new HashSet<string>(StringComparer.Ordinal);
@@ -422,6 +422,10 @@ public sealed class SpendSummary
                 unclassified += entry.UnclassifiedTokens;
                 tally += entry.Tally;
                 cost += entry.Cost;
+                // 调用次数只认明细行与天级聚合行。小时聚合行是**同一批数据的另一种切法**，
+                // 把它也加进来就是双算(实测 2026-10-19 的 agg_day 与 agg_hour 各 916 次，
+                // 界面会显示 1832)。与 MonthForChannel 里跳过 Hour 行是同一条规矩。
+                requests += entry.Requests;
                 if (entry.UnpricedTokens > 0)
                 {
                     unpricedTokens += entry.UnpricedTokens;
@@ -517,7 +521,7 @@ public sealed class SpendSummary
 
         return new SpendSummary(
             span, from, to, firstDay, totalTokens, cost.Total, tally, cost, unclassified,
-            unpricedTokens, unpricedModels.Count, selected.Sum(e => e.Requests),
+            unpricedTokens, unpricedModels.Count, requests,
             sessionBuckets.Count, projectBuckets.Count(p => p.Key != NoProject),
             days, models, projectRows, sessionRows, agentRows, hourly);
     }

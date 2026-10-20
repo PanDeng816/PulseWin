@@ -183,10 +183,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="圆环大小" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="默认档比旧版小一圈、细一号" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="圆环大小" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                         <RadioButton x:Name="SizeSmall" Style="{StaticResource Segment}" Content="小" GroupName="ringsize" Checked="RingSize_Changed"/>
                                         <RadioButton x:Name="SizeStandard" Style="{StaticResource Segment}" Content="标准" GroupName="ringsize" IsChecked="True" Checked="RingSize_Changed"/>
@@ -199,10 +196,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="圆环间距" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="环与环之间留多少空隙" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="圆环间距" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                         <RadioButton x:Name="SpacingTight" Style="{StaticResource Segment}" Content="紧" GroupName="ringspacing" Checked="RingSpacing_Changed"/>
                                         <RadioButton x:Name="SpacingStandard" Style="{StaticResource Segment}" Content="标准" GroupName="ringspacing" IsChecked="True" Checked="RingSpacing_Changed"/>
@@ -215,10 +209,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="背景不透明度" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="底板越透,桌面透出越多;压不住浅色桌面时往右调" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="背景不透明度" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <Slider x:Name="OpacitySlider" Width="140" Minimum="30" Maximum="100"
                                                 Style="{StaticResource LightSlider}" VerticalAlignment="Center"
@@ -232,10 +223,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="在圆环下显示读数" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock x:Name="PercentHint" Text="" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="在圆环下显示读数" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="ShowPercentBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="ShowPercent_Changed" Unchecked="ShowPercent_Changed"/>
@@ -246,10 +234,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="只在正在使用时显示 5 小时圈" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="不活跃的源只画总额度外环。判定是「此刻正在被烧」而不是「5 小时窗口有历史用量」——停用后内圈立刻收起,内圈出现就表示这个源正在被用" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
-                                    </StackPanel>
+                                    <TextBlock Text="只在正在使用时显示 5 小时圈" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="IdleInnerRingBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="IdleInnerRing_Changed" Unchecked="IdleInnerRing_Changed"/>
@@ -268,10 +253,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="隐藏时收成贴边小条" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="不用时折叠成贴在屏幕边缘的细条,有源越过警报阈值时细条会变色;指针靠近即展开。关掉则完全滑出屏幕外" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
-                                    </StackPanel>
+                                    <TextBlock Text="隐藏时收成贴边小条" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="SliverBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="Sliver_Changed" Unchecked="Sliver_Changed"/>
@@ -282,10 +264,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="全屏时隐藏" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="前台是全屏应用(视频/游戏/演示)时自动收起,期间指针到屏边也不会弹出;退出全屏后指针到屏边唤回" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
-                                    </StackPanel>
+                                    <TextBlock Text="全屏时隐藏" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="FullScreenBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="FullScreen_Changed" Unchecked="FullScreen_Changed"/>
@@ -296,9 +275,6 @@
                         <TextBlock Text="圆环顺序" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel Margin="0,11">
-                                <TextBlock Text="rail 上数据源的排列" Style="{StaticResource RowTitle}"/>
-                                <TextBlock Text="拖动行首的手柄,或点右侧箭头逐格移动;从上到下就是 rail 上的顺序。只列已显示的圆环——要增减显示哪些源,去「数据源」页勾选。"
-                                           Style="{StaticResource RowSub}" Margin="0,3,0,8"/>
                                 <!-- 可重排列表:源一多时不会像"排列组合下拉框"那样爆炸 -->
                                 <local:RingOrderList x:Name="RingOrder"/>
                             </StackPanel>
@@ -315,10 +291,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="报警阈值" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="用量超过该比例时圆环转红" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="报警阈值" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <Slider x:Name="AlertSlider" Width="140" Minimum="50" Maximum="99"
                                                 Style="{StaticResource LightSlider}" VerticalAlignment="Center"
@@ -332,10 +305,8 @@
                         <TextBlock Text="圆环颜色" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource RowHint}" Margin="0,10,0,4"
-                                           Text="颜色默认表示“离上限还有多远”(按用量着色),不是产品标识——产品由环心图标表示。想固定成品牌色就在这里选;额度用满时一律深红,不受这里影响。"/>
                                 <!-- 每个源一行,按 SourceCatalog 生成(见 BuildTintPickers) -->
-                                <StackPanel x:Name="TintPanel"/>
+                                <StackPanel x:Name="TintPanel" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -344,8 +315,6 @@
                     <!-- 每张凭据卡按 SourceCatalog 生成(见 SourceCard.cs):加一个源只改注册表,
                          不用在这里复制一整块 XAML、再去代码里同步命名控件。 -->
                     <StackPanel x:Name="PageSources" Visibility="Collapsed">
-                        <TextBlock Text="凭据自动从环境变量 / CLI 登录态读取;也可以在下面手动输入 API Key(按当前 Windows 用户 DPAPI 加密保存)。"
-                                   Style="{StaticResource RowHint}" Margin="1,0,0,12"/>
                         <StackPanel x:Name="SourceCardsPanel"/>
                         <TextBlock x:Name="SourceHint" FontSize="11" Foreground="#C7502E"
                                    Margin="1,0,0,10" TextWrapping="Wrap" Visibility="Collapsed"/>
@@ -358,11 +327,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="用量数据" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="各客户端记录的用量、按套餐拆分、逐小时与时段分布,都在独立的「用量」窗口里。"/>
-                                    </StackPanel>
+                                    <TextBlock Text="用量数据" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <Button x:Name="OpenUsageButton" Grid.Column="1" Style="{StaticResource LightButton}"
                                             Content="打开用量窗口…" Click="OpenUsage_Click"
                                             HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -373,11 +338,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="BigModel 包月预算(元/月,选填)" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="BigModel 不提供用量接口。填了它,用量窗口的额度条才会显示「本月估算 / 预算」进度条;不填只显示本月估算金额与月底预测。"/>
-                                    </StackPanel>
+                                    <TextBlock Text="BigModel 包月预算(元/月,选填)" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <TextBox x:Name="BigModelBudgetBox" Grid.Column="1" Width="90" VerticalAlignment="Center"
                                              HorizontalContentAlignment="Right" TextChanged="BigModelBudget_Changed"/>
                                 </Grid>
@@ -392,11 +353,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="浏览器会话明细与网页口径额度(账号级,覆盖所有设备/key)" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="用登录会话调只有登录态才开放的官方接口——都是账号级口径,覆盖其他电脑/其他 key 的用量,本机记录库看不到它们。打开后:①「用量窗口 → GOAT 套餐页」显示官方逐模型榜;②「OpenCode Go 套餐页」追加近 30 天官方对照与按 API Key / 按会话 / 逐请求明细;③ OpenCode Go 的额度百分比改用网页控制台读数——与网页卡片同一个公式(精度到分),而 API Key 接口只给向下取整的整数,同一个真实用量两边会差 1 个百分点(实测:网页 11% / API Key 10%)。默认关:可能被安全软件误判(同类工具曾被 AV 当作 infostealer)。注意:**「自动读本机浏览器 cookie」这条路已被 Edge 的 v20 加密堵死**(Edge 154 起所有 cookie 都是 App-Bound 加密,第三方解不了),请用下面的「登录」按钮,或手动粘贴。"/>
-                                    </StackPanel>
+                                    <TextBlock Text="浏览器会话明细(账号级)" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="BrowserSessionBox" Grid.Column="1" Style="{StaticResource LightCheckBox}"
                                               HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Checked="BrowserSession_Changed" Unchecked="BrowserSession_Changed"/>
@@ -409,11 +366,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="登录 commandcode.ai" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="内嵌浏览器登一次,「用量窗口 → GOAT 套餐页」的官方逐模型榜与缓存读/写明细才会出现。注意这条只补明细:GOAT 的额度本身仍由 API Key 读取,不能省。"/>
-                                    </StackPanel>
+                                    <TextBlock Text="登录 commandcode.ai" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock x:Name="CommandCodeLoginState" Style="{StaticResource RowSub}"
                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -427,11 +380,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="登录 opencode.ai" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Style="{StaticResource RowSub}" MaxWidth="440" HorizontalAlignment="Left"
-                                                   Text="内嵌浏览器登一次。cookie 由浏览器引擎直接给出(已解密、HttpOnly 也拿得到),不受 Edge 是否在跑、是否 v20 加密影响;DPAPI 加密保存在本机。登完额度改用网页控制台口径(精度到分,环才会连续走)并解锁官方明细。会话过期后再点一次即可。"/>
-                                    </StackPanel>
+                                    <TextBlock Text="登录 opencode.ai" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock x:Name="OpenCodeLoginState" Style="{StaticResource RowSub}"
                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -450,6 +399,7 @@
                                                   Style="{StaticResource LightCombo}"
                                                   SelectionChanged="ManualCookieSite_Changed"/>
                                         <TextBox x:Name="ManualCookieBox" Width="200" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                 Style="{StaticResource LightTextBox}"
                                                  ToolTip="粘贴 cookie 值,或整条 Cookie 串"/>
                                         <Button x:Name="ManualCookieSave" Style="{StaticResource LightButton}" Content="保存"
                                                 Margin="6,0,0,0" Click="ManualCookieSave_Click"/>
@@ -473,10 +423,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="同步间隔" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="成功获取数据后等待多久再拉一次" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="同步间隔" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <Slider x:Name="IntervalSlider" Width="140" Minimum="15" Maximum="300"
                                                 Style="{StaticResource LightSlider}" VerticalAlignment="Center"
@@ -497,7 +444,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="网络代理" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="数据源 API、价目表更新与检查更新都走这里。改完重启程序生效" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="改完重启程序生效" Style="{StaticResource RowSub}"/>
                                     </StackPanel>
                                     <ComboBox x:Name="ProxyCombo" Width="150" Height="30" Grid.Column="1"
                                               Style="{StaticResource LightCombo}" VerticalAlignment="Center"
@@ -512,10 +459,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="代理地址" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="HTTP 代理;Clash/V2Ray 等填它们的 HTTP 端口" Style="{StaticResource RowSub}"/>
-                                    </StackPanel>
+                                    <TextBlock Text="代理地址" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <TextBox x:Name="ProxyBox" Grid.Column="1" Width="200" Height="30"
                                              VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
                                              LostFocus="ProxyBox_LostFocus"/>
@@ -531,10 +475,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="美元兑人民币汇率" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="用量统计的估算金额按此换算显示;价目表本身是美元。填 0 显示美元原值。" Style="{StaticResource RowSub}" MaxWidth="430" HorizontalAlignment="Left"/>
-                                    </StackPanel>
+                                    <TextBlock Text="美元兑人民币汇率" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
                                     <TextBox x:Name="UsdRateBox" Grid.Column="1" Width="90" Height="30"
                                              VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
                                              LostFocus="UsdRateBox_LostFocus"/>
@@ -556,7 +497,7 @@
                                 <TextBlock Text="PulseWin" Style="{StaticResource RowTitle}" FontSize="14" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="AboutVersion" Style="{StaticResource RowSub}" Margin="0,3,0,0"/>
                                 <TextBlock Style="{StaticResource RowSub}" Margin="0,6,0,0"
-                                           Text="Windows 版用量悬浮轨,展示层移植自 macOS 应用 Pulse(qunqin24/Pulse),数据层来自 Command Code GOAT Usage Monitor。统计金额按 models.dev 公开价估算,不是账单。"/>
+                                           Text="金额按 models.dev 公开牌价估算,不是账单。"/>
                                 <Button x:Name="CheckUpdateButton" Content="检查更新" Width="96" Height="30"
                                         Style="{StaticResource LightButton}" HorizontalAlignment="Left" Margin="0,10,0,10"
                                         Click="CheckUpdate_Click"/>

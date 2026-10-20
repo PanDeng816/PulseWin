@@ -135,6 +135,9 @@ public static class UsageRepository
             // 仓库坏了不致命:退回"只用源库明细"的旧口径,把原因说出来
             Diagnostics.Note("用量仓库读写失败,本次统计只用源库明细", ex);
             aggregated.Clear();
+            // remaining 在 try 里已经填过一部分(早于 cutoff 的老行),这里不清空就会与
+            // live 叠加,让 90 天前的明细出现两次——token / 金额 / 请求数全部翻倍。
+            remaining.Clear();
             foreach (var entry in live) remaining.Add(entry);
         }
         return (aggregated, remaining);

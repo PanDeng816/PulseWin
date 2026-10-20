@@ -108,6 +108,11 @@ internal static class FlyoutMenu
         };
 
         _open = window;
+        // 菜单因失焦/Esc/点项关闭后，静态引用不能继续抓着已关闭的窗与整棵可视树
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_open, window)) _open = null;
+        };
         window.Show();
         window.Activate();   // 失焦即关的前提:菜单窗在前台,和系统菜单一致
     }

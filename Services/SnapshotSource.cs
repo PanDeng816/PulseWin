@@ -96,14 +96,55 @@ public sealed class SubData
     public List<PoolData> Pools { get; init; } = new();
 
     /// <summary>
+    /// 最近一次同步失败的原因(一句人话)。空 = 没失败或已恢复。
+    /// 快照文件只记成功时刻,错误只活在引擎的内存状态里——这一层由
+    /// <see cref="SourceStatusHub"/> 在构建时填进来,让 rail 卡片能回答"为什么停更",
+    /// 而不只是"多久没更新"。
+    /// </summary>
+    public string? LastError { get; init; }
+
+    /// <summary>失败原因是凭据问题时为真:卡片据此给"去重新登录"的提示。</summary>
+    public bool NeedsAuth { get; init; }
+
+    /// <summary>
     /// 今日 0~23 点每小时的消耗金额(索引 = 小时),仅 DeepSeek 有。
     /// 来自本程序自己的余额采样,单位与账户币种一致。
     /// </summary>
     public double[]? HourlySpend { get; set; }
 
-    /// <summary>数据是否已过期(超过 3 个同步周期没有更新)。</summary>
+    /// <summary>
+    /// 数据是否已过期:按同步间隔的 3 倍算(下限 3 分钟)。写死 3 分钟是错的——同步
+    /// 间隔调到 5 分钟以上时,刚取回来的数据也会立刻被标成"未能刷新"。
+    /// </summary>
     public bool IsStale(DateTimeOffset now) =>
-        FetchedAt is { } t && now - t > TimeSpan.FromMinutes(3);
+        FetchedAt is { } t
+        && now - t > TimeSpan.FromSeconds(Math.Max(180, AppSettings.Current.SyncIntervalSeconds * 3));
+}
+
+/// <summary>
+/// 各数据源最近一次同步的失败原因(内存态,不落盘)。
+/// 快照文件只记"最后一次成功"的时刻,错误只活在引擎的内存状态里;rail 卡片要回答
+/// "为什么停更",就需要这一层把内存状态交给渲染(见 <see cref="SubData.LastError"/>)。
+/// </summary>
+public static class SourceStatusHub
+{
+    private static readonly object Gate = new();
+    private static readonly Dictionary<string, (string? Error, bool NeedsAuth)> Map = new(StringComparer.Ordinal);
+
+    /// <summary>error 传 null/空表示已恢复:清掉该源的失败记录。</summary>
+    public static void Publish(string key, string? error, bool needsAuth)
+    {
+        lock (Gate)
+        {
+            if (string.IsNullOrWhiteSpace(error)) Map.Remove(key);
+            else Map[key] = (error, needsAuth);
+        }
+    }
+
+    public static (string? Error, bool NeedsAuth) Get(string key)
+    {
+        lock (Gate) return Map.TryGetValue(key, out var v) ? v : (null, false);
+    }
 }
 
 /// <summary>
@@ -276,7 +317,7 @@ public static class SnapshotSource
         try
         {
             if (!File.Exists(file)) return null;
-            var snapshot = JsonSerializer.Deserialize<UsageSnapshot>(File.ReadAllText(file), JsonOptions);
+            var snapshot = JsonSerializer.Deserialize<UsageSnapshot>(AtomicFile.ReadAllTextShared(file), JsonOptions);
             if (snapshot is null || snapshot.Windows.Count == 0) return null;
 
             var pools = new List<PoolData>(3);
@@ -325,6 +366,8 @@ public static class SnapshotSource
                 PeriodCost = snapshot.PeriodCost,
                 FetchedAt = snapshot.FetchedAt,
                 Pools = pools,
+                LastError = SourceStatusHub.Get(profile.Key).Error,
+                NeedsAuth = SourceStatusHub.Get(profile.Key).NeedsAuth,
             };
         }
         catch (Exception ex)

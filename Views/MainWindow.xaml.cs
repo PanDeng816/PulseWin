@@ -36,7 +36,7 @@ public partial class MainWindow : Window
     private bool _downArmed, _dragging;
     private Point _downDiu, _dragOffset;
     private int? _downRing, _hoverRing;
-    private int? _cardFor;
+    private string? _cardFor;   // 存 sub.Key：源顺序变化/数量减少时下标会失效
 
     // —— 点击刷新 ——
     private double[] _refreshUntil = new double[4];
@@ -384,8 +384,13 @@ public partial class MainWindow : Window
         // 正在悬停的卡片要跟着换成新数据:ShowSubCard 在同一条环上会提前返回,
         // 不在这里重配的话,鼠标停在环上不动时卡片会一直显示打开那一刻的旧值。
         // (菜单开着时卡片本就不该显示,见 SetMenuOpen。)
-        if (!_menuOpen && _card.IsVisible && _cardFor is { } shown && shown < _subs.Count)
-            ShowSubCard(shown, force: true);
+        // 卡片按 key 跟随源：源被删/顺序变了就收起，别拿旧下标去 _ringY 取值
+        if (!_menuOpen && _card.IsVisible && _cardFor is { } shownKey)
+        {
+            int shownIndex = _subs.FindIndex(s => s.Key == shownKey);
+            if (shownIndex >= 0) ShowSubCard(shownIndex, force: true);
+            else HideCard();
+        }
 
         // 引擎回报了新数据:结束"刷新中"动画(点击环触发的)
         if (fromEngine && _refreshPending)
@@ -421,12 +426,22 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// 只重画、不重读:透明度/告警阈值改的是绘制参数,与快照内容无关。
+    /// 拖动滑块每帧都会触发,走 ReloadData 等于每帧几十次磁盘读 + 一次 rail 改尺寸。
+    /// </summary>
+    public void ApplyAppearance()
+    {
+        _textCache.Clear();
+        _dirty = true;
+    }
+
+    /// <summary>
     /// 设置变了:作废缓存并按新设置重新布局。显示源/读数这两个开关会改变 rail
     /// 的内容与长度,所以必须走一次 ReloadData(它会重算尺寸)——只重绘不够。
     /// </summary>
     public void ApplySettings()
     {
-        _textCache.Clear();
+        ApplyAppearance();
         ReloadData();
     }
 
@@ -497,7 +512,11 @@ public partial class MainWindow : Window
                 string zc = _activity.IsWorking ? $"跑[{string.Join(",", _activity.ActiveProviders)}]" : "停";
                 string ds = _dshActivity.IsWorking ? $"跑[{string.Join(",", _dshActivity.ActiveProviders)}]" : "停";
                 string burning = string.Join(",", SourceCatalog.Keys.Where(IsBurning));
-                Diagnostics.Note($"活动心跳: ZCode{zc} DSH{ds} → 正在烧: {(burning.Length > 0 ? burning : "无")}");
+                // 数据有多新也一起记:同步循环一旦停摆,界面只会静静停在"数据 X 分钟前 ·
+                // 未能刷新",这一行是唯一能自证"循环没在跑"的地方(2026-10-12 那次停摆,
+                // 日志里除心跳外什么都没有,到 20 分钟才从快照文件时间看出来)。
+                Diagnostics.Note($"活动心跳: ZCode{zc} DSH{ds} → 正在烧: {(burning.Length > 0 ? burning : "无")}"
+                    + $" · 数据{SnapshotAgeText()}");
             }
         }
         if (AnyClientWorking) { _dirty = true; animate = true; }
@@ -627,6 +646,21 @@ public partial class MainWindow : Window
         foreach (string p in _dshActivity.ActiveProviders)
             if (ChannelRegistry.Current.SourceKeyOf(p) == baseKey) return true;
         return false;
+    }
+
+    /// <summary>
+    /// 心跳里那句"数据多久前"。取 rail 上**最旧**的那个源——它是先变成"未能刷新"的那个,
+    /// 也是最旧的那份读数。全都过期就等于这一整块停摆了。
+    /// </summary>
+    private string SnapshotAgeText()
+    {
+        var ages = _subs.Where(s => s.FetchedAt is not null)
+            .Select(s => DateTimeOffset.UtcNow - s.FetchedAt!.Value)
+            .ToList();
+        if (ages.Count == 0) return "无";
+        int newest = (int)ages.Min().TotalMinutes;
+        int oldest = (int)ages.Max().TotalMinutes;
+        return newest == oldest ? $"{newest} 分钟前" : $"{oldest}~{newest} 分钟前";
     }
 
     // ————————————————— 指针 —————————————————
@@ -890,11 +924,11 @@ public partial class MainWindow : Window
     private void ShowSubCard(int ringIndex, bool force = false)
     {
         if (ringIndex < 0 || ringIndex >= _subs.Count) return;
-        if (!force && _card.IsVisible && _cardFor == ringIndex) return; // 已显示,位置交给每帧跟随
         var sub = _subs[ringIndex];
+        if (!force && _card.IsVisible && _cardFor == sub.Key) return; // 已显示,位置交给每帧跟随
         bool stale = sub.IsStale(DateTimeOffset.UtcNow);
         var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale, sub.HourlySpend is not null);
-        _cardFor = ringIndex;
+        _cardFor = sub.Key;
         _card.Configure(sub, win, body, stale);
         _card.ShowCard();
         PositionCard();
@@ -903,7 +937,10 @@ public partial class MainWindow : Window
     /// <summary>把卡窗放到当前 rail 位置旁。每帧调用,rail 滑入/拖动时卡片跟着走,不会与 rail 重叠。</summary>
     private void PositionCard()
     {
-        if (!_card.IsVisible || _cardFor is not { } ringIndex) return;
+        if (!_card.IsVisible || _cardFor is not { } key) return;
+        // 用 key 反查下标：源数量减少时旧下标可能越界，宁可收卡也不抛异常
+        int ringIndex = _subs.FindIndex(s => s.Key == key);
+        if (ringIndex < 0) { HideCard(); return; }
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
         double gap = CardLayout.GapToRail;
         Point c = RingCenter(ringIndex);
@@ -939,6 +976,9 @@ public partial class MainWindow : Window
 
     private Point RingCenter(int ringIndex)
     {
+        // 防御：_ringY 由 _subs 重建，调用方拿旧下标时不能越界
+        if (ringIndex < 0 || ringIndex >= _ringY.Count)
+            return new Point(Width / 2, Height / 2);
         double along = Pt.P(_ringY[ringIndex]);
         return IsVertical
             ? new Point(Width / 2, along)
@@ -1245,6 +1285,9 @@ public partial class MainWindow : Window
             _textCache.Clear();
             _textCacheScale = dpi;
         }
+        // 缓存键带文本与颜色,余额型读数几乎每分钟都是新键——常驻进程会缓慢增长。
+        // 设软上限,超了整体丢弃重建:命中率短暂下降,但内存有界。
+        if (_textCache.Count > 2048) _textCache.Clear();
         if (_textCache.TryGetValue(key, out var cached)) return cached;
 
         var ft = new FormattedText(s, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,

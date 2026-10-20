@@ -86,6 +86,10 @@ public static class OpenCodeUsageStatsClient
     private static readonly Dictionary<string, (OpenCodeUsageStats Stats, DateTimeOffset At)> Cache =
         new(StringComparer.Ordinal);
 
+    /// <summary>Cache 是纯静态,后台同步与 UI 线程会同时读写(取数 / Invalidate / 落盘),
+    /// 不加锁时并发写会损坏 Dictionary 的内部结构。</summary>
+    private static readonly object CacheGate = new();
+
     /// <summary>缓存新鲜度。官方这个窗口是**滚动 30 天**的统计量,十五分钟内不会有
     /// 需要立刻反映的变化;想要当下的数就点顶部的「重新读取」。</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(15);
@@ -95,7 +99,7 @@ public static class OpenCodeUsageStatsClient
     /// <summary>丢掉结果缓存(界面上的「重新读取」用)。</summary>
     public static void Invalidate()
     {
-        Cache.Clear();
+        lock (CacheGate) Cache.Clear();
         SaveToDisk();
     }
 
@@ -124,9 +128,12 @@ public static class OpenCodeUsageStatsClient
             if (CacheFile.Length == 0 || !File.Exists(CacheFile)) return;
             var saved = JsonSerializer.Deserialize<List<CachedStats>>(File.ReadAllText(CacheFile));
             if (saved is null) return;
-            foreach (var item in saved)
+            lock (CacheGate)
             {
-                if (item.Stats.Range.Length > 0) Cache[item.Stats.Range] = (item.Stats, item.At);
+                foreach (var item in saved)
+                {
+                    if (item.Stats.Range.Length > 0) Cache[item.Stats.Range] = (item.Stats, item.At);
+                }
             }
         }
         catch { /* 缓存坏了就当没有——不影响联网取值 */ }
@@ -137,8 +144,13 @@ public static class OpenCodeUsageStatsClient
         try
         {
             if (CacheFile.Length == 0) return;
-            File.WriteAllText(CacheFile, JsonSerializer.Serialize(
-                Cache.Values.Select(v => new CachedStats(v.Stats, v.At)).ToList()));
+            string json;
+            lock (CacheGate)
+            {
+                json = JsonSerializer.Serialize(
+                    Cache.Values.Select(v => new CachedStats(v.Stats, v.At)).ToList());
+            }
+            AtomicFile.WriteText(CacheFile, json);
         }
         catch { /* 落盘失败不影响本次结果 */ }
     }
@@ -189,12 +201,18 @@ public static class OpenCodeUsageStatsClient
             return null;
         }
 
-        if (!forceRefresh && Cache.TryGetValue(range, out var hit)
-            && DateTimeOffset.Now - hit.At < CacheLifetime)
+        if (!forceRefresh)
         {
-            Available = true;
-            LastStatus = $"已读到官方聚合读数({range},{Age(hit.At)}前的缓存)";
-            return hit.Stats;
+            lock (CacheGate)
+            {
+                if (Cache.TryGetValue(range, out var hit)
+                    && DateTimeOffset.Now - hit.At < CacheLifetime)
+                {
+                    Available = true;
+                    LastStatus = $"已读到官方聚合读数({range},{Age(hit.At)}前的缓存)";
+                    return hit.Stats;
+                }
+            }
         }
 
         string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
@@ -261,9 +279,16 @@ public static class OpenCodeUsageStatsClient
                     .OrderByDescending(d => d.Day, StringComparer.Ordinal)
                     .ToList(),
                 DateTimeOffset.Now);
-            Cache[range] = (stats, DateTimeOffset.Now);
+            lock (CacheGate) Cache[range] = (stats, DateTimeOffset.Now);
             SaveToDisk();
             return stats;
+        }
+        catch (TaskCanceledException ex) when (!token.IsCancellationRequested)
+        {
+            // HttpClient.Timeout 到期抛的是 TaskCanceledException(= OperationCanceledException),
+            // 不能当成"程序正在退出"往外抛(见 UsageEngine.RunRoundAsync 的说明)。
+            // 转成普通异常,交给下面的兜底:有旧读数就退回旧读数。
+            throw new CommandCodeApiException(null, "连接 OpenCode 用量接口超时。", ex);
         }
         catch (OperationCanceledException) { throw; }
         catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)

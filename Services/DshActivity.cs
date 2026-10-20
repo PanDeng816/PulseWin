@@ -34,6 +34,8 @@ public sealed class DshActivity
 
     private readonly string _directory;
     private string? _lastErrorText;
+    private DateTimeOffset _lastScanAt = DateTimeOffset.MinValue;
+    private List<(string Path, DateTimeOffset Written)> _lastScan = new();
 
     public DshActivity(string? projectionDirectory = null)
     {
@@ -142,8 +144,17 @@ public sealed class DshActivity
     /// </summary>
     private List<(string Path, DateTimeOffset Written)> RecentProjections(DateTimeOffset now)
     {
+        // Tick 每秒调一次,而目录里有 100+ 个投影文件,每次都要 GetLastWriteTimeUtc。
+        // DSH 的"在跑"判定本身有 5 分钟宽限,2 秒精度完全够用——这一层只是探测"刚写过"。
+        if (now - _lastScanAt < TimeSpan.FromSeconds(2)) return _lastScan;
+
         var all = new List<(string Path, DateTimeOffset Written)>();
-        if (!Directory.Exists(_directory)) return all;
+        if (!Directory.Exists(_directory))
+        {
+            _lastScanAt = now;
+            _lastScan = all;
+            return all;
+        }
 
         foreach (string path in Directory.EnumerateFiles(_directory, "*.json"))
         {
@@ -152,7 +163,9 @@ public sealed class DshActivity
             if (now - stamp > FreshWindow) continue;
             all.Add((path, stamp));
         }
-        return all.OrderByDescending(x => x.Written).Take(MaxCandidates).ToList();
+        _lastScanAt = now;
+        _lastScan = all.OrderByDescending(x => x.Written).Take(MaxCandidates).ToList();
+        return _lastScan;
     }
 
     private static bool TryReadState(string path, out SessionState state)

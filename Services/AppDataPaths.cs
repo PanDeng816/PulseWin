@@ -82,6 +82,9 @@ public sealed class AppDataPaths
     /// <summary>模型牌价缓存(从 models.dev 拉取后裁剪;不存在时用内置表)。</summary>
     public string ModelPricesFile => Path.Combine(RootDirectory, "model-prices.json");
 
+    /// <summary>对账历史(JSONL,每次渲染「官方 vs 本机」对照卡追加一条)。</summary>
+    public string ReconcileFile => Path.Combine(RootDirectory, "reconcile.jsonl");
+
     /// <summary>首次启动:把旧目录的快照/加密凭据/设置复制过来(不删除旧目录)。</summary>
     public void MigrateFromLegacy()
     {
@@ -119,27 +122,94 @@ internal static class AtomicFile
     private static string TempPath(string path) =>
         $"{path}.{Environment.ProcessId}.tmp";
 
+    /// <summary>
+    /// 与原子替换共存地读:允许别的线程/进程正把新文件 Move 上来。
+    /// 普通 <c>File.ReadAllText</c> 只申请 Read 共享,碰上 MoveFileEx 替换目标就会抛
+    /// 共享冲突——上层把它当成"该源本轮同步失败"(状态变 Stale、卡片红字),而数据
+    /// 其实已经取到了。用 ReadWrite|Delete 打开即可;代价是可能读到替换前的那一版,
+    /// 对快照来说完全可接受。
+    /// </summary>
+    public static string ReadAllTextShared(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+        return reader.ReadToEnd();
+    }
+
+    /// <summary>Move 撞上读句柄时重试几次;仍失败才上抛(临时文件由 finally 清理)。</summary>
+    private static void MoveWithRetry(string temporaryPath, string path)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                File.Move(temporaryPath, path, true);
+                return;
+            }
+            catch (IOException) when (attempt < 3)
+            {
+                Thread.Sleep(30);
+            }
+        }
+    }
+
     public static async Task WriteTextAsync(string path, string content, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temporaryPath = TempPath(path);
-        await File.WriteAllTextAsync(temporaryPath, content, cancellationToken);
-        File.Move(temporaryPath, path, true);
+        try
+        {
+            await File.WriteAllTextAsync(temporaryPath, content, cancellationToken);
+            MoveWithRetry(temporaryPath, path);
+        }
+        finally
+        {
+            TryDelete(temporaryPath);
+        }
     }
 
     public static void WriteText(string path, string content)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temporaryPath = TempPath(path);
-        File.WriteAllText(temporaryPath, content);
-        File.Move(temporaryPath, path, true);
+        try
+        {
+            File.WriteAllText(temporaryPath, content);
+            MoveWithRetry(temporaryPath, path);
+        }
+        finally
+        {
+            TryDelete(temporaryPath);
+        }
     }
 
     public static void WriteBytes(string path, byte[] content)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temporaryPath = TempPath(path);
-        File.WriteAllBytes(temporaryPath, content);
-        File.Move(temporaryPath, path, true);
+        try
+        {
+            File.WriteAllBytes(temporaryPath, content);
+            MoveWithRetry(temporaryPath, path);
+        }
+        finally
+        {
+            TryDelete(temporaryPath);
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 }

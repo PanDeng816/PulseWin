@@ -34,6 +34,8 @@ internal static class UiShot
             RenderSettingsPage(engine, Path.Combine(dir, "settings-behavior.png"), "行为", "NavBehavior");
             RenderSettingsPage(engine, Path.Combine(dir, "settings-rings.png"), "圆环与数字", "NavRings");
             RenderSettingsPage(engine, Path.Combine(dir, "settings-sources.png"), "数据源", "NavSources");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-refresh.png"), "刷新与网络", "NavRefresh");
+            RenderSettingsPage(engine, Path.Combine(dir, "settings-about.png"), "关于", "NavAbout");
         }
         catch (Exception ex)
         {
@@ -258,9 +260,23 @@ internal static class UiShot
 
     private static void Save(FrameworkElement element, Size size, string path)
     {
-        var bmp = new RenderTargetBitmap(
-            (int)Math.Ceiling(size.Width), (int)Math.Ceiling(size.Height), 96, 96, PixelFormats.Pbgra32);
-        bmp.Render(element);
+        int w = (int)Math.Ceiling(size.Width), h = (int)Math.Ceiling(size.Height);
+        if (w < 1 || h < 1) { Diagnostics.Note($"界面出图跳过(尺寸为 0):{path}"); return; }
+
+        var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        // **不要直接 bmp.Render(element)**:那样会带上元素在父级里的 margin 偏移,
+        // 导致整幅右移(滚动区内容有 20px 左边距,于是右缘被裁掉同样宽的一条)。
+        // 用 VisualBrush 把元素内容画到 (0,0) 自己控制原点。
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawRectangle(
+                new VisualBrush(element) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
+                null,
+                new Rect(0, 0, w, h));
+        }
+        bmp.Render(dv);
+
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bmp));
         using var fs = File.Create(path);

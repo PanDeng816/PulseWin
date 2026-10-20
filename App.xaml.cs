@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -28,10 +28,26 @@ public partial class App : System.Windows.Application
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunValueName = "PulseWin";
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        // 诊断落盘是 300ms 合并写,退出前补一次,否则最后几条(往往正是崩溃原因)会丢。
+        try { Diagnostics.FlushNow(); } catch { }
+        base.OnExit(e);
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         _headless = e.Args.Any(a => a.StartsWith("--", StringComparison.Ordinal));
+
+        // 后台任务上死掉的 Task 走不到下面那个 DispatcherUnhandledException(它不是 UI
+        // 线程的异常),默认被静默吞掉——2026-10-12 那次"同步循环悄悄停摆、诊断日志里
+        // 一行错都没有"就是这么无声无息的。这里至少让它在日志里留个名字。
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Diagnostics.Note("后台任务未处理异常", args.Exception);
+            args.SetObserved();
+        };
 
         // 兜底:任何未处理异常都记进 diagnostics 并提示,而不是弹原始 .NET 崩溃框。
         //
@@ -1038,7 +1054,6 @@ public partial class App : System.Windows.Application
                 ? main.Subs
                 : SnapshotSource.LoadAll();
             string tooltip = TraySummary.BuildTooltip(subs);
-            if (tooltip.Length > 63) tooltip = tooltip[..63];
             _tray.Icon = _icon;
             _tray.Text = tooltip;
             CheckQuotaAlerts(subs);
@@ -1133,6 +1148,7 @@ public partial class App : System.Windows.Application
             // 同上:设置窗有多页 XAML(含三套色板弹层),关掉后不再留引用。
             settings.Closed += (_, _) => _settings = null;
             settings.SettingsChanged += () => _main?.ApplySettings();
+            settings.AppearanceChanged += () => _main?.ApplyAppearance();
             settings.OpenUsageRequested += OpenSpend;
             _settings = settings;
             _settings.Show();

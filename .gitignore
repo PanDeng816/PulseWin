@@ -22,3 +22,7 @@ Thumbs.db
 
 # 临时构建目录
 publish-new/
+publish-selfcontained/
+
+# 发布包(一版一个带日期的文件夹;成品 exe 走 GitHub Release,不入库)
+100_ReleaseVersion/

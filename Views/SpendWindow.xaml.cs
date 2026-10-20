@@ -3,9 +3,11 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace PulseWin;
 
@@ -19,7 +21,7 @@ namespace PulseWin;
 public partial class SpendWindow : Window
 {
     private SpendLedger? _ledger;
-    private SpendSpan _span = SpendSpan.Week;
+    private SpendSpan _span = SpendSpan.Today;
     private bool _loading;
     private bool _closed;
 
@@ -61,6 +63,11 @@ public partial class SpendWindow : Window
     private static readonly Brush ChartZero = Frozen(Color.FromRgb(0xE5, 0xE5, 0xEA));
     private static readonly Brush PeakBar = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
 
+    // 曲线图用的原始颜色(渐变填充/峰时段底纹要按 Color 建画刷,不能直接拿 Brush)
+    private static readonly Color AccentColor = Color.FromRgb(0x00, 0x7A, 0xFF);
+    private static readonly Color GoodColor = Color.FromRgb(0x00, 0xA8, 0x5C);
+    private static readonly Color PeakColor = Color.FromRgb(0xFF, 0x9F, 0x0A);
+
     // 套餐页从设置窗搬来,那里用主题资源,这里用同色值的固定画刷
     private static readonly Brush TextMain = Frozen(Color.FromRgb(0x1D, 0x1D, 0x1F));
     private static readonly Brush TextSub = Frozen(Color.FromRgb(0x86, 0x86, 0x8B));
@@ -71,11 +78,271 @@ public partial class SpendWindow : Window
     private static readonly Brush WarnBrush = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
     private static readonly Brush BadBrush = Frozen(Color.FromRgb(0xE0, 0x48, 0x3E));
 
+    /// <summary>浅一档的蓝(强调色的 45% 混白):铺满整行的占比条用它,免得盖过数字。</summary>
+    private static readonly Brush BarSoft = Frozen(Color.FromRgb(0x8C, 0xBF, 0xFF));
+
     private static Brush Frozen(Color c)
     {
         var brush = new SolidColorBrush(c);
         brush.Freeze();
         return brush;
+    }
+
+    // ————————————————— 面积曲线(全窗口统一:所有"随时间变化"的图都走这里) —————————————————
+
+    /// <summary>曲线下方的渐变填充(顶部有色、到底部完全透明),按颜色缓存,免得每次重绘都新建画刷。</summary>
+    private static readonly Dictionary<Color, Brush> AreaFills = [];
+
+    private static Brush AreaFill(Color c)
+    {
+        if (AreaFills.TryGetValue(c, out var cached)) return cached;
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(0x3C, c.R, c.G, c.B), 0),
+                new GradientStop(Color.FromArgb(0x10, c.R, c.G, c.B), 0.7),
+                new GradientStop(Color.FromArgb(0x00, c.R, c.G, c.B), 1),
+            },
+        };
+        brush.Freeze();
+        AreaFills[c] = brush;
+        return brush;
+    }
+
+    /// <summary>峰时段的浅色底纹(叠在曲线后面的竖条),颜色也缓存。</summary>
+    private static readonly Dictionary<Color, Brush> BandFills = [];
+
+    private static Brush BandFill(Color c)
+    {
+        if (BandFills.TryGetValue(c, out var cached)) return cached;
+        var brush = Frozen(Color.FromArgb(0x14, c.R, c.G, c.B));
+        BandFills[c] = brush;
+        return brush;
+    }
+
+    /// <summary>
+    /// 把一串数值画成**平滑面积曲线**(替代柱图)。用 Catmull-Rom 转三次贝塞尔,
+    /// 控制点 Y 夹在相邻两点之间,保证曲线不会冲到 0 轴以下。
+    ///
+    /// 命中区是垫在曲线下面的不可见矩形(每点一格),所以悬停提示与点击下钻的行为
+    /// 跟原来的柱子一模一样——换的只是长相。
+    /// </summary>
+    /// <param name="values">纵轴数值(0 = 贴底)。</param>
+    /// <param name="tips">每个点的悬停文本,null = 该点不可悬停。</param>
+    /// <param name="band">需要打底纹的点(峰时段),null = 不打。</param>
+    /// <param name="onClick">点的点击回调(索引),null = 不可点。</param>
+    /// <param name="xLabels">横轴刻度(索引 + 文本),一般只给少数几个。</param>
+    private static void DrawAreaChart(
+        Canvas canvas,
+        double width,
+        double height,
+        IReadOnlyList<double> values,
+        IReadOnlyList<string?> tips,
+        Color lineColor,
+        Color bandColor,
+        Func<int, bool>? band,
+        Action<int>? onClick,
+        IReadOnlyList<(int Index, string Text)>? xLabels,
+        double labelBand = 16,
+        IReadOnlyList<double>? overlay = null,
+        Color overlayColor = default)
+    {
+        canvas.Children.Clear();
+        int n = values.Count;
+        if (n == 0 || width <= 1 || height <= 1) return;
+
+        double plotH = Math.Max(8, height - labelBand);
+        const double padX = 7;
+        double spanX = Math.Max(1, width - padX * 2);
+        double step = n > 1 ? spanX / (n - 1) : 0;
+        double X(int i) => n > 1 ? padX + i * step : width / 2;
+
+        long max = 0;
+        for (int i = 0; i < n; i++) max = Math.Max(max, (long)values[i]);
+
+        // 基线:无论有没有数据都画,免得图看着"悬空"
+        var baseline = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)) };
+        Canvas.SetLeft(baseline, 0);
+        Canvas.SetTop(baseline, plotH);
+        canvas.Children.Add(baseline);
+
+        if (max <= 0)
+        {
+            AddXLabels(canvas, width, plotH, xLabels, X);
+            var empty = new TextBlock
+            {
+                Text = "这个区间没有记录", FontSize = 11, Foreground = TextSub,
+            };
+            Canvas.SetLeft(empty, padX);
+            Canvas.SetTop(empty, plotH / 2 - 8);
+            canvas.Children.Add(empty);
+            return;
+        }
+
+        // 峰值留一点顶部余量,曲线不会顶到画布边缘
+        double topRoom = 8;
+        double usable = Math.Max(4, plotH - topRoom);
+        double Y(int i) => plotH - Math.Max(0, values[i]) / max * usable;
+
+        // 峰时段底纹(先画,压在曲线下面)
+        if (band is not null)
+        {
+            int i = 0;
+            while (i < n)
+            {
+                if (!band(i)) { i++; continue; }
+                int j = i;
+                while (j + 1 < n && band(j + 1)) j++;
+                double x1 = Math.Max(0, X(i) - (n > 1 ? step / 2 : 20));
+                double x2 = Math.Min(width, X(j) + (n > 1 ? step / 2 : 20));
+                var rect = new Rectangle
+                {
+                    Width = Math.Max(2, x2 - x1),
+                    Height = Math.Max(4, plotH - 5),
+                    RadiusX = 3,
+                    RadiusY = 3,
+                    Fill = BandFill(bandColor),
+                };
+                Canvas.SetLeft(rect, x1);
+                Canvas.SetTop(rect, 4);
+                canvas.Children.Add(rect);
+                i = j + 1;
+            }
+        }
+
+        var pts = new List<Point>(n);
+        for (int i = 0; i < n; i++) pts.Add(new Point(X(i), Y(i)));
+
+        // 面积(曲线 + 收到基线,闭合填充渐变)
+        var areaFig = new PathFigure { StartPoint = new Point(pts[0].X, plotH), IsClosed = true, IsFilled = true };
+        foreach (var seg in SmoothSegments(pts)) areaFig.Segments.Add(seg);
+        areaFig.Segments.Add(new LineSegment(new Point(pts[^1].X, plotH), false));
+        var areaGeo = new PathGeometry();
+        areaGeo.Figures.Add(areaFig);
+        canvas.Children.Add(new System.Windows.Shapes.Path { Data = areaGeo, Fill = AreaFill(lineColor) });
+
+        // 曲线本体
+        var lineFig = new PathFigure { StartPoint = pts[0], IsClosed = false, IsFilled = false };
+        foreach (var seg in SmoothSegments(pts)) lineFig.Segments.Add(seg);
+        var lineGeo = new PathGeometry();
+        lineGeo.Figures.Add(lineFig);
+        canvas.Children.Add(new System.Windows.Shapes.Path
+        {
+            Data = lineGeo,
+            Stroke = Frozen(lineColor),
+            StrokeThickness = 2,
+            StrokeLineJoin = PenLineJoin.Round,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+        });
+
+        // 叠加线(可选):同一套纵轴上的第二条序列,比如"输出"占"合计"多少
+        if (overlay is { Count: > 1 })
+        {
+            var opts = new List<Point>(n);
+            for (int i = 0; i < n; i++)
+                opts.Add(new Point(X(i), plotH - Math.Max(0, i < overlay.Count ? overlay[i] : 0) / max * usable));
+            var overFig = new PathFigure { StartPoint = opts[0], IsClosed = false, IsFilled = false };
+            foreach (var seg in SmoothSegments(opts)) overFig.Segments.Add(seg);
+            var overGeo = new PathGeometry();
+            overGeo.Figures.Add(overFig);
+            canvas.Children.Add(new System.Windows.Shapes.Path
+            {
+                Data = overGeo,
+                Stroke = Frozen(overlayColor),
+                StrokeThickness = 1.4,
+                StrokeDashArray = [3, 2],
+                StrokeLineJoin = PenLineJoin.Round,
+            });
+        }
+
+        // 数据点:点少时逐个画,点多时只画最大值那一个(避免糊成一条线)
+        int maxIndex = 0;
+        for (int i = 1; i < n; i++) if (values[i] > values[maxIndex]) maxIndex = i;
+        double dotR = n <= 40 ? 1.6 : 0;
+        for (int i = 0; i < n; i++)
+        {
+            bool isMax = i == maxIndex;
+            if (!isMax && dotR <= 0) continue;
+            if (!isMax && values[i] <= 0) continue;
+            double r = isMax ? 3.4 : dotR;
+            var dot = new Ellipse
+            {
+                Width = r * 2, Height = r * 2,
+                Fill = isMax ? Frozen(lineColor) : Frozen(Color.FromRgb(0xFF, 0xFF, 0xFF)),
+                Stroke = Frozen(lineColor), StrokeThickness = isMax ? 0 : 1.2,
+            };
+            Canvas.SetLeft(dot, pts[i].X - r);
+            Canvas.SetTop(dot, pts[i].Y - r);
+            canvas.Children.Add(dot);
+        }
+
+        // 命中区:不可见矩形垫在下面,每点一格;有 tooltip 或可点的才铺
+        for (int i = 0; i < n; i++)
+        {
+            string? tip = i < tips.Count ? tips[i] : null;
+            if (tip is null && onClick is null) continue;
+            double left = n > 1 ? X(i) - step / 2 : 0;
+            double wide = n > 1 ? step : width;
+            left = Math.Max(0, left);
+            wide = Math.Min(width - left, Math.Max(6, wide));
+            var hit = new Rectangle
+            {
+                Width = wide, Height = plotH, Fill = Brushes.Transparent,
+                ToolTip = tip,
+                Cursor = onClick is null ? null : Cursors.Hand,
+            };
+            if (onClick is not null)
+            {
+                int captured = i;
+                hit.MouseLeftButtonDown += (_, e) => { e.Handled = true; onClick(captured); };
+            }
+            Canvas.SetLeft(hit, left);
+            Canvas.SetTop(hit, 0);
+            canvas.Children.Add(hit);
+        }
+
+        AddXLabels(canvas, width, plotH, xLabels, X);
+    }
+
+    /// <summary>Catmull-Rom → 三次贝塞尔;控制点 Y 夹在相邻两点之间,曲线不会过冲。</summary>
+    private static IEnumerable<PathSegment> SmoothSegments(IReadOnlyList<Point> pts)
+    {
+        int n = pts.Count;
+        if (n == 1) yield break;
+        for (int i = 0; i < n - 1; i++)
+        {
+            var p0 = i == 0 ? pts[0] : pts[i - 1];
+            var p1 = pts[i];
+            var p2 = pts[i + 1];
+            var p3 = i + 2 < n ? pts[i + 2] : pts[n - 1];
+            var c1 = new Point(p1.X + (p2.X - p0.X) / 6, Clamp(p1.Y + (p2.Y - p0.Y) / 6, p1.Y, p2.Y));
+            var c2 = new Point(p2.X - (p3.X - p1.X) / 6, Clamp(p2.Y - (p3.Y - p1.Y) / 6, p1.Y, p2.Y));
+            yield return new BezierSegment(c1, c2, p2, true);
+        }
+    }
+
+    private static double Clamp(double v, double a, double b) =>
+        v < Math.Min(a, b) ? Math.Min(a, b) : v > Math.Max(a, b) ? Math.Max(a, b) : v;
+
+    private static void AddXLabels(Canvas canvas, double width, double plotY,
+        IReadOnlyList<(int Index, string Text)>? labels,
+        Func<int, double>? xOf = null)
+    {
+        if (labels is null) return;
+        foreach (var (index, text) in labels)
+        {
+            var label = new TextBlock { Text = text, FontSize = 10, Foreground = TextSub };
+            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double raw = xOf is null ? index : xOf(index) - label.DesiredSize.Width / 2;
+            double x = Math.Max(0, Math.Min(width - label.DesiredSize.Width, raw));
+            Canvas.SetLeft(label, x);
+            Canvas.SetTop(label, plotY + 3);
+            canvas.Children.Add(label);
+        }
     }
 
     public SpendWindow()
@@ -88,11 +355,16 @@ public partial class SpendWindow : Window
         if (Height > MaxHeight) Height = MaxHeight;
         if (Width > MaxWidth) Width = MaxWidth;
 
-        SpanWeek.IsChecked = true;
+        // 每次打开都从「今天」开始(用户 2026-10-18 要求:不要默认 7 天)
+        SpanToday.IsChecked = true;
         ModelSortTokens.IsChecked = true;
+        // 合并卡的分段默认项:总览看"模型",套餐页看"今天"
+        BreakdownModels.IsChecked = true;
+        HourToday.IsChecked = true;
         foreach (var button in new[] { SpanToday, SpanWeek, SpanMonth, SpanCustom, SpanAll })
             button.Checked += Span_Checked;
-        Loaded += (_, _) => ReloadLedger();
+        Loaded += (_, _) => { ReloadLedger(); HookResizeRedraw(); };
+        Heatmap.DayClicked += EnterDayFocus;
     }
 
     // ————————————————— 数据加载 —————————————————
@@ -213,8 +485,12 @@ public partial class SpendWindow : Window
             + $"   ·   来源:{string.Join(" + ", _ledger.PresentStores)}"
             + (_ledger.MissingStores.Count > 0 ? $"(本机未装 {string.Join("、", _ledger.MissingStores)})" : "");
 
-        // 渠道列表(tab 要显示每个套餐的用量徽标;区间变了要跟着重算)
-        _channels = ChannelUsageIndex.Build(_ledger, _span);
+        // 渠道列表(tab 徽标)。**区间必须与下面的 Render 用同一个**:自定义区间/按天下钻时
+        // EffectiveRange() 才是真正生效的区间,只传 _span 会让徽标停在"今天"。
+        var (rangeFrom, rangeTo) = _dayFilter is { } day
+            ? (day.ToDateTime(TimeOnly.MinValue), day.ToDateTime(TimeOnly.MinValue).AddDays(1))
+            : (EffectiveRange().From, EffectiveRange().To);
+        _channels = ChannelUsageIndex.Build(_ledger, _span, rangeFrom, rangeTo);
         // 区间变了尽量停在同一个套餐上
         if (_selectedChannel is { } keep)
             _selectedChannel = _channels.FirstOrDefault(c => c.Key == keep.Key);
@@ -228,9 +504,7 @@ public partial class SpendWindow : Window
         if (_selectedChannel is { } ch)
             SelectChannel(ch);
         else
-            Render(_dayFilter is { } day
-                ? SpendSummary.Build(_ledger, day.ToDateTime(TimeOnly.MinValue), day.ToDateTime(TimeOnly.MinValue).AddDays(1))
-                : SpendSummary.Build(_ledger, EffectiveRange().From, EffectiveRange().To));
+            Render(SpendSummary.Build(_ledger, rangeFrom, rangeTo));
     }
 
     // ————————————————— 视图切换 —————————————————
@@ -371,11 +645,7 @@ public partial class SpendWindow : Window
             QuotaPanel.Children.Add(row);
         }
 
-        QuotaHint.Text = "额度读数来自悬浮环的同步(约每分钟一次),是官方接口的数字,不是估算;"
-            + (_subs.Any(s => s.Pools.Any(p => p.ReadingFrom is { Length: > 0 }))
-                ? "标了「网页控制台」的那些来自 opencode.ai 网页同款接口(与网页卡片同一个公式,精度到分);"
-                : "")
-            + "BigModel 包月一行是按公开牌价估算的金额,与包月费无关。";
+        QuotaHint.Text = "";
     }
 
     /// <summary>一条 pool 读数:标签 + 进度条 + 百分比/金额 + 重置倒计时。</summary>
@@ -591,6 +861,34 @@ public partial class SpendWindow : Window
 
     // ————————————————— 总览渲染 —————————————————
 
+    /// <summary>概览页的曲线/热图按画布宽度画一次；窗口可拉伸，拉宽后必须重画（v1.22.2）。</summary>
+    private bool _resizeHooked;
+    private DispatcherTimer? _resizeTimer;
+
+    private void HookResizeRedraw()
+    {
+        if (_resizeHooked) return;
+        _resizeHooked = true;
+        _resizeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
+        _resizeTimer.Tick += (_, _) =>
+        {
+            _resizeTimer!.Stop();
+            if (_closed || _ledger is null) return;
+            var (from, to) = _dayFilter is { } day
+                ? (day.ToDateTime(TimeOnly.MinValue), day.ToDateTime(TimeOnly.MinValue).AddDays(1))
+                : (EffectiveRange().From, EffectiveRange().To);
+            RenderChart(SpendSummary.Build(_ledger, from, to));
+            RenderHeatmap();
+        };
+        void OnSizeChanged(object? s, SizeChangedEventArgs e)
+        {
+            _resizeTimer?.Stop();
+            _resizeTimer?.Start();
+        }
+        ChartCanvas.SizeChanged += OnSizeChanged;
+        Heatmap.SizeChanged += OnSizeChanged;
+    }
+
     private void Render(SpendSummary summary)
     {
         TotalTokens.Text = SpendFormat.Tokens(summary.TotalTokens);
@@ -604,12 +902,9 @@ public partial class SpendWindow : Window
         var notes = new List<string>();
         double rate = AppSettings.Current.UsdToCny;
         notes.Add($"按厂商公开 API 价估算{(summary.CostIsPartial ? "(只覆盖有价的部分)" : "")},不是账单。"
-            + (rate > 0 ? $"金额按 $1 ≈ ¥{rate:0.00} 换算显示。" : "金额为美元原值。"));
+            + (rate > 0 ? $"金额按 $1 ≈ ¥{rate:0.00} 换算。" : "金额为美元原值。"));
         if (summary.UnpricedTokens > 0)
-            notes.Add($"{summary.UnpricedModels} 个模型没有公开价,它们的 {SpendFormat.Tokens(summary.UnpricedTokens)} tokens 只计数、不计金额;"
-                + "下面带 * 的金额是有价部分的小计,显示 — 的算不出金额。");
-        if (summary.UnclassifiedTokens > 0)
-            notes.Add($"其中 {SpendFormat.Tokens(summary.UnclassifiedTokens)} tokens 来源只给了总量、没分类,计入总数但不计价。");
+            notes.Add($"{summary.UnpricedModels} 个模型没有公开价,只计数、不计金额;金额带 * 的是有价部分小计。");
         CostNote.Text = string.Join(" ", notes);
 
         // 缓存写恒为 0 容易被当成 bug(这是个显眼的数字)。本机 ZCode / OpenCode 的记录里
@@ -665,21 +960,49 @@ public partial class SpendWindow : Window
             BarWidth = Fraction(p.Tokens, summary.ProjectRows.FirstOrDefault()?.Tokens ?? 0) * BarBase,
             BarBrush = BarProjects
         }).ToList());
-        RenderList(SessionList, summary.SessionRows.Take(12).Select(x => new RowVm
+        RenderRecentSessions(summary);
+
+        Footnote.Text = _ledger is { } l && l.Notes.Count > 0
+            ? "读取提示:" + string.Join(";", l.Notes)
+            : "";
+    }
+
+    /// <summary>
+    /// 最近对话(最近 6 个会话)。会话行只由源库明细喂,所以这 6 行的合计与顶部的总量
+    /// 不必相等——两套口径,各自诚实。点一行弹会话详情窗。
+    /// **6 行之后补一行"其余 N 个会话"的合计**:否则用户看到 6 行、又看到顶部总量,
+    /// 会以为是同一件事的两个数字(实际是"6 个"与"全部"的差别),这正是他提过的"对不上"。
+    /// </summary>
+    private void RenderRecentSessions(SpendSummary summary)
+    {
+        const int limit = 6;
+        var rows = summary.SessionRows.Take(limit).ToList();
+        RecentSessionSection.Visibility = rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RenderList(RecentSessionList, rows.Select(x => new RowVm
         {
             Name = string.IsNullOrWhiteSpace(x.Title) ? x.SessionId : x.Title!,
             Tokens = SpendFormat.Tokens(x.Tokens),
+            TokensTip = $"{SpendFormat.TokensExact(x.Tokens)} tokens",
             Amount = SpendFormat.Amount(x.Cost, x.HasUnpriced),
-            Detail = $"{x.Agent} · {x.Project ?? "无项目"} · {x.Last:MM-dd HH:mm}",
-            BarWidth = Fraction(x.Tokens, summary.SessionRows.FirstOrDefault()?.Tokens ?? 0) * BarBase,
-            BarBrush = BarSessions,
             AmountTip = SpendFormat.AmountTip(x.Cost, x.HasUnpriced),
+            Detail = $"{x.Agent} · {x.Project ?? "无项目"} · {x.Last:MM-dd HH:mm}",
+            BarWidth = Fraction(x.Tokens, rows[0].Tokens) * BarBase,
+            BarBrush = BarSessions,
             SessionId = x.SessionId
         }).ToList());
 
-        Footnote.Text = "数据来自本机各客户端的记录库(ZCode 的 model_usage、OpenCode 的会话消息),"
-            + "按 models.dev 上厂商公开的 API 牌价折算,仅供参考;金额不是实际账单。"
-            + (_ledger is { } l && l.Notes.Count > 0 ? "  读取提示:" + string.Join(";", l.Notes) : "");
+        var rest = summary.SessionRows.Skip(rows.Count).ToList();
+        if (rest.Count == 0)
+        {
+            RecentSessionMore.Visibility = Visibility.Collapsed;
+            return;
+        }
+        long restTokens = rest.Sum(x => x.Tokens);
+        double restCost = rest.Sum(x => x.Cost);
+        bool restUnpriced = rest.Any(x => x.HasUnpriced);
+        RecentSessionMore.Text = $"其余 {rest.Count} 个会话 · {SpendFormat.Tokens(restTokens)} tokens · "
+            + $"{SpendFormat.Amount(restCost, restUnpriced)}(合计 {rows.Count + rest.Count} 个)";
+        RecentSessionMore.Visibility = Visibility.Visible;
     }
 
     /// <summary>环比:本期 vs 等长的上一周期。回答"这周烧得是不是更凶了"。</summary>
@@ -737,9 +1060,7 @@ public partial class SpendWindow : Window
         var unpriced = summary.Models.Where(m => m.UnpricedTokens > 0).Select(m => m.Model).ToList();
         ModelHint.Text = summary.Models.Count == 0
             ? "这个区间里没有记录。"
-            : (unpriced.Count > 0
-                ? $"有算不出价的 token 的模型(金额只是有价部分):{string.Join("、", unpriced)}"
-                : "");
+            : (unpriced.Count > 0 ? $"无公开价(只计数、不计金额):{string.Join("、", unpriced)}" : "");
     }
 
     private static void RenderList(ItemsControl target, List<RowVm> rows)
@@ -748,6 +1069,199 @@ public partial class SpendWindow : Window
     }
 
     // ————————————————— 每日柱图(自动降采样 + 点击下钻) —————————————————
+
+    /// <summary>
+    /// 柱状图（v1.22.3）：每日用量与时段分布改回柱形——"哪一天/哪一小时多"用高度比曲线更直接。
+    /// 柱宽随格宽自适应（2.5~30），纵向渐变（越高越实），峰值柱用实色；
+    /// 峰时段仍用橙色底纹、不染柱身（两个维度不打架）；每柱一块透明命中区承载悬停与下钻。
+    /// overlay 存在时叠一条细折线（时段分布的"其中输出"）。
+    /// </summary>
+    private static void DrawBarChart(
+        Canvas canvas,
+        double width,
+        double height,
+        IReadOnlyList<double> values,
+        IReadOnlyList<string?> tips,
+        Color barColor,
+        Color bandColor,
+        Func<int, bool>? band,
+        Action<int>? onClick,
+        IReadOnlyList<(int Index, string Text)>? xLabels,
+        double labelBand = 16,
+        IReadOnlyList<double>? overlay = null,
+        Color overlayColor = default)
+    {
+        canvas.Children.Clear();
+        int n = values.Count;
+        if (n == 0 || width <= 1 || height <= 1) return;
+
+        double plotH = Math.Max(8, height - labelBand);
+        const double padX = 7;
+        double spanX = Math.Max(1, width - padX * 2);
+        double slot = spanX / n;
+        double barW = Math.Clamp(slot * 0.66, 2.5, 30);
+        double Center(int i) => padX + slot * (i + 0.5);
+
+        long max = 0;
+        for (int i = 0; i < n; i++) max = Math.Max(max, (long)values[i]);
+
+        var baseline = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)) };
+        Canvas.SetLeft(baseline, 0);
+        Canvas.SetTop(baseline, plotH);
+        canvas.Children.Add(baseline);
+
+        if (max <= 0)
+        {
+            var empty = new TextBlock { Text = "这个区间没有记录", FontSize = 11, Foreground = TextSub };
+            Canvas.SetLeft(empty, padX);
+            Canvas.SetTop(empty, plotH / 2 - 8);
+            canvas.Children.Add(empty);
+            return;
+        }
+
+        // 两条淡网格线（半格/满格）：让高度可读，又不加刻度文字把图面弄噪
+        foreach (double frac in new[] { 0.5, 1.0 })
+        {
+            var grid = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xEE, 0xEE, 0xF2)) };
+            Canvas.SetLeft(grid, 0);
+            Canvas.SetTop(grid, plotH - plotH * frac * 0.94);
+            canvas.Children.Add(grid);
+        }
+
+        double topRoom = 8;
+        double usable = Math.Max(4, plotH - topRoom);
+
+        // 峰时段底纹（先画，压在柱后）
+        if (band is not null)
+        {
+            int i = 0;
+            while (i < n)
+            {
+                if (!band(i)) { i++; continue; }
+                int j = i;
+                while (j + 1 < n && band(j + 1)) j++;
+                double x1 = Math.Max(0, padX + slot * i);
+                double x2 = Math.Min(width, padX + slot * (j + 1));
+                var rect = new Rectangle
+                {
+                    Width = Math.Max(2, x2 - x1),
+                    Height = Math.Max(4, plotH - 4),
+                    RadiusX = 3,
+                    RadiusY = 3,
+                    Fill = BandFill(bandColor),
+                };
+                Canvas.SetLeft(rect, x1);
+                Canvas.SetTop(rect, 3);
+                canvas.Children.Add(rect);
+                i = j + 1;
+            }
+        }
+
+        int maxIndex = 0;
+        for (int i = 1; i < n; i++) if (values[i] > values[maxIndex]) maxIndex = i;
+
+        // 统一纵向渐变：所有柱共用一支 brush，柱越高顶部越实
+        var fill = new LinearGradientBrush(
+            Color.FromArgb(0xE6, barColor.R, barColor.G, barColor.B),
+            Color.FromArgb(0x4D, barColor.R, barColor.G, barColor.B),
+            new Point(0, 0), new Point(0, 1));
+        fill.Freeze();
+        var peakFill = Frozen(barColor);
+
+        for (int i = 0; i < n; i++)
+        {
+            double v = Math.Max(0, values[i]);
+            double h = v / max * usable;
+            double x = Center(i) - barW / 2;
+            if (h < 1.5)
+            {
+                // 零值：贴底 2px 小点，表示"这段有格子但没用量"
+                var dot = new Rectangle
+                {
+                    Width = barW, Height = 2, RadiusX = 1, RadiusY = 1,
+                    Fill = Frozen(Color.FromRgb(0xE4, 0xE4, 0xEA)),
+                };
+                Canvas.SetLeft(dot, x);
+                Canvas.SetTop(dot, plotH - 2);
+                canvas.Children.Add(dot);
+            }
+            else
+            {
+                var bar = new Rectangle
+                {
+                    Width = barW,
+                    Height = h,
+                    RadiusX = Math.Min(3, barW / 2),
+                    RadiusY = Math.Min(3, barW / 2),
+                    Fill = i == maxIndex ? peakFill : fill,
+                };
+                Canvas.SetLeft(bar, x);
+                Canvas.SetTop(bar, plotH - h);
+                canvas.Children.Add(bar);
+            }
+
+            // 透明命中区：悬停提示 + 下钻（与曲线版行为一致）
+            bool hasTip = tips.Count > i && tips[i] is not null;
+            if (hasTip || onClick is not null)
+            {
+                var hit = new Rectangle
+                {
+                    Width = Math.Max(2, slot),
+                    Height = plotH,
+                    Fill = Brushes.Transparent,
+                };
+                if (hasTip) hit.ToolTip = tips[i];
+                if (onClick is not null)
+                {
+                    hit.Cursor = Cursors.Hand;
+                    int captured = i;
+                    hit.MouseLeftButtonDown += (_, e) => { e.Handled = true; onClick(captured); };
+                }
+                Canvas.SetLeft(hit, padX + slot * i);
+                Canvas.SetTop(hit, 0);
+                canvas.Children.Add(hit);
+            }
+        }
+
+        // 叠加折线（可选）
+        if (overlay is { Count: > 1 })
+        {
+            var fig = new PathFigure
+            {
+                StartPoint = new Point(Center(0), plotH - Math.Max(0, overlay[0]) / max * usable),
+                IsClosed = false,
+            };
+            for (int i = 1; i < n; i++)
+                fig.Segments.Add(new LineSegment(
+                    new Point(Center(i), plotH - Math.Max(0, i < overlay.Count ? overlay[i] : 0) / max * usable), false));
+            var geo = new PathGeometry();
+            geo.Figures.Add(fig);
+            canvas.Children.Add(new System.Windows.Shapes.Path
+            {
+                Data = geo,
+                Stroke = Frozen(overlayColor),
+                StrokeThickness = 1.4,
+                StrokeDashArray = [3, 2],
+                StrokeLineJoin = PenLineJoin.Round,
+            });
+        }
+
+        // 横轴刻度：居中到柱心，贴边时夹回画布
+        if (xLabels is not null)
+        {
+            foreach (var (index, text) in xLabels)
+            {
+                if (index < 0 || index >= n) continue;
+                var tb = new TextBlock { Text = text, FontSize = 10, Foreground = TextSub };
+                tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                double lx = Math.Clamp(Center(index) - tb.DesiredSize.Width / 2, 0,
+                    Math.Max(0, width - tb.DesiredSize.Width));
+                Canvas.SetLeft(tb, lx);
+                Canvas.SetTop(tb, plotH + 2);
+                canvas.Children.Add(tb);
+            }
+        }
+    }
 
     private void RenderChart(SpendSummary summary)
     {
@@ -779,83 +1293,27 @@ public partial class SpendWindow : Window
             unit = "天";
         }
         ChartHint.Text = unit == "天"
-            ? "点柱子可以看那一天的明细。"
+            ? "点柱子看那一天的明细。"
             : $"天数较多,已按{unit}聚合(峰值 {SpendFormat.Tokens(bars.Max(b => b.Tokens))})。";
 
         double width = ChartCanvas.ActualWidth > 0 ? ChartCanvas.ActualWidth : 500;
-        double height = 132;
-        double labelBand = 16;
-        double plotHeight = height - labelBand;
+        const double height = 132;
         int count = bars.Count;
-        double slot = width / count;
-        double barWidth = Math.Max(2, Math.Min(26, slot * 0.68));
-        long max = bars.Max(b => b.Tokens);
 
-        for (int i = 0; i < count; i++)
-        {
-            var b = bars[i];
-            double x = i * slot + (slot - barWidth) / 2;
-            bool singleDay = b.Start == b.End;
-            string tip = singleDay
-                ? $"{b.Start:yyyy-MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
-                : $"{b.Start:MM-dd} ~ {b.End:MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
-                    + (b.HasUnpriced ? "\n(含无公开价的模型)" : "");
-
-            if (b.Tokens == 0)
-            {
-                // 整段没有调用:画一条贴底的淡线,而不是与"有量但极小"混在一起
-                var zero = new Rectangle
-                {
-                    Width = barWidth,
-                    Height = 1.5,
-                    Fill = ChartZero,
-                    ToolTip = tip + (singleDay ? "" : "\n没有记录"),
-                };
-                Canvas.SetLeft(zero, x);
-                Canvas.SetTop(zero, plotHeight - 1.5);
-                ChartCanvas.Children.Add(zero);
-                continue;
-            }
-
-            double ratio = max == 0 ? 0 : (double)b.Tokens / max;
-            double barHeight = Math.Max(2, ratio * plotHeight);
-            var bar = new Rectangle
-            {
-                Width = barWidth,
-                Height = barHeight,
-                Fill = ChartBar,
-                RadiusX = 2,
-                RadiusY = 2,
-                ToolTip = tip,
-                Cursor = Cursors.Hand,
-            };
-            if (singleDay)
-            {
-                // 点击下钻只对"一天"的柱生效
-                var captured = b.Start;
-                bar.MouseLeftButtonDown += (_, e) => { e.Handled = true; EnterDayFocus(captured); };
-            }
-            Canvas.SetLeft(bar, x);
-            Canvas.SetTop(bar, plotHeight - barHeight);
-            ChartCanvas.Children.Add(bar);
-        }
-
-        // 底部只标首/中/尾三个日期,免得挤成一团
+        var values = bars.Select(b => (double)b.Tokens).ToList();
+        var tips = bars.Select(b => b.Start == b.End
+            ? $"{b.Start:yyyy-MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
+            : $"{b.Start:MM-dd} ~ {b.End:MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
+                + (b.HasUnpriced ? "\n(含无公开价的模型)" : "")).ToList<string?>();
+        var labels = new List<(int, string)>();
         foreach (var index in new[] { 0, count / 2, count - 1 }.Distinct())
-        {
-            var label = new TextBlock
-            {
-                Text = bars[index].Start.ToString("MM-dd"),
-                FontSize = 10.5,
-                Foreground = Frozen(Color.FromRgb(0x86, 0x86, 0x8B))
-            };
-            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            double x = index * slot + (slot - label.DesiredSize.Width) / 2;
-            x = Math.Max(0, Math.Min(width - label.DesiredSize.Width, x));
-            Canvas.SetLeft(label, x);
-            Canvas.SetTop(label, plotHeight + 2);
-            ChartCanvas.Children.Add(label);
-        }
+            labels.Add((index, bars[index].Start.ToString("MM-dd")));
+
+        // 下钻只对"一天"的桶有意义,聚合过的桶不给点
+        Action<int>? drill = unit == "天" ? i => EnterDayFocus(bars[i].Start) : null;
+
+        DrawBarChart(ChartCanvas, width, height, values, tips,
+            AccentColor, AccentColor, band: null, onClick: drill, xLabels: labels);
     }
 
     /// <summary>把逐日序列按 keySelector 分桶(桶界 = key 本身),桶末 = endSelector(key)。</summary>
@@ -878,10 +1336,11 @@ public partial class SpendWindow : Window
 
     private void RenderHeatmap()
     {
-        HeatCanvas.Children.Clear();
         if (_ledger is null || _ledger.Entries.Count == 0)
         {
             HeatHint.Text = "还没有记录。";
+            Heatmap.SetData(new Dictionary<DateOnly, (long, double)>(), DateOnly.FromDateTime(DateTime.Today),
+                DateOnly.FromDateTime(DateTime.Today), 1, 0);
             return;
         }
 
@@ -895,70 +1354,24 @@ public partial class SpendWindow : Window
         if (byDay.Count == 0)
         {
             HeatHint.Text = "还没有记录。";
+            Heatmap.SetData(new Dictionary<DateOnly, (long, double)>(), DateOnly.FromDateTime(DateTime.Today),
+                DateOnly.FromDateTime(DateTime.Today), 1, 0);
             return;
         }
 
-        double cell = 12, gap = 3, step = cell + gap;
-        int fitColumns = Math.Max(1, (int)(HeatCanvas.ActualWidth > 0 ? HeatCanvas.ActualWidth / step : 33));
+        const double cell = 12, gap = 3, step = cell + gap;
+        double available = Heatmap.ActualWidth > 0 ? Heatmap.ActualWidth : 400;
+        int fitColumns = Math.Max(1, (int)(available / step));
         var today = DateTime.Today;
         // 本周周一为最后一列;往回数 weekColumns 列
         var lastMonday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
-        // **永远铺满可用宽**(锚定今天往回数):数据短时格子里自然有空周(画淡框),
-        // 数据长时以上限 60 周(约 14 个月)截断。居中/右贴的做法都试过,看起来都
-        // 像"内容没画出来"——铺满最不像 bug。
+        // 永远铺满可用宽(锚定今天往回数):数据短时格子里自然有空周(画淡框),
+        // 数据长时以上限 60 周(约 14 个月)截断。居中/右贴都试过,看起来都像"没画出来"。
         int weekColumns = Math.Clamp(fitColumns, 1, 60);
         var firstMonday = lastMonday.AddDays(-7 * (weekColumns - 1));
-        double usedW = weekColumns * step - gap;
-
         long max = byDay.Values.Max(v => v.Tokens);
-        var monthLabels = new List<(int Column, string Label)>();
 
-        for (int col = 0; col < weekColumns; col++)
-        {
-            for (int row = 0; row < 7; row++)
-            {
-                var day = firstMonday.AddDays(col * 7 + row);
-                if (day > today) break;
-                var key = DateOnly.FromDateTime(day);
-                long tokens = byDay.TryGetValue(key, out var v) ? v.Tokens : 0;
-
-                var rect = new Rectangle
-                {
-                    Width = cell,
-                    Height = cell,
-                    RadiusX = 2.5,
-                    RadiusY = 2.5,
-                    Fill = HeatBrush(tokens, max),
-                    Cursor = Cursors.Hand,
-                };
-                rect.ToolTip = tokens > 0
-                    ? $"{day:yyyy-MM-dd}\n{SpendFormat.TokensExact(tokens)} tokens\n{SpendFormat.MoneyExact(byDay[key].Cost)}\n(点击看这一天)"
-                    : $"{day:yyyy-MM-dd}\n没有记录";
-                var captured = key;
-                rect.MouseLeftButtonDown += (_, e) => { e.Handled = true; EnterDayFocus(captured); };
-                Canvas.SetLeft(rect, col * step);
-                Canvas.SetTop(rect, row * step);
-                HeatCanvas.Children.Add(rect);
-            }
-
-            // 列首恰逢月初(或第一列)时,在顶部标月份
-            var colFirst = firstMonday.AddDays(col * 7);
-            if (colFirst.Month != (col > 0 ? firstMonday.AddDays((col - 1) * 7).Month : 0) || col == 0)
-                monthLabels.Add((col, colFirst.ToString("M月")));
-        }
-
-        foreach (var (column, label) in monthLabels)
-        {
-            var labelBlock = new TextBlock
-            {
-                Text = label,
-                FontSize = 10.5,
-                Foreground = Frozen(Color.FromRgb(0x86, 0x86, 0x8B))
-            };
-            Canvas.SetLeft(labelBlock, column * step);
-            Canvas.SetTop(labelBlock, 7 * step - 2);
-            HeatCanvas.Children.Add(labelBlock);
-        }
+        Heatmap.SetData(byDay, DateOnly.FromDateTime(firstMonday), DateOnly.FromDateTime(today), weekColumns, max);
 
         var earliest = byDay.Keys.Min();
         var firstVisibleMonday = DateOnly.FromDateTime(firstMonday);
@@ -966,7 +1379,7 @@ public partial class SpendWindow : Window
             ? $"   ·   {firstVisibleMonday.AddDays(-1):yyyy-MM-dd} 之前的 {byDay.Count(d => d.Key < firstVisibleMonday)} 天没画下(宽不够),数字仍在统计里"
             : "";
         HeatHint.Text = $"共 {byDay.Count} 天有记录   ·   最忙 {byDay.Aggregate((a, b) => a.Value.Tokens > b.Value.Tokens ? a : b).Key:yyyy-MM-dd}"
-            + $"   ·   (格色越亮当天用量越大,点格子看那一天){truncated}";
+            + $"   ·   点格子看那一天{truncated}";
     }
 
     private static Brush HeatBrush(long tokens, long max)
@@ -1013,6 +1426,39 @@ public partial class SpendWindow : Window
         if (_selectedChannel is { } ch) RenderChannelModels(ch);
     }
 
+    /// <summary>总览的「构成与明细」分段:模型 / 来源 / 项目 共用一张卡,只翻可见性。</summary>
+    private void Breakdown_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton { Tag: string tag }) return;
+        if (ModelList is null || AgentList is null || ProjectList is null) return;
+
+        ModelList.Visibility = tag == "Models" ? Visibility.Visible : Visibility.Collapsed;
+        AgentList.Visibility = tag == "Agents" ? Visibility.Visible : Visibility.Collapsed;
+        ProjectList.Visibility = tag == "Projects" ? Visibility.Visible : Visibility.Collapsed;
+        // "有算不出价的模型"这条提示只跟模型列表有关,切走就别留着
+        if (ModelHint is not null)
+            ModelHint.Visibility = tag == "Models" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>套餐页「时段分布」:今天 / 整个区间 共用一张卡。切档后画布才有宽度,
+    /// 所以重画要等布局跑完(否则刚变可见的 Canvas ActualWidth 还是 0,画出来是空白)。</summary>
+    private void HourScope_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton { Tag: string tag }) return;
+        if (HourTodayPanel is null || HourRangePanel is null) return;
+
+        bool today = tag == "Today";
+        HourTodayPanel.Visibility = today ? Visibility.Visible : Visibility.Collapsed;
+        HourRangePanel.Visibility = today ? Visibility.Collapsed : Visibility.Visible;
+
+        if (!IsLoaded || _selectedChannel is not { } ch) return;
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (today) RenderHourlyChart(ch);
+            else RenderChannelPeak(ch);
+        }), DispatcherPriority.Loaded);
+    }
+
     private void SelectChannel(ChannelUsage ch)
     {
         _selectedChannel = ch;
@@ -1046,21 +1492,29 @@ public partial class SpendWindow : Window
             ch.CacheHit is { } hit ? $"{hit:P1}" : "—",
             $"命中 {SpendFormat.Tokens(ch.Tally.CacheRead)}", "Cache");
         AddCell(ChannelKpiGrid, "缓存读 / 写",
-            $"{SpendFormat.Tokens(ch.Tally.CacheRead)} / {SpendFormat.Tokens(ch.Tally.CacheWrite)}",
+            $"{SpendFormat.Tokens(ch.Tally.CacheRead)}/{SpendFormat.Tokens(ch.Tally.CacheWrite)}",
             null, "Cache");
-        AddCell(ChannelKpiGrid, "会话数", ch.Sessions.ToString("N0"), "去重 sessionId", "Sessions");
-
-        // —— Token 构成六格 ——
+        // —— Token 构成四格:输入 / 输出 / 缓存读 / 合计 ——
+        // 「缓存写」并进 KPI 的「缓存读 / 写」那一格、「未分类」并进合计的脚注——
+        // 单列出来只会把这一排挤成两行(用户实测窗口 560 宽时正是这样)。
         ChannelTokenGrid.Children.Clear();
         var t = ch.Tally;
         AddCell(ChannelTokenGrid, "输入", SpendFormat.Tokens(t.Input), null, "Tokens");
         AddCell(ChannelTokenGrid, "输出", SpendFormat.Tokens(t.Output), null, "Tokens");
         AddCell(ChannelTokenGrid, "缓存读", SpendFormat.Tokens(t.CacheRead),
             ch.CacheHit is { } ch2 ? $"命中率 {ch2:P1}" : null, "Cache");
-        AddCell(ChannelTokenGrid, "缓存写", SpendFormat.Tokens(t.CacheWrite), null, "Cache");
-        AddCell(ChannelTokenGrid, "未分类", SpendFormat.Tokens(ch.UnclassifiedTokens),
-            ch.UnclassifiedTokens > 0 ? "来源只报总量、不参与计价" : "无", "Muted");
-        AddCell(ChannelTokenGrid, "合计", SpendFormat.TokensExact(ch.TotalTokens), null, "Tokens");
+        // 合计用短写法(与 KPI 的"总 TOKEN"同一口径),精确值进悬停——精确的 9 位数
+        // 一格就要 110diu,这一排就排不下了
+        var total = AddCell(ChannelTokenGrid, "合计", SpendFormat.Tokens(ch.TotalTokens),
+            ch.UnclassifiedTokens > 0 ? $"含未分类 {SpendFormat.Tokens(ch.UnclassifiedTokens)}" : null,
+            "Tokens");
+        total.ToolTip = $"{SpendFormat.TokensExact(ch.TotalTokens)} tokens"
+            + (ch.UnclassifiedTokens > 0
+                ? $"\n其中 {SpendFormat.TokensExact(ch.UnclassifiedTokens)} 来源只报总量、不参与计价"
+                : "");
+        // 这两格的值短,列宽下限可以更松:用户窗口 560 宽(内容区约 466)也要排成一排
+        AutoColumns(ChannelKpiGrid, minCell: 88);
+        AutoColumns(ChannelTokenGrid, minCell: 88);
 
         // 本区间无用量:给一条说明,免得看着像"没统计到"
         ChannelStatusLine.Text = ch.HasData ? "" : ch.LifetimeTokens > 0
@@ -1101,7 +1555,7 @@ public partial class SpendWindow : Window
                 Text = "快照里没有这个套餐的可用读数。",
                 FontSize = 11.5, Foreground = TextSub,
             });
-        ChannelQuotaHint.Text = "官方接口读数(悬浮环同步),不是估算。";
+        ChannelQuotaHint.Text = "";
     }
 
     /// <summary>
@@ -1155,11 +1609,8 @@ public partial class SpendWindow : Window
         ChannelQuotaPanel.Children.Add(line);
 
         ChannelQuotaHint.Text = budget is { } b2 && b2 > 0
-            ? $"BigModel(智谱)没有公开的额度接口,这里的分母是你在 设置 › 行为 里填的包月预算,"
-                + $"分子是本月(自 {monthStart:MM-dd})按公开牌价估算的金额——它是「用 API 要花多少钱」,与包月费本身无关。"
-            : $"BigModel(智谱)没有公开的额度接口,本机也没有它的用量读数。"
-                + $"在 设置 › 行为 里填一个包月预算,这里就会显示进度与月底预测"
-                + $"(本月已估算 ¥{spentCny:N0}、{SpendFormat.Tokens(month.Tokens)} tokens)。";
+            ? $"分母是设置里填的包月预算,分子是本月(自 {monthStart:MM-dd})按公开牌价估算的金额。"
+            : $"没填包月预算,只显示本月估算金额(自 {monthStart:MM-dd}、{SpendFormat.Tokens(month.Tokens)} tokens)。";
     }
 
     // ————————————————— 账号计量对照(官方服务端 vs 本机记录) —————————————————
@@ -1242,17 +1693,48 @@ public partial class SpendWindow : Window
             localRequests > 0 ? $"{localRequests:N0} 次请求" : "这台电脑的 ZCode/OpenCode 记录",
             "Tokens");
         AddCell(AccountMeterGrid, "差值(其他设备/CLI)",
-            SpendFormat.Tokens(diff),
-            diff > 0 && diffPctOfOfficial is { } p ? $"占官方 {p:0.0}%" : (diff <= 0 ? "本机没有多出的记录" : null),
+            diff < 0 ? "—" : SpendFormat.Tokens(diff),
+            diff > 0 && diffPctOfOfficial is { } p
+                ? $"占官方 {p:0.0}%"
+                : diff < 0 ? $"本机比官方多 {SpendFormat.Tokens(-diff)}" : "两边一致",
             "Cache");
+        AutoColumns(AccountMeterGrid);
 
-        AccountMeterHint.Text = "官方 = Command Code 服务端的账期计量,覆盖这台电脑之外的所有设备与 key;"
-            + "本机 = 只来自这台电脑的客户端记录库。差值是本机看不到明细的用量"
-            + "(其他电脑、命令行直接使用等)——下面的官方逐模型明细就是补这块的。";
-        if (diff < 0)
-            AccountMeterHint.Text += " 差值为负:本机记录比官方多,通常是区间口径的偏差(以官方为准)。";
+        AccountMeterHint.Text = "官方 = 服务端账期计量(含其他设备与 key);本机 = 这台电脑的客户端记录。";
+        var (verdict, why) = ClassifyAccountGap(officialTokens, localTokens, periodStart);
+        AccountMeterHint.Text += $"\n判定:{verdict} — {why}";
+        // 账本完整度:本机读数是否可信,本身就是对账的一半(C 稿说的"这一段完整吗")。
+        if (_ledger is { } lg && lg.Notes.Count > 0)
+            AccountMeterHint.Text += $"\n账本:{string.Join(";", lg.Notes)}";
+
+        // 对账历史：这一眼看到的两个数落一条，供日后做重置残留审计（同分钟去重）
+        ReconcileLog.Append("goat", $"账期自 {periodStart:MM-dd HH:mm}", officialTokens, localTokens, verdict);
 
         _ = LoadAccountModelsAsync(ch, periodStart);
+    }
+
+    /// <summary>
+    /// 把"官方 − 本机"判成一个档位，而不是只给一个数字。四档来自本项目真实踩过的坑：
+    /// v1.21.3（一把过期 Key 静默停更 10.3 小时）、v1.21.6（官方当日账未结算，本机反超）、
+    /// 以及"官方含其他设备/其他 Key"这条结构性差异。
+    /// **落不进任何一档的宁可显示"无法判定"，不许猜**——这是本项目一贯的口径。
+    /// </summary>
+    private static (string Verdict, string Why) ClassifyAccountGap(
+        long official, long local, DateTime periodStart)
+    {
+        if (official <= 0) return ("无法判定", "官方读数缺失");
+        if (local <= 0) return ("本机无记录", "这台电脑没有该渠道的用量");
+        long diff = official - local;
+        double ratio = Math.Abs(diff) / (double)official;
+        if (ratio <= 0.02) return ("两边一致", "差额在 2% 以内");
+
+        if (diff > 0)
+            return ("他端用量", "官方含其他设备或其他 Key 的用量");
+
+        // 本机比官方多:账期未结束时最常见的原因是官方当日还没结算。
+        return (DateTime.Now - periodStart).TotalDays < 31
+            ? ("官方未结算", "账期还没结束,当天读数入库有延迟")
+            : ("本机多记", "官方已结算仍少于本机,查客户端是否有重复计数");
     }
 
     /// <summary>官方逐模型明细(/internal/usage/charts,浏览器登录态):按模型聚合整个账期。</summary>
@@ -1271,10 +1753,8 @@ public partial class SpendWindow : Window
             AccountModelList.ItemsSource = null;
             AccountModelHint.Text = CommandCodeWebSession.LastStatus is { } status
                 && status.Contains("未启用", StringComparison.Ordinal)
-                ? "想看全部设备/各 key 的按模型用量:在 设置 → 数据源 打开「浏览器会话明细」,"
-                    + "并用那里的「登录 commandcode.ai」登一次(直接读本机浏览器 cookie 已被 Edge 的 v20 加密堵死)。"
-                : "官方逐模型明细当前读不到:" + (CommandCodeWebSession.LastStatus ?? "未知原因")
-                    + "。对照行的差值不受影响,那来自官方聚合接口。";
+                ? "要读这块:在 设置 → 数据源 打开「浏览器会话明细」并登录 commandcode.ai。"
+                : "官方逐模型明细读不到:" + (CommandCodeWebSession.LastStatus ?? "未知原因");
             return;
         }
 
@@ -1298,9 +1778,7 @@ public partial class SpendWindow : Window
         }).ToList();
 
         long officialTotal = buckets.Sum(x => x.Total);
-        AccountModelHint.Text = $"已读到官方明细(共 {SpendFormat.Tokens(officialTotal)} tokens,{buckets.Count} 个时间桶,"
-            + $"自 {periodStart:MM-dd} 起)。这是账号在所有设备上的合计,没有设备/项目维度。"
-            + $"注意:官方明细的 token 口径与服务端聚合可能略有出入,以对照行的大数为准。";
+        AccountModelHint.Text = $"官方账号级合计 {SpendFormat.Tokens(officialTotal)} tokens(自 {periodStart:MM-dd} 起,含所有设备与 Key)。";
     }
 
     /// <summary>
@@ -1335,10 +1813,9 @@ public partial class SpendWindow : Window
             ch.HasData ? SpendFormat.Amount(ch.Cost, ch.HasUnpriced) : "—",
             ch.HasData ? $"{SpendFormat.Tokens(ch.TotalTokens)} tokens · {ch.Requests:N0} 次" : "这个区间没有记录",
             "Cache");
+        AutoColumns(AccountMeterGrid);
 
-        string hint = "官方余额是 DeepSeek 账户的真实读数(这台电脑之外用掉的也在里面);"
-            + "本机记录只统计这台电脑的客户端,金额按公开牌价估算。两者口径不同、不能相减——"
-            + "余额本身就回答了「还剩多少」。";
+        string hint = "官方余额是账户真实读数(含这台电脑之外的消耗);本机记录只有这台电脑,两者不能相减。";
         if (balance?.Amount is { } current && ch.HasData && ch.Cost > 0)
         {
             var (from, to) = EffectiveRange();
@@ -1349,8 +1826,8 @@ public partial class SpendWindow : Window
                 double left = current / perDay;
                 // 余额几十块、日均几毛钱时"还能用 607 天"没有可读性,折成年更直观
                 hint += left >= 365
-                    ? $" 按本区间日均 ¥{perDay:0.00} 估,余额大约还能用 {left / 365:0.#} 年。"
-                    : $" 按本区间日均 ¥{perDay:0.00} 估,余额大约还能用 {left:0} 天。";
+                    ? $" 按本区间日均 ¥{perDay:0.00} 估,余额约还能用 {left / 365:0.#} 年。"
+                    : $" 按本区间日均 ¥{perDay:0.00} 估,余额约还能用 {left:0} 天。";
             }
         }
         AccountMeterHint.Text = hint;
@@ -1391,42 +1868,125 @@ public partial class SpendWindow : Window
         AccountMeterCard.Visibility = Visibility.Visible;
         AccountMeterTitle.Text = "官方口径对照";
 
+        // 先摆骨架(官方那格显示"读取中…"),官方读数回来后再整格重建——位置不变、只填数字
+        RenderOpenCodeMeterGrid(ch, stats: null);
+
+        // 原来这句写"三个数是同一个窗口"——**是错的**:官方没有自然日档,「今天」只能取滚动
+        // 24 小时,比本机的"今天"多含昨晚那一段。不如实写出来,用户就会拿两个窗口的数直接相减。
+        AccountMeterHint.Text = "官方是滚动 24 小时窗口(比本机的今天多含昨晚),含所有设备与 Key;"
+            + "当日读数入库有延迟,刚跑完的量可能还没进官方。";
+
+        _ = LoadOpenCodeOfficialAsync(ch);
+    }
+
+    /// <summary>
+    /// OpenCode Go 的「官方 vs 本机」对照格。**三个可比的数字必须同窗口、而且挨着摆**——
+    /// 之前把"本机记录(近 30 天)"钉死在 30 天、差值却按 7 天算，并排一看就像对不上。
+    /// 窗口跟随上方区间(今天 = 近 24 小时、近 7 天 = 7 天,其余 = 近 30 天,官方最多只给 30 天)。
+    /// </summary>
+    private void RenderOpenCodeMeterGrid(ChannelUsage ch, OpenCodeUsageStats? stats, bool record = true)
+    {
+        var sub = _subs.FirstOrDefault(s => s.Key == "opencode" || s.Key.StartsWith("opencode:", StringComparison.Ordinal));
+        var (range, windowLabel) = OpenCodeUsageStatsClient.WindowFor(_span);
+        long localTokens, localRequests;
+        if (_span is SpendSpan.Today or SpendSpan.Week)
+        {
+            var from = range == "24h" ? DateTime.Now.AddHours(-24) : DateTime.Now.AddDays(-7);
+            (localTokens, localRequests) = CountLocalSince(ch, from);
+        }
+        else
+        {
+            // 自定义/全部也按官方的 30 天上限对齐,取本机同一窗口
+            (localTokens, localRequests) = CountLocalSince(ch, DateTime.Now.AddDays(-30));
+        }
+
+        AccountMeterGrid.Children.Clear();
+
+        // 本机只有"自然日"粒度(agg_day),「今天」这一档实际算的是今天 00:00 起;
+        // 官方**没有自然日档**、只有滚动 24 小时 —— 标签必须说清楚,否则两个数并排会被读成同窗口。
+        string localLabel = _span == SpendSpan.Today ? "今天" : windowLabel;
+        AddCell(AccountMeterGrid, $"本机记录({localLabel})",
+            ch.HasData || localTokens > 0 ? SpendFormat.Tokens(localTokens) : "—",
+            localTokens > 0
+                ? $"{localRequests:N0} 次 · 这台电脑"
+                : (ch.LifetimeTokens > 0 ? "这个窗口没有记录" : "这台电脑没有记录"),
+            "Tokens");
+
+        AddCell(AccountMeterGrid, $"官方用量({windowLabel},所有设备/Key)",
+            stats is null ? "读取中…" : SpendFormat.Tokens(stats.TotalTokens),
+            stats is null
+                ? "走浏览器会话通道"
+                : (stats.Requests > 0 ? $"{stats.Requests:N0} 次请求" : null)
+                    + (stats.Cost > 0 ? $" · 官方计费 ${stats.Cost:0.00}" : null),
+            "Money");
+
+        long diff = (stats?.TotalTokens ?? 0) - localTokens;
+        AddCell(AccountMeterGrid, "差值(其他设备/CLI)",
+            // 官方含所有设备,理论上应 ≥ 本机;本机更多时**绝不能给一个负的"其他设备用量"**
+            // ——那说明官方当天的账还没结算完(实测:官方当日值 1.75 小时只涨 340 万,
+            // 同期本机涨 1.2 亿)。这里给"—",真实差额写进副标题。
+            stats is null || diff < 0 ? "—" : SpendFormat.Tokens(diff),
+            stats is null
+                ? "等官方读数回来"
+                : diff > 0 && stats.TotalTokens > 0
+                    ? $"占官方 {diff * 100.0 / stats.TotalTokens:0.0}%"
+                    : diff < 0
+                        ? $"官方当日未结算完(本机多 {SpendFormat.Tokens(-diff)})"
+                        : "两边一致",
+            "Cache");
+
         string official = sub is null
             ? "—"
-            : string.Join(" / ", new[] { "FiveHour", "Weekly", "Monthly" }
+            : string.Join("/", new[] { "FiveHour", "Weekly", "Monthly" }
                 .Select(kind => sub.Pools.FirstOrDefault(p => p.PoolKind == kind))
-                .Select(pool => pool is { HasPercent: true } ? pool.PercentText : "--"));
-
-        AddCell(AccountMeterGrid, $"本机记录({RangeLabel()})",
-            ch.HasData ? SpendFormat.Amount(ch.Cost, ch.HasUnpriced) : "—",
-            ch.HasData ? $"{SpendFormat.Tokens(ch.TotalTokens)} tokens · {ch.Requests:N0} 次" : "这个区间没有记录",
-            "Tokens");
-        // 官方的「月」是滚动 30 天窗口,对照格必须同窗口——全时段量与官方百分比并排没有可比性
-        var last30 = CountLocalSince(ch, DateTime.Now.AddDays(-30));
-        AddCell(AccountMeterGrid, "本机记录(近 30 天)",
-            SpendFormat.Tokens(last30.Tokens),
-            ch.LifetimeTokens > 0
-                ? (last30.Requests > 0 ? $"{last30.Requests:N0} 次" : "这个窗口没有记录")
-                    + $" · 全时段 {SpendFormat.Tokens(ch.LifetimeTokens)}"
-                : "这台电脑的客户端记录",
-            "Cache");
+                // 三个数挤在一格(5 列的排法下格宽约 108diu),去掉重复的 %:口径见下面那行脚注
+                .Select(pool => pool is { HasPercent: true } ? pool.PercentText.TrimEnd('%') : "--"));
         AddCell(AccountMeterGrid, "官方已用(5h/周/月)", official,
             sub is not null && sub.Pools.Any(p => p.ReadingFrom is { Length: > 0 })
                 ? "网页控制台口径(与网页同公式)"
                 : "API Key 接口只给整数百分比",
             "Money");
 
-        AccountMeterHint.Text = "官方的「月」是滚动 30 天窗口,本机一格按同窗口对齐"
-            + (ch.LifetimeFirst is { } first
-                ? $"(全时段自 {first:yyyy-MM-dd} 共 {SpendFormat.Tokens(ch.LifetimeTokens)} tokens)。"
-                : "。")
-            + "额度百分比默认来自 API Key 接口(整数、向下取整),与网页可能差 1 个百分点;"
-            + "在 设置 → 数据源 打开「浏览器会话明细」后,额度会改用网页控制台的读数"
-            + "(与网页卡片同一个公式,并带回已用/上限金额),同时这里会自动追加"
-            + "「官方 vs 本机」对照(窗口跟随上方区间:今天 = 近 24 小时、近 7 天 = 7 天,其余 = 30 天,"
-            + "官方最多只给 30 天)。";
+        if (ch.LifetimeTokens > 0)
+            AddCell(AccountMeterGrid, "本机全时段累计", SpendFormat.Tokens(ch.LifetimeTokens),
+                $"{ch.LifetimeRequests:N0} 次"
+                    + (ch.LifetimeFirst is { } first ? $" · 自 {first:yyyy-MM-dd}" : "")
+                    + " · 与上面不是同一窗口",
+                "Sessions");
+        AutoColumns(AccountMeterGrid);
 
-        _ = LoadOpenCodeOfficialAsync(ch);
+        // 差值落到一个档位:否则"官方 1.39 亿 / 本机 1.87 亿"这种并列只会让人怀疑工具。
+        if (stats is not null)
+        {
+            var (verdict, why) = ClassifyOpenCodeGap(stats.TotalTokens, localTokens, _span);
+            AccountMeterHint.Text = $"判定:{verdict} — {why}";
+            if (_ledger is { } lg2 && lg2.Notes.Count > 0)
+                AccountMeterHint.Text += $"\n账本:{string.Join(";", lg2.Notes)}";
+
+            // 对账历史：官方滚动窗口 vs 本机同窗口（同分钟去重）。
+            // 离屏出图的合成读数不落——那是假数据，进了历史会污染"重置残留审计"。
+            if (record)
+                ReconcileLog.Append("opencode", windowLabel, stats.TotalTokens, localTokens, verdict);
+        }
+    }
+
+    /// <summary>
+    /// OpenCode 官方是本机之外的另一侧(含其他设备/Key),且官方只有**滚动窗口**
+    /// (24h/7d/30d),而本机按自然日聚合——两者天然不同窗口,不能直接相减后当结论。
+    /// 这里给四档;落不进任何一档的宁可"无法判定"。
+    /// </summary>
+    private static (string Verdict, string Why) ClassifyOpenCodeGap(
+        long official, long local, SpendSpan span)
+    {
+        if (official <= 0) return ("无法判定", "官方读数缺失");
+        if (local <= 0) return ("本机无记录", "这台电脑没有该渠道的用量");
+        long diff = official - local;
+        if (Math.Abs(diff) / (double)official <= 0.02) return ("两边一致", "差额在 2% 以内");
+        if (diff > 0) return ("他端用量", "官方含其他设备或其他 Key 的用量");
+
+        return span == SpendSpan.Today
+            ? ("官方未结算", "官方当日入库有延迟,本机反超属正常")
+            : ("口径不同", "官方是滚动窗口,本机是自然日区间");
     }
 
     /// <summary>
@@ -1457,39 +2017,22 @@ public partial class SpendWindow : Window
             AccountModelSection.Visibility = Visibility.Collapsed;
             AccountModelHint.Text = OpenCodeUsageStatsClient.LastStatus is { } status
                     && status.Contains("未启用", StringComparison.Ordinal)
-                ? "想看跟网页版一样的官方用量:在 设置 → 数据源 打开「浏览器会话明细」,"
-                    + "并用那里的「登录 opencode.ai」登一次(直接读本机浏览器 cookie 已被 Edge 的 v20 加密堵死)。"
-                : "官方用量当前读不到:" + (OpenCodeUsageStatsClient.LastStatus ?? "未知原因");
+                ? "要读官方用量:在 设置 → 数据源 打开「浏览器会话明细」并登录 opencode.ai。"
+                : "官方用量读不到:" + (OpenCodeUsageStatsClient.LastStatus ?? "未知原因");
             return;
         }
 
-        // 本机同窗口(24h / 7d / 30d)、同渠道——口径与基础第二格一致,直接复用同一个聚合
-        var from = range switch
+        // 官方读数到了:整格重建——「本机 / 官方 / 差值」三格同窗口、挨着摆
+        RenderOpenCodeMeterGrid(ch, stats);
+
+        var (localTokens, localRequests) = CountLocalSince(ch, range switch
         {
-            "24h" => DateTimeOffset.Now.AddHours(-24),
-            "7d" => DateTimeOffset.Now.AddDays(-7),
-            _ => DateTimeOffset.Now.AddDays(-30),
-        };
-        var (localTokens, localRequests) = CountLocalSince(ch, from.LocalDateTime);
-        long diff = stats.TotalTokens - localTokens;
-
-        AddCell(AccountMeterGrid, $"官方用量({windowLabel},所有设备/Key)",
-            SpendFormat.Tokens(stats.TotalTokens),
-            (stats.Requests > 0 ? $"{stats.Requests:N0} 次请求" : null)
-            + (stats.Cost > 0 ? $" · 官方计费 ${stats.Cost:0.00}" : null),
-            "Money");
-        // 「本机记录(近 30 天)」不再重复:基础第二格就是同窗口口径,差值直接对它算
-        AddCell(AccountMeterGrid, "差值(其他设备/CLI)",
-            SpendFormat.Tokens(diff),
-            diff > 0 && stats.TotalTokens > 0
-                ? $"占官方 {diff * 100.0 / stats.TotalTokens:0.0}%"
-                : "本机没有多出的记录",
-            "Cache");
-
-        AccountModelHint.Text = $"官方账号级口径({windowLabel},覆盖这台电脑之外的所有设备与 Key)"
-            + $";同窗口本机记录 {SpendFormat.Tokens(localTokens)} tokens · {localRequests:N0} 次。"
-            + "官方金额是服务端的真实计费(含峰谷时段价),本机金额按固定牌价估算、不含时段系数,两者有差属正常。"
-            + "逐模型明细见下。";
+            "24h" => DateTime.Now.AddHours(-24),
+            "7d" => DateTime.Now.AddDays(-7),
+            _ => DateTime.Now.AddDays(-30),
+        });
+        AccountModelHint.Text = $"官方账号级口径({windowLabel},含所有设备与 Key);同窗口本机 {SpendFormat.Tokens(localTokens)} tokens · {localRequests:N0} 次。"
+            + "官方金额为服务端真实计费(含峰谷时段价)。";
 
         RenderOfficialModels(stats);
     }
@@ -1521,21 +2064,14 @@ public partial class SpendWindow : Window
     internal void UiShotInjectOfficialUsage(OpenCodeUsageStats stats)
     {
         _meteringSeq++;
+        if (_selectedChannel is not { } ch) return;
         AccountMeterCard.Visibility = Visibility.Visible;
         AccountMeterTitle.Text = "官方口径对照";
         AccountModelSection.Visibility = Visibility.Visible;
         AccountModelHint.Text = "(出图用合成读数,真实数据要浏览器登录态)";
-        // 真实通道可能已经把前几格填上了(出图环境偶发能读到 cookie)——注入是**替代**它,
-        // 不是追加,否则同一个格子在图上会出现两遍。
-        AccountMeterGrid.Children.Clear();
-        AddCell(AccountMeterGrid, "官方用量(近 30 天,所有设备/Key)",
-            SpendFormat.Tokens(stats.TotalTokens),
-            $"{stats.Requests:N0} 次请求 · 官方计费 ${stats.Cost:0.00}",
-            "Money");
-        AddCell(AccountMeterGrid, "差值(其他设备/CLI)",
-            SpendFormat.Tokens(stats.TotalTokens / 2),
-            "占官方 52.0%",
-            "Cache");
+        // 真实通道可能已经把格子填上了(出图环境偶发能读到 cookie)——注入是**替代**它,不是追加,
+        // 所以直接走整格重建(它会先清空)。
+        RenderOpenCodeMeterGrid(ch, stats, record: false);
         RenderOfficialModels(stats);
     }
 
@@ -1575,102 +2111,60 @@ public partial class SpendWindow : Window
                 ? (projected > b2 ? "按当前速度会超出预算" : "按当前速度在预算内")
                 : null,
             "Cache");
+        AutoColumns(AccountMeterGrid);
 
-        AccountMeterHint.Text = "智谱没有公开的用量/额度接口,这一页所有数字都来自本机客户端记录、按公开牌价估算——"
-            + "它回答的是「这些调用如果按 API 计价要花多少钱」,与包月费本身无关。"
-            + "填了包月预算之后,上面的额度区与这里都会给出进度与月底预测。";
+        AccountMeterHint.Text = "这页所有数字都来自本机记录、按公开牌价估算,与包月费本身无关;填了包月预算才有进度与月底预测。";
     }
 
     private void RenderHourlyChart(ChannelUsage ch)
-    {        ChannelHourBox.Child = null;
+    {
+        ChannelHourBox.Child = null;
+        long total = ch.TodayHourly.Sum(h => h.Tokens);
+        // 今天没数据就别留一个 110 高的空画布
+        ChannelHourBox.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
+        if (total == 0)
+        {
+            ChannelTodayHint.Text = "今天还没有记录。";
+            return;
+        }
+
         var canvas = new Canvas { ClipToBounds = true };
         ChannelHourBox.Child = canvas;
-        long total = ch.TodayHourly.Sum(h => h.Tokens);
-        ChannelTodayHint.Text = total == 0
-            ? "今天还没有记录(程序未运行的小时不会有采样)。"
-            : $"{SpendFormat.Tokens(total)} tokens · 最忙 {ch.TodayHourly.OrderByDescending(h => h.Tokens).First().Hour}:00";
-        // 按峰谷加价的套餐(GOAT 与 OpenCode Go,两者同一套峰时段)才把高峰柱染成橙色——
+        // 按峰谷加价的套餐(GOAT 与 OpenCode Go,两者同一套峰时段)才在图上打橙色底纹——
         // 别的渠道那样画等于暗示它有时段价
         var peakHours = PeakHoursFor(ch.SourceKey);
+        ChannelTodayHint.Text = $"{SpendFormat.Tokens(total)} tokens · 最忙 {ch.TodayHourly.OrderByDescending(h => h.Tokens).First().Hour}:00";
         canvas.SizeChanged += (_, _) => DrawHourly(canvas, ch.TodayHourly, peakHours);
         DrawHourly(canvas, ch.TodayHourly, peakHours);
     }
 
     private void DrawHourly(Canvas canvas, IReadOnlyList<HourBucket> hours, int[]? peakHours)
     {
-        canvas.Children.Clear();
         double w = ChannelHourBox.ActualWidth, h = ChannelHourBox.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
-        double slot = w / 24;
-        double barW = Math.Max(3, Math.Min(20, slot * 0.62));
-        long max = hours.Count > 0 ? hours.Max(x => x.Tokens) : 0;
-        var empty = FieldBack;
-        double plotH = h - 16;
-
+        var values = new List<double>(24);
+        var outputOnly = new List<double>(24);
+        var tips = new List<string?>(24);
         for (int i = 0; i < 24; i++)
         {
             var hr = hours[i];
-            double x = i * slot + (slot - barW) / 2;
-            if (hr.Tokens <= 0)
-            {
-                var dot = new Rectangle
-                {
-                    Width = barW, Height = 1.5, Fill = empty, ToolTip = $"{i:00}:00 没有记录",
-                };
-                Canvas.SetLeft(dot, x);
-                Canvas.SetTop(dot, plotH - 1.5);
-                canvas.Children.Add(dot);
-                continue;
-            }
-            // 输入(含缓存)/输出 两段堆叠,便于看构成;峰时段柱画成橙色,一眼看出"贵的时段"
-            long inputPart = hr.Input + hr.CacheRead + hr.CacheWrite;
-            long outputPart = hr.Output;
-            double totalH = max <= 0 ? 0 : Math.Max(2, (double)hr.Tokens / max * plotH);
-            double outH = hr.Tokens == 0 ? 0 : totalH * outputPart / hr.Tokens;
-            double inH = totalH - outH;
+            values.Add(hr.Tokens);
+            outputOnly.Add(hr.Output);
             bool isPeak = peakHours?.Contains(i) == true;
-            var inFill = isPeak ? PeakBar : Accent;
-
-            if (inH > 0)
-            {
-                var inBar = new Rectangle
-                {
-                    Width = barW, Height = inH, Fill = inFill, RadiusX = 1.5, RadiusY = 1.5,
-                    ToolTip = $"{i:00}:00\n{SpendFormat.TokensExact(hr.Tokens)} tokens\n{hr.Requests} 次调用"
-                        + (isPeak ? "\n(高价时段)" : ""),
-                };
-                Canvas.SetLeft(inBar, x);
-                Canvas.SetTop(inBar, plotH - totalH);
-                canvas.Children.Add(inBar);
-            }
-            if (outH > 0)
-            {
-                var outBar = new Rectangle
-                {
-                    Width = barW, Height = outH, Fill = GoodBrush, RadiusX = 1.5, RadiusY = 1.5,
-                    ToolTip = $"{i:00}:00\n输出 {SpendFormat.TokensExact(outputPart)} tokens",
-                };
-                Canvas.SetLeft(outBar, x);
-                Canvas.SetTop(outBar, plotH - outH);
-                canvas.Children.Add(outBar);
-            }
+            tips.Add(hr.Tokens <= 0
+                ? $"{i:00}:00 没有记录"
+                : $"{i:00}:00  {SpendFormat.TokensExact(hr.Tokens)} tokens\n"
+                    + $"输入 {SpendFormat.TokensExact(hr.Input + hr.CacheRead + hr.CacheWrite)} · 输出 {SpendFormat.TokensExact(hr.Output)}\n"
+                    + $"{hr.Requests} 次调用" + (isPeak ? "\n(高价时段)" : ""));
         }
+        Func<int, bool>? band = peakHours is null ? null : i => peakHours.Contains(i);
 
-        // 只标 0/6/12/18 四个刻度,免得挤
-        foreach (int hh in new[] { 0, 6, 12, 18 })
-        {
-            var label = new TextBlock
-            {
-                Text = $"{hh:00}:00", FontSize = 10,
-                Foreground = TextSub,
-            };
-            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            double x = hh * slot + (slot - label.DesiredSize.Width) / 2;
-            Canvas.SetLeft(label, Math.Max(0, Math.Min(w - label.DesiredSize.Width, x)));
-            Canvas.SetTop(label, h - 13);
-            canvas.Children.Add(label);
-        }
+        // 柱 = 合计,虚线 = 其中的输出;峰时段打浅橙底纹
+        DrawBarChart(canvas, w, h, values, tips, AccentColor, PeakColor, band,
+            onClick: null,
+            xLabels: [(0, "0:00"), (6, "6:00"), (12, "12:00"), (18, "18:00")],
+            overlay: outputOnly, overlayColor: GoodColor);
     }
 
     /// <summary>
@@ -1683,23 +2177,33 @@ public partial class SpendWindow : Window
         var peakHours = PeakHoursFor(ch.SourceKey);
         bool peakPriced = peakHours is not null;
         ChannelPeakCard.Visibility = Visibility.Visible;
-        ChannelPeakTitle.Text = peakPriced ? "时段分布(峰谷)" : "时段分布";
+        ChannelPeakTitle.Text = (peakPriced ? "时段分布(峰谷)" : "时段分布")
+            + (ch.RangeHourlyPartial ? " · 近 35 天" : "");
+
+        long total = ch.RangeHourly.Sum(h => h.Tokens);
+        double totalCost = ch.RangeHourly.Sum(h => h.Cost);
+        long todayTotal = ch.TodayHourly.Sum(h => h.Tokens);
+
+        // 两档都没数据时整张卡收起:留着就是一块空图 + 一条说明,占掉大半屏
+        ChannelPeakCard.Visibility = total == 0 && todayTotal == 0
+            ? Visibility.Collapsed : Visibility.Visible;
+        if (ChannelPeakCard.Visibility == Visibility.Collapsed) return;
+
+        ChannelRangeHourBox.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
+        if (total == 0)
+        {
+            ChannelPeakHint.Text = "这个区间没有逐小时记录。";
+            ChannelPeakGrid.Children.Clear();
+            return;
+        }
 
         ChannelRangeHourBox.Child = null;
         var canvas = new Canvas { ClipToBounds = true };
         ChannelRangeHourBox.Child = canvas;
-        canvas.SizeChanged += (_, _) => DrawRangeHourly(canvas, ch.RangeHourly, peakHours);
-        DrawRangeHourly(canvas, ch.RangeHourly, peakHours);
-
-        long total = ch.RangeHourly.Sum(h => h.Tokens);
-        double totalCost = ch.RangeHourly.Sum(h => h.Cost);
+        canvas.SizeChanged += (_, _) => DrawRangeHourly(canvas, ch.RangeHourly, peakHours, ch.RangeHourlyPartial);
+        DrawRangeHourly(canvas, ch.RangeHourly, peakHours, ch.RangeHourlyPartial);
 
         ChannelPeakGrid.Children.Clear();
-        if (total == 0)
-        {
-            ChannelPeakHint.Text = "这个区间没有逐小时记录(仓库里只有天级聚合的老数据)。";
-            return;
-        }
 
         if (!peakPriced)
         {
@@ -1712,8 +2216,8 @@ public partial class SpendWindow : Window
                 $"区间内有记录的时段(共 {SpendFormat.Tokens(total)} tokens)", "Tokens");
             AddCell(ChannelPeakGrid, "金额最高小时", $"{priciest.Hour:00}:00",
                 SpendFormat.Money(priciest.Cost), "Cache");
-            ChannelPeakHint.Text = $"{ch.Name} 不按时段加价,柱子统一配色;这里看的是"
-                + "「这台机器一天里的哪个时段干活最多」——把任务挪到闲时对费用没有影响,只影响排队的拥挤程度。";
+            ChannelPeakHint.Text = $"{ch.Name} 不按时段加价;这里看的是哪个时段干活最多。";
+            AutoColumns(ChannelPeakGrid);
             return;
         }
 
@@ -1726,58 +2230,40 @@ public partial class SpendWindow : Window
             $"{SpendFormat.Tokens(total - peak)} tokens", "Tokens");
         AddCell(ChannelPeakGrid, "峰时段金额", SpendFormat.Amount(peakCost, ch.HasUnpriced),
             totalCost > 0 ? $"占本期金额 {(double)peakCost / totalCost:P1}" : null, "Cache");
-        ChannelPeakHint.Text = "橙色柱 = 峰时段(本地 09:00–12:00、14:00–18:00),"
-            + $"{ch.Name} 在这些时段按更高的时段价计费。上面的金额按公开牌价估算、未含时段系数——"
-            + "把大任务挪到峰时段之外最省钱(官方的计费金额本身已含时段价)。";
+        ChannelPeakHint.Text = "橙色底纹 = 峰时段(本地 09:00–12:00、14:00–18:00),这些时段单价更高。"
+            + (ch.RangeHourlyPartial
+                ? "   ·   本图只覆盖近 35 天(逐小时明细的保留期),上方 KPI 是全区间。"
+                : "");
+        AutoColumns(ChannelPeakGrid);
     }
 
-    private void DrawRangeHourly(Canvas canvas, IReadOnlyList<RangeHourBucket> hours, int[]? peakHours)
+    private void DrawRangeHourly(Canvas canvas, IReadOnlyList<RangeHourBucket> hours, int[]? peakHours, bool partial)
     {
-        canvas.Children.Clear();
         double w = ChannelRangeHourBox.ActualWidth, h = ChannelRangeHourBox.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
-        double slot = w / 24;
-        double barW = Math.Max(3, Math.Min(20, slot * 0.62));
-        long max = hours.Count > 0 ? hours.Max(x => x.Tokens) : 0;
-        double plotH = h - 16;
+        // 逐小时行只保留 35 天(UsageRepository.HourRetentionDays)。区间更长时必须如实说
+        // "近 35 天"——写"整个区间累计"会让用户以为看到的是全史。
+        string hourRangeLabel = partial ? "近 35 天" : "整个区间累计";
 
+        var values = new List<double>(24);
+        var tips = new List<string?>(24);
         for (int i = 0; i < 24; i++)
         {
             var hr = hours[i];
-            double x = i * slot + (slot - barW) / 2;
-            if (hr.Tokens <= 0)
-            {
-                var dot = new Rectangle { Width = barW, Height = 1.5, Fill = FieldBack, ToolTip = $"{i:00}:00 没有记录" };
-                Canvas.SetLeft(dot, x);
-                Canvas.SetTop(dot, plotH - 1.5);
-                canvas.Children.Add(dot);
-                continue;
-            }
-            double bh = max <= 0 ? 0 : Math.Max(2, (double)hr.Tokens / max * plotH);
+            values.Add(hr.Tokens);
             bool isPeak = peakHours?.Contains(i) == true;
-            var bar = new Rectangle
-            {
-                Width = barW, Height = bh, RadiusX = 1.5, RadiusY = 1.5,
-                Fill = isPeak ? PeakBar : Accent,
-                ToolTip = $"{i:00}:00(整个区间累计)\n{SpendFormat.TokensExact(hr.Tokens)} tokens\n"
+            tips.Add(hr.Tokens <= 0
+                ? $"{i:00}:00 没有记录"
+                : $"{i:00}:00({hourRangeLabel})\n{SpendFormat.TokensExact(hr.Tokens)} tokens\n"
                     + $"{SpendFormat.MoneyExact(hr.Cost)} · {hr.Requests:N0} 次调用"
-                    + (isPeak ? "\n(高价时段)" : ""),
-            };
-            Canvas.SetLeft(bar, x);
-            Canvas.SetTop(bar, plotH - bh);
-            canvas.Children.Add(bar);
+                    + (isPeak ? "\n(高价时段)" : ""));
         }
+        Func<int, bool>? band = peakHours is null ? null : i => peakHours.Contains(i);
 
-        foreach (int hh in new[] { 0, 6, 12, 18 })
-        {
-            var label = new TextBlock { Text = $"{hh:00}:00", FontSize = 10, Foreground = TextSub };
-            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            double x = hh * slot + (slot - label.DesiredSize.Width) / 2;
-            Canvas.SetLeft(label, Math.Max(0, Math.Min(w - label.DesiredSize.Width, x)));
-            Canvas.SetTop(label, h - 13);
-            canvas.Children.Add(label);
-        }
+        DrawBarChart(canvas, w, h, values, tips, AccentColor, PeakColor, band,
+            onClick: null,
+            xLabels: [(0, "0:00"), (6, "6:00"), (12, "12:00"), (18, "18:00")]);
     }
 
     /// <summary>
@@ -1788,9 +2274,8 @@ public partial class SpendWindow : Window
     {
         ChannelPerfGrid.Children.Clear();
         bool any = ch.ReasoningTokens > 0 || ch.DurationSamples > 0 || ch.ToolCalls > 0;
-        ChannelPerfHint.Text = any
-            ? "来自客户端记录的每次调用遥测(平均耗时的分母是「记了耗时的请求数」)"
-            : "客户端没有为这些请求记录遥测(推理/耗时/工具调用),这一块为空。";
+        // 来源没记遥测就收起整张卡:ZCode 的 model_usage 没有耗时列,这一页对它是永久空白
+        ChannelPerfCard.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         if (!any) return;
 
         AddCell(ChannelPerfGrid, "推理占输出",
@@ -1806,14 +2291,39 @@ public partial class SpendWindow : Window
             ch.Requests > 0 ? $"均 {(double)ch.ToolCalls / ch.Requests:0.0} 次/请求" : null, "Requests");
         AddCell(ChannelPerfGrid, "重试", ch.Retries.ToString("N0"),
             ch.Requests > 0 ? $"占请求 {ch.Retries * 100.0 / ch.Requests:0.0}%" : null, "Money");
+        // 平均输出速度:每次请求的输出 tokens ÷ 生成耗时(总耗时扣掉首字等待)。
+        // 与"平均耗时"一样是**区间平均**,不是实时读数;来源没记耗时就是 —。
+        AddCell(ChannelPerfGrid, "平均输出速度", OutputSpeed(ch) is { } speed ? $"{speed:0.#} tok/s" : "—",
+            OutputSpeed(ch) is null ? "来源没记耗时" : null,
+            "Cache");
         AddCell(ChannelPerfGrid, "平均每请求",
             ch.AvgTokensPerRequest is { } avg ? SpendFormat.Tokens((long)avg) : "—",
             "tokens / 次", "Tokens");
+        AutoColumns(ChannelPerfGrid);
+    }
+
+    /// <summary>
+    /// 平均输出速度(tok/s)。分子是**每次请求的平均输出 tokens**、分母是**平均生成耗时**
+    /// (总耗时减去首字等待)——总耗时里含输入处理与排队,不扣掉首字等待会把速度算低一半。
+    /// 两个平均值各自的样本集可能不同,所以是估算;样本不足时返回 null。
+    /// </summary>
+    private static double? OutputSpeed(ChannelUsage ch)
+    {
+        if (ch.Tally.Output <= 0 || ch.DurationSamples <= 0 || ch.AvgSeconds is not { } avgSec || avgSec <= 0) return null;
+        double genSeconds = avgSec - (ch.AvgTtftSeconds ?? 0);
+        if (genSeconds <= 0.05) return null;
+        double avgOutputPerRequest = (double)ch.Tally.Output / ch.DurationSamples;
+        return avgOutputPerRequest / genSeconds;
     }
 
     private void RenderDailyChart(ChannelUsage ch)
     {
         ChannelDailyBox.Child = null;
+        // 没有用量就收起整张卡:空画布留着的是一整块白。
+        ChannelDailyCard.Visibility = ch.Daily.Any(d => d.Tokens > 0)
+            ? Visibility.Visible : Visibility.Collapsed;
+        if (ChannelDailyCard.Visibility == Visibility.Collapsed) return;
+
         var canvas = new Canvas { ClipToBounds = true };
         ChannelDailyBox.Child = canvas;
         canvas.SizeChanged += (_, _) => DrawDaily(canvas, ch.Daily);
@@ -1828,49 +2338,16 @@ public partial class SpendWindow : Window
         if (w <= 0 || h <= 0 || daily.Count == 0) return;
 
         int n = daily.Count;
-        double slot = w / n;
-        double barW = Math.Max(2, Math.Min(22, slot * 0.7));
-        long max = daily.Max(d => d.Tokens);
-        double plotH = h - 16;
+        var values = daily.Select(d => (double)d.Tokens).ToList();
+        var tips = daily.Select(d =>
+            $"{d.Day:yyyy-MM-dd}\n{SpendFormat.TokensExact(d.Tokens)} tokens\n"
+            + $"{SpendFormat.MoneyExact(d.Cost)} · {d.Requests} 次调用").ToList<string?>();
+        var labels = new List<(int, string)> { (0, daily[0].Day.ToString("MM-dd")) };
+        if (n > 1) labels.Add((n - 1, daily[^1].Day.ToString("MM-dd")));
+        if (n > 4) labels.Add((n / 2, daily[n / 2].Day.ToString("MM-dd")));
 
-        for (int i = 0; i < n; i++)
-        {
-            var d = daily[i];
-            double x = i * slot + (slot - barW) / 2;
-            if (d.Tokens <= 0)
-            {
-                var dot = new Rectangle
-                {
-                    Width = barW, Height = 1.5, Fill = FieldBack, ToolTip = $"{d.Day:yyyy-MM-dd}:没有记录",
-                };
-                Canvas.SetLeft(dot, x);
-                Canvas.SetTop(dot, plotH - 1.5);
-                canvas.Children.Add(dot);
-                continue;
-            }
-            double bh = max <= 0 ? 0 : Math.Max(2, (double)d.Tokens / max * plotH);
-            var bar = new Rectangle
-            {
-                Width = barW, Height = bh, Fill = Accent, RadiusX = 2, RadiusY = 2,
-                ToolTip = $"{d.Day:yyyy-MM-dd}\n{SpendFormat.TokensExact(d.Tokens)} tokens\n"
-                    + $"{SpendFormat.MoneyExact(d.Cost)} · {d.Requests} 次调用",
-            };
-            Canvas.SetLeft(bar, x);
-            Canvas.SetTop(bar, plotH - bh);
-            canvas.Children.Add(bar);
-        }
-
-        var first = new TextBlock { Text = daily[0].Day.ToString("MM-dd"), FontSize = 10, Foreground = TextSub };
-        Canvas.SetLeft(first, 0); Canvas.SetTop(first, h - 13);
-        canvas.Children.Add(first);
-        if (n > 1)
-        {
-            var last = new TextBlock { Text = daily[^1].Day.ToString("MM-dd"), FontSize = 10, Foreground = TextSub };
-            last.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(last, Math.Max(0, w - last.DesiredSize.Width));
-            Canvas.SetTop(last, h - 13);
-            canvas.Children.Add(last);
-        }
+        DrawBarChart(canvas, w, h, values, tips, AccentColor, AccentColor,
+            band: null, onClick: null, xLabels: labels);
     }
 
     /// <summary>该套餐里各模型的用量行(带占比条;可按 token 或金额排序)。</summary>
@@ -1893,6 +2370,7 @@ public partial class SpendWindow : Window
 
         long max = models.Max(m => m.Tokens);
         double maxCost = models.Max(m => m.Cost);
+        ChannelModelPanel.Children.Add(ModelRowHeader());
         bool first = true;
         foreach (var m in models)
         {
@@ -1900,59 +2378,103 @@ public partial class SpendWindow : Window
                 ChannelModelPanel.Children.Add(new Border { Background = Separator, Height = 1 });
             first = false;
 
-            var grid = new Grid { Margin = new Thickness(1, 9, 1, 9) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var left = new StackPanel();
-            left.Children.Add(new TextBlock
-            {
-                Text = m.Model, FontSize = 12.5,
-                Foreground = TextMain,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            });
-            var barRow = new Grid { Margin = new Thickness(0, 4, 0, 3) };
-            barRow.Children.Add(new Border
-            {
-                Height = 5, CornerRadius = new CornerRadius(2.5),
-                Background = FieldBack,
-                HorizontalAlignment = HorizontalAlignment.Left, Width = 200,
-            });
-            // 排序键决定比例条画什么:按金额时条长比金额,条色不变(条只是排序键的可视化)
+            // 一排四个数(tokens / 次数 / 命中 / 金额)+ 占比条:原来每个模型占三行,
+            // 一屏只看得到四五个模型,留白又全在右侧。
             double ratio = _modelsByCost
                 ? maxCost <= 0 ? 0 : m.Cost / maxCost
                 : max <= 0 ? 0 : (double)m.Tokens / max;
-            barRow.Children.Add(new Border
-            {
-                Height = 5, CornerRadius = new CornerRadius(2.5),
-                Background = Accent,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Width = Math.Max(5, ratio * 200),
-            });
-            left.Children.Add(barRow);
-            string cache = m.CacheHit is { } hit ? $" · 缓存命中 {hit:P0}" : "";
-            left.Children.Add(new TextBlock
-            {
-                Text = $"{SpendFormat.Tokens(m.Tokens)} tokens · {m.Requests:N0} 次{cache}",
-                FontSize = 10.5,
-                Foreground = TextSub,
-            });
-            grid.Children.Add(left);
 
-            var amount = new TextBlock
+            var grid = new Grid { Margin = new Thickness(1, 6, 1, 6) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 120 });
+            foreach (double w in ModelColumns)
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(w) });
+
+            grid.Children.Add(new TextBlock
             {
-                Text = SpendFormat.Amount(m.Cost, m.HasUnpriced),
-                FontSize = 12.5,
+                Text = m.Model, FontSize = 12.5, Foreground = TextMain,
+                TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(12, 0, 0, 0),
-                Foreground = TextMain,
-                ToolTip = SpendFormat.AmountTip(m.Cost, m.HasUnpriced),
+                ToolTip = m.HasUnpriced ? "金额只覆盖有公开价的部分" : null,
+            });
+            string[] cells =
+            [
+                SpendFormat.Tokens(m.Tokens),
+                $"{m.Requests:N0} 次",
+                m.CacheHit is { } hit ? $"{hit:P0}" : "—",
+                SpendFormat.Amount(m.Cost, m.HasUnpriced),
+            ];
+            for (int i = 0; i < cells.Length; i++)
+            {
+                var cell = new TextBlock
+                {
+                    Text = cells[i], FontSize = 12, Foreground = TextMain,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    TextAlignment = TextAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(8, 0, 0, 0),
+                };
+                if (i == cells.Length - 1)
+                    cell.ToolTip = SpendFormat.AmountTip(m.Cost, m.HasUnpriced);
+                Grid.SetColumn(cell, i + 1);
+                grid.Children.Add(cell);
+            }
+
+            // 占比条铺满整行(按排序键的比例):窗口多宽就多宽,不再固定 200。
+            // 用浅一档的蓝:第一名的条是 100% 满宽,实心强调色会看着像条分隔线。
+            var track = new Grid { Margin = new Thickness(0, 5, 0, 0) };
+            track.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(Math.Max(ratio, 0.0001), GridUnitType.Star),
+            });
+            track.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(Math.Max(1 - ratio, 0.0001), GridUnitType.Star),
+            });
+            track.Children.Add(new Border
+            {
+                Height = 3, CornerRadius = new CornerRadius(1.5),
+                Background = FieldBack, HorizontalAlignment = HorizontalAlignment.Stretch,
+            });
+            var fill = new Border
+            {
+                Height = 3, CornerRadius = new CornerRadius(1.5),
+                Background = BarSoft, HorizontalAlignment = HorizontalAlignment.Stretch,
             };
-            Grid.SetColumn(amount, 1);
-            grid.Children.Add(amount);
+            track.Children.Add(fill);
+            Grid.SetRow(track, 1);
+            Grid.SetColumnSpan(track, ModelColumns.Length + 1);
+            grid.Children.Add(track);
 
             ChannelModelPanel.Children.Add(grid);
         }
+    }
+
+    /// <summary>模型行的四个数值列宽(tokens / 次数 / 命中 / 金额),表头行共用。</summary>
+    private static readonly double[] ModelColumns = [76, 64, 58, 74];
+
+    /// <summary>模型分布的表头:没有它,四列裸数字看不出哪列是哪。</summary>
+    private Grid ModelRowHeader()
+    {
+        var grid = new Grid { Margin = new Thickness(1, 0, 1, 4) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 120 });
+        foreach (double w in ModelColumns)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(w) });
+
+        string[] heads = ["模型", "tokens", "次数", "命中", "金额"];
+        for (int i = 0; i < heads.Length; i++)
+        {
+            var cell = new TextBlock
+            {
+                Text = heads[i], FontSize = 10.5, Foreground = TextSub,
+                HorizontalAlignment = i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right,
+                TextAlignment = TextAlignment.Right,
+            };
+            Grid.SetColumn(cell, i);
+            grid.Children.Add(cell);
+        }
+        return grid;
     }
 
     /// <summary>逐日明细表:每行一个模型,列出区间内逐天的 token / 次数 / 金额。</summary>
@@ -1971,8 +2493,8 @@ public partial class SpendWindow : Window
         // 6 列 + 边距刚好;7 列就会把最右一列推出窗口右缘。
         var shown = days.TakeLast(6).ToList();
         ChannelDailyTableHint.Text = shown.Count < days.Count
-            ? $"每行一个模型,列为最近 {shown.Count} 天(区间共 {days.Count} 天有用量)。"
-            : $"每行一个模型,列为 {shown.Count} 天。";
+            ? $"列为最近 {shown.Count} 天(区间共 {days.Count} 天有用量)"
+            : $"列为 {shown.Count} 天";
 
         var grid = new Grid { Margin = new Thickness(1, 2, 1, 6) };
         // 第一列(模型名)给一个下限宽度,否则会被后面的日期列挤到只剩 "d…"
@@ -2053,15 +2575,13 @@ public partial class SpendWindow : Window
             : "全时段没有记录(本机从未用过这个套餐)";
         ChannelMetaLine.Text = $"来源客户端 {ch.Agent}{sourceKey} · {state}\n"
             + $"provider id:{ids}\n"
-            + life + "\n"
-            + "统计口径与总览一致:四类 token 之和对不上来源总量时差额记未分类(计入总数、不计价);"
-            + "金额按 models.dev 公开牌价估算。";
+            + life;
     }
 
-    /// <summary>KPI 小格:大数字 + 小标签 + 可选脚注。金额/缓存类用强调色。</summary>
-    private void AddCell(Panel host, string label, string value, string? note, string kind)
+    /// <summary>KPI 小格:大数字 + 小标签 + 可选脚注。金额/缓存类用强调色。返回格子本身(调用方偶尔要挂 ToolTip)。</summary>
+    private StackPanel AddCell(Panel host, string label, string value, string? note, string kind)
     {
-        var panel = new StackPanel { Margin = new Thickness(0, 0, 12, 12) };
+        var panel = new StackPanel { Margin = new Thickness(0, 0, 12, 9) };
         Brush accent = kind switch
         {
             "Money" => Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A)),
@@ -2074,15 +2594,15 @@ public partial class SpendWindow : Window
         panel.Children.Add(new TextBlock
         {
             Text = label,
-            FontSize = 11,
+            FontSize = 10.5,
             Foreground = TextSub,
         });
         panel.Children.Add(new TextBlock
         {
             Text = value,
-            FontSize = 19,
+            FontSize = 16.5,
             FontWeight = FontWeights.SemiBold,
-            Margin = new Thickness(0, 2, 0, 0),
+            Margin = new Thickness(0, 1, 0, 0),
             Foreground = accent,
         });
         if (!string.IsNullOrEmpty(note))
@@ -2090,13 +2610,43 @@ public partial class SpendWindow : Window
             panel.Children.Add(new TextBlock
             {
                 Text = note,
-                FontSize = 10.5,
-                Margin = new Thickness(0, 2, 0, 0),
+                FontSize = 10,
+                Margin = new Thickness(0, 1, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = TextSub,
             });
         }
         host.Children.Add(panel);
+        return panel;
+    }
+
+    /// <summary>已挂过自适应列数监听的网格(避免每次重渲染重复订阅 SizeChanged)。</summary>
+    private readonly HashSet<UniformGrid> _autoCols = [];
+
+    /// <summary>
+    /// 指标网格按可用宽度决定列数。固定 3 列时窗口一拉宽,每格右边就空出一大片
+    /// (实测 1400 宽下三个半格都空着);改成自适应后一排能摆下整组数字,
+    /// 而且列宽一律均等——一排里几个数就是均匀铺满整行。
+    /// <paramref name="minCell"/> 是列宽下限:值短的网格(KPI / Token 构成)可以给到 88,
+    /// 让默认窗口那一排也能装下 5 格;其余网格留 108。
+    /// **不"匀"末行**:曾经为了不让末行只剩一格而减列数(5 格排 3 列),结果正是用户抱怨的
+    /// "一排才两三个"——宁可末行落单,也不减列。
+    /// </summary>
+    private void AutoColumns(UniformGrid grid, double minCell = 108)
+    {
+        void Apply()
+        {
+            int n = grid.Children.Count;
+            if (n == 0) return;
+            double w = grid.ActualWidth;
+            if (w <= 0) return;   // 折叠页还没布局;变可见时 SizeChanged 会再调一次
+            int cols = Math.Clamp((int)(w / minCell), 2, n);
+            if (grid.Columns != cols) grid.Columns = cols;
+        }
+
+        if (_autoCols.Add(grid))
+            grid.SizeChanged += (_, _) => Apply();
+        Apply();
     }
 
     // ————————————————— 导出 —————————————————
@@ -2115,7 +2665,7 @@ public partial class SpendWindow : Window
         menu.IsOpen = true;
     }
 
-    private void ExportCurrent(bool exportJson)
+    private async void ExportCurrent(bool exportJson)
     {
         if (_ledger is null) return;
         var (from, to) = _dayFilter is { } day
@@ -2134,6 +2684,10 @@ public partial class SpendWindow : Window
 
         try
         {
+            // 先让界面刷一帧，再异步写盘：大区间（上万会话）同步写会僵住整个窗口
+            PriceSourceText.Text = "正在导出…";
+            await Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
+
             if (exportJson)
             {
                 var payload = new
@@ -2172,7 +2726,7 @@ public partial class SpendWindow : Window
                         cost_usd = s.Cost, cost_cny = Math.Round(s.Cost * rate, 4), s.Last,
                     }),
                 };
-                File.WriteAllText(dialog.FileName,
+                await File.WriteAllTextAsync(dialog.FileName,
                     JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
             }
             else
@@ -2204,7 +2758,7 @@ public partial class SpendWindow : Window
                     sb.AppendLine($"{Csv(s.SessionId)},{Csv(s.Title ?? "")},{Csv(s.Agent)},{Csv(s.Project ?? "")},"
                         + $"{s.Tokens},{s.Cost:F4},{s.Cost * rate:F4},{s.Last:yyyy-MM-dd HH:mm:ss}");
                 // BOM:Excel 双击打开不乱码
-                File.WriteAllText(dialog.FileName, sb.ToString(), new System.Text.UTF8Encoding(true));
+                await File.WriteAllTextAsync(dialog.FileName, sb.ToString(), new System.Text.UTF8Encoding(true));
             }
             PriceSourceText.Text = $"已导出 {dialog.FileName}";
         }
@@ -2287,6 +2841,9 @@ public partial class SpendWindow : Window
     {
         public string Name { get; init; } = "";
         public string Tokens { get; init; } = "";
+
+        /// <summary>token 数的精确值(列表里是 1.2M 这种短写法),悬停才给。</summary>
+        public string? TokensTip { get; init; }
         public string Amount { get; init; } = "";
         public string AmountTip { get; init; } = "";
         public string Detail { get; init; } = "";

@@ -101,6 +101,14 @@ public static class OpenCodeConsoleClient
             LastStatus = $"已从网页控制台读到 {result.Count} 个工作区的额度读数";
             return result;
         }
+        catch (TaskCanceledException) when (!token.IsCancellationRequested)
+        {
+            // **HttpClient.Timeout 到期抛的就是它,而它是 OperationCanceledException**。
+            // 若照旧当成"程序正在退出"往外抛,整个同步循环会就此结束,且一行日志都不留
+            // (见 UsageEngine.RunRoundAsync 的说明:2026-10-12 那次停摆就出在这条路上)。
+            LastStatus = "读取网页额度超时(30 秒无响应)";
+            return null;
+        }
         catch (OperationCanceledException) { throw; }
         catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
         {
@@ -150,8 +158,11 @@ public static class OpenCodeConsoleClient
         return new OpenCodeConsoleMeters(
             workspaceId,
             workspaceName,
-            ParseMeter(meters, "fiveHour", periodEnd),
-            ParseMeter(meters, "week", periodEnd),
+            // fiveHour/week 缺 resetsAt 时**不能**拿月账期的 endsAt 顶上:5 小时那一行
+            // 显示"剩 16天6小时"就是这么来的(月账期确实剩 16 天,但它与 5 小时窗口无关)。
+            // 返回 null,MergeMeter 会保留 API Key 通道给的重置时间。
+            ParseMeter(meters, "fiveHour", null),
+            ParseMeter(meters, "week", null),
             ParseMeter(meters, "month", periodEnd));
     }
 

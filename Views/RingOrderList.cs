@@ -206,9 +206,22 @@ public sealed class RingOrderList : UserControl
 
         if (_dragIndex >= 0)
         {
+            // 用每行中心求最近落点：rowH 不含 Margin，行数多时除法估算会差一格
             double y = e.GetPosition(_rows).Y;
-            double rowH = row.ActualHeight > 0 ? row.ActualHeight : 30;
-            int target = Math.Clamp((int)(y / rowH), 0, _order.Count - 1);
+            int target = 0;
+            double best = double.MaxValue;
+            for (int i = 0; i < _rows.Children.Count && i < _order.Count; i++)
+            {
+                if (_rows.Children[i] is not FrameworkElement rowEl) continue;
+                double center = rowEl.TranslatePoint(new Point(0, rowEl.ActualHeight / 2), _rows).Y;
+                double distance = Math.Abs(center - y);
+                if (distance < best)
+                {
+                    best = distance;
+                    target = i;
+                }
+            }
+            target = Math.Clamp(target, 0, _order.Count - 1);
             int from = _dragIndex;
             _dragIndex = -1;
             if (target != from) Move(from, target);

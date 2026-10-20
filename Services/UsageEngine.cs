@@ -51,8 +51,10 @@ public sealed class UsageEngine : IDisposable
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _lastError =
         new(StringComparer.Ordinal);
 
-    /// <summary>附加账号各自的状态(主账号与整源状态见 <see cref="Go"/>,实例键 → 状态)。</summary>
-    private readonly Dictionary<string, SourceStatus> _instanceStatus = new(StringComparer.Ordinal);
+    /// <summary>附加账号各自的状态(主账号与整源状态见 <see cref="Go"/>,实例键 → 状态)。
+    /// 用并发字典:条目同步是并行的,两个以上附加账号会同时写它,UI 线程同时在读。</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SourceStatus> _instanceStatus =
+        new(StringComparer.Ordinal);
 
     /// <summary>
     /// 服务端明确说"不可用"的条目(账户未订阅、Key 无权)下次允许重试的时刻。
@@ -106,7 +108,13 @@ public sealed class UsageEngine : IDisposable
             environmentVariable: DeepSeekApiClient.ApiKeyEnvironmentVariable);
     }
 
-    public void Start() => _ = Task.Run(() => Loop(_life.Token));
+    private readonly object _loopLock = new();
+    private Task? _loopTask;
+
+    public void Start()
+    {
+        lock (_loopLock) _loopTask = Task.Run(() => Loop(_life.Token));
+    }
 
     /// <summary>立即唤醒一次同步(跳过剩余等待与任何静默周期)。</summary>
     public void RequestRefreshNow()
@@ -115,16 +123,43 @@ public sealed class UsageEngine : IDisposable
         {
             // 手动刷新要连"正在静默等待"的源也一起试(用户续订后点一下就该看到恢复)
             _forceNextSync = true;
-            // 只唤醒不排队:连续点击"立即刷新"不该攒出多次同步
-            if (_signal.CurrentCount == 0) _signal.Release();
+            // 只唤醒不排队:连续点击"立即刷新"不该攒出多次同步。
+            // 不再用 CurrentCount 判断——那是 check-then-act,两次并发调用可能都读到 0,
+            // 第二次 Release 抛 SemaphoreFullException 并一路抛给 UI 调用方。
+            try { _signal.Release(); }
+            catch (SemaphoreFullException) { }
+            // 循环真结束了(未预料的异常)时,手动刷新顺带把它拉起来——
+            // 在那之前用户唯一的办法是重启程序,而界面上看不出区别。
+            EnsureLoopRunning();
         }
         catch (ObjectDisposedException)
         {
         }
     }
 
+    /// <summary>
+    /// 循环不在跑了就重起一个。守卫是防呆、不是常规路径:一轮同步的任何异常都会在
+    /// <see cref="RunRoundAsync"/> 里被吃掉,循环本身不该结束(见那里的说明)。
+    /// </summary>
+    private void EnsureLoopRunning()
+    {
+        lock (_loopLock)
+        {
+            if (_loopTask is { IsCompleted: false } or null) return;
+            Diagnostics.Note($"同步循环已结束({_loopTask.Status}),重新启动");
+            _loopTask = Task.Run(() => Loop(_life.Token));
+        }
+    }
+
     /// <summary>把手动刷新标记只交给紧随其后的那一轮。</summary>
     private bool _forceNextSync;
+
+    /// <summary>
+    /// 一轮同步最多给多久。各客户端自己那点超时(10~30s)管不住"响应头到了、正文不来"
+    /// 这类停顿(HttpClient.Timeout 不覆盖 ResponseHeadersRead 之后的正文读取),
+    /// 那会把整轮永远挂住。这一层是最后的兜底。
+    /// </summary>
+    private static readonly TimeSpan RoundTimeout = TimeSpan.FromMinutes(2);
 
     private async Task Loop(CancellationToken token)
     {
@@ -135,27 +170,91 @@ public sealed class UsageEngine : IDisposable
         var failures = new Dictionary<string, int>(StringComparer.Ordinal);
         while (!token.IsCancellationRequested)
         {
-            await SyncOnce(token, failures);
+            TimeSpan delay;
+            try
+            {
+                delay = await RunRoundAsync(token, failures);
+            }
+            catch (OperationCanceledException)
+            {
+                return;   // 程序在退出
+            }
+            catch (Exception ex)
+            {
+                // RunRoundAsync 本该吃掉所有异常;漏到这里说明它自身出了问题。
+                // 绝不能让 Task 因此结束——那正是 v1.20.5 的现场:rail 永远停在
+                // "数据 X 分钟前 · 未能刷新",诊断里连一行错都没有,只能重启。
+                Diagnostics.Note("同步循环异常,1 秒后重试", ex);
+                delay = TimeSpan.FromSeconds(1);
+            }
+
+            try
+            {
+                // WaitAsync 不占用线程池线程(旧写法 Task.Run + Wait(60000) 会阻塞一个)
+                await _signal.WaitAsync(delay, token);
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception ex)
+            {
+                // 同上:等待环节抛非取消异常也会结束循环。退化成固定 1 秒轮询。
+                Diagnostics.Note("同步循环等待异常,1 秒后重试", ex);
+                try { await Task.Delay(1000, token); }
+                catch (OperationCanceledException) { return; }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 同步一轮,并算好下一轮该等多久。**任何异常都在这里收口**——这是本类最要紧的
+    /// 一条不变量:循环体里漏出任何一个异常,这个后台任务就此结束,而它**没有别处会
+    /// 重启**,界面上只是静静停在"数据 X 分钟前 · 未能刷新",连诊断日志都一行错没有,
+    /// 只有重启程序才能恢复。
+    ///
+    /// 本机实测过这一次(2026-10-12 08:36 起):网页额度通道的一次 HTTP 超时抛出
+    /// TaskCanceledException(它**就是** OperationCanceledException),被各层
+    /// <c>catch (OperationCanceledException) { throw; }</c> 当成"程序正在退出"一路
+    /// rethrow 出循环,于是同步在 30 秒内整个停摆——进程活着、活动心跳照写、
+    /// 三个源的快照永远停在 08:36,而日志里找不到任何失败记录。
+    /// </summary>
+    private async Task<TimeSpan> RunRoundAsync(CancellationToken token, Dictionary<string, int> failures)
+    {
+        // 声明在 try 外面:catch 里要靠它判断这一轮到底是谁取消的
+        using var round = CancellationTokenSource.CreateLinkedTokenSource(token);
+        try
+        {
+            round.CancelAfter(RoundTimeout);
+            await SyncOnce(round.Token, failures);
 
             // 整轮的节奏取**最健康的那个源**:只要还有源在正常工作就按正常周期跑,
             // 全都失败才退避(避免断网时每 60s 撞一次)。
             int healthiest = failures.Count == 0 ? 0 : failures.Values.Min();
-            var delay = healthiest switch
+            return healthiest switch
             {
                 0 => SuccessDelay,
                 1 => FailureDelay,
                 2 => TimeSpan.FromMinutes(2),
                 _ => TimeSpan.FromMinutes(5),
             };
-
-            try
-            {
-                // WaitAsync 不占用线程池线程(旧写法 Task.Run + Wait(60000) 会阻塞一个)
-                var waiter = _signal.WaitAsync(delay, token);
-                try { await waiter; }
-                catch (OperationCanceledException) { throw; }
-            }
-            catch (OperationCanceledException) { return; }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            throw;   // 程序在退出,交给 Loop 收尾
+        }
+        catch (OperationCanceledException ex)
+        {
+            // 两种来源要分开记:①上面那个 watchdog 到点;②某条通道把**自己的 HTTP
+            // 超时**当成取消抛了出来(HttpClient.Timeout 抛的 TaskCanceledException
+            // 就是 OperationCanceledException)。②过去会一路穿透整个循环、把同步
+            // 永久打死,现在只是这一轮不要了。
+            Diagnostics.Note(round.IsCancellationRequested
+                ? $"同步一轮超过 {RoundTimeout.TotalSeconds:0} 秒未返回,已放弃本轮"
+                : "同步一轮被通道抛出的取消异常打断,已放弃本轮", ex);
+            return FailureDelay;
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("同步一轮失败,已跳过本轮", ex);
+            return FailureDelay;
         }
     }
 
@@ -219,7 +318,9 @@ public sealed class UsageEngine : IDisposable
         {
             yield return source.Key;
             if (source.Key != SourceKeys.OpenCode) continue;
-            foreach (var account in AppSettings.Current.OpenCodeAccounts)
+            // 取快照再枚举:后台同步线程在跑时,UI 线程可能正在增删附加账号;
+            // 直接枚举 List 会因版本变化抛 InvalidOperationException,让这一轮同步整轮失败。
+            foreach (var account in AppSettings.Current.AccountsSnapshot())
                 yield return SourceKeys.InstanceKey(source.Key, account.Id);
         }
     }
@@ -252,15 +353,9 @@ public sealed class UsageEngine : IDisposable
         return new SourceStatus();
     }
 
-    private SourceStatus InstanceStatus(string entry)
-    {
-        if (!_instanceStatus.TryGetValue(entry, out var status))
-        {
-            status = new SourceStatus();
-            _instanceStatus[entry] = status;
-        }
-        return status;
-    }
+    private SourceStatus InstanceStatus(string entry) =>
+        // GetOrAdd 是原子的:并行同步里两个账号同时进来也只会建一个状态对象
+        _instanceStatus.GetOrAdd(entry, _ => new SourceStatus());
 
     private IUsageProvider ProviderFor(MonitorSource source) => source switch
     {
@@ -305,10 +400,13 @@ public sealed class UsageEngine : IDisposable
         var status = StatusFor(source);
         string name = SourceCatalog.ById(source).DisplayName;
         var provider = ProviderFor(source);
-        var candidates = DiscoverCandidatesFor(source);
 
         try
         {
+            // 凭据发现也放进 try 里:它要读磁盘(auth.json / DPAPI 密文),读失败
+            // 不该把整个循环带走——过去它就在 try 外面,是同一种"漏出异常"。
+            var candidates = DiscoverCandidatesFor(source);
+
             if (candidates.Count == 0)
             {
                 status.State = SourceState.AuthenticationRequired;
@@ -321,6 +419,8 @@ public sealed class UsageEngine : IDisposable
 
             // 逐个候选尝试,直到成功(monitor 同款策略)
             Exception? last = null;
+            CommandCodeApiException? authFailure = null;
+            int otherFailures = 0;
             foreach (var candidate in candidates)
             {
                 try
@@ -334,17 +434,30 @@ public sealed class UsageEngine : IDisposable
                     status.CredentialSource = candidate.SourceLabel;
                     status.FetchedAt = snapshot.FetchedAt;
                     _lastError.TryRemove(name, out _);
+                    SourceStatusHub.Publish(SourceCatalog.ById(source).Key, null, false);
                     return (true, false);
                 }
                 catch (CommandCodeApiException ex) when (ex.IsAuthenticationError)
                 {
-                    throw; // 凭据无效,不再尝试其余候选
+                    // **一把 Key 被拒不等于别的 Key 也不行**。候选里可能同时有环境变量、
+                    // CLI 的 auth.json、用户在设置里手填的三把**互不相同**的 Key。实测踩过:
+                    // auth.json 里那把 OpenCode Key 被服务端标成 api_key_expired(官方口径:
+                    // 重新登录不续期,必须去控制台新建),而用户手填的那把是好的——却被
+                    // "立即 throw"挡在后面永远试不到,整个源于是报"Key 无效或已过期",
+                    // 卡片上就是红字"数据 X 小时前 · 未能刷新"。
+                    authFailure = ex;
+                    last = ex;
                 }
                 catch (Exception ex)
                 {
                     last = ex;
+                    otherFailures++;
                 }
             }
+            // 只有**所有**候选都因鉴权被拒,才认定这是凭据问题(它会进 30 分钟长静默)。
+            // 否则报最后一次的真实错误——一把过期 Key 不该把整源盖成"需要重新登录",
+            // 更不该因此静默半小时(实测:第一候选过期 + 手填那把恰好超时,用户会以为要重登)。
+            if (authFailure is not null && otherFailures == 0) throw authFailure;
             throw last ?? new Exception("未知错误");
         }
         catch (OperationCanceledException) { throw; }
@@ -354,6 +467,8 @@ public sealed class UsageEngine : IDisposable
             bool denied = ex is CommandCodeApiException { IsAuthenticationError: true };
             status.State = denied ? SourceState.AuthenticationRequired : SourceState.Stale;
             status.StatusText = ex.Message;
+            // 交给 rail 卡片:光有"多久没更新"不够,用户要知道"为什么"。
+            SourceStatusHub.Publish(SourceCatalog.ById(source).Key, ex.Message, denied);
             // 同一个源反复报同一个错(账户未订阅、Key 失效)不必每次都记:诊断只留
             // 100 条,同一行刷屏会把真正有用的历史挤掉。错误内容变了才重新记一条。
             if (_lastError.GetValueOrDefault(name) != ex.Message)
@@ -664,12 +779,12 @@ public sealed class UsageEngine : IDisposable
             return AccountOperationResult.Fail("连接 OpenCode Go 失败,请检查网络后重试。");
         }
 
-        int id = settings.OpenCodeAccounts.Count == 0 ? 2 : settings.OpenCodeAccounts.Max(a => a.Id) + 1;
+        int id = settings.NextOpenCodeAccountId();
         var accounts = _goResolver.LoadAccounts().ToList();
         accounts.Add(new StoredOpenCodeAccount(id, apiKey));
         _goResolver.SaveAccounts(accounts);
 
-        settings.OpenCodeAccounts.Add(new OpenCodeAccountInfo(id, label));
+        settings.AddOpenCodeAccount(new OpenCodeAccountInfo(id, label));
         string entry = SourceKeys.InstanceKey(SourceKeys.OpenCode, id);
         if (!settings.VisibleSources.Contains(entry)) settings.VisibleSources.Add(entry);
         settings.Save();
@@ -689,7 +804,7 @@ public sealed class UsageEngine : IDisposable
             .ToList();
         _goResolver.SaveAccounts(accounts);
 
-        settings.OpenCodeAccounts.RemoveAll(a => a.Id == id);
+        settings.RemoveOpenCodeAccount(id);
         settings.VisibleSources.Remove(SourceKeys.InstanceKey(SourceKeys.OpenCode, id));
         settings.Save();
 
@@ -707,9 +822,7 @@ public sealed class UsageEngine : IDisposable
     public void RenameOpenCodeAccount(int id, string label)
     {
         var settings = AppSettings.Current;
-        int index = settings.OpenCodeAccounts.FindIndex(a => a.Id == id);
-        if (index < 0) return;
-        settings.OpenCodeAccounts[index] = settings.OpenCodeAccounts[index] with { Label = label.Trim() };
+        settings.RenameOpenCodeAccount(id, label);
         settings.Save();
         RequestRefreshNow();
     }

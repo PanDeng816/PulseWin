@@ -108,7 +108,17 @@ public sealed class SourceCard : Border
         };
         _saveButton.SetResourceReference(FrameworkElement.StyleProperty, "PrimaryButton");
         Grid.SetColumn(_saveButton, 1);
-        _saveButton.Click += async (_, _) => await SaveKeyAsync();
+        // async void 事件处理器一旦抛异常就是未观察异常:要么崩进程,要么静默停在
+        // "正在验证 Key…"(views P2-6)。这里兜底,至少把原因写到卡片与诊断里。
+        _saveButton.Click += async (_, _) =>
+        {
+            try { await SaveKeyAsync(); }
+            catch (Exception ex)
+            {
+                Diagnostics.Note("保存 API Key 失败", ex);
+                _hintText.Text = "保存失败:" + ex.Message;
+            }
+        };
         keyRow.Children.Add(_saveButton);
         stack.Children.Add(keyRow);
 
@@ -168,12 +178,7 @@ public sealed class SourceCard : Border
             {
                 Text = "预算金额", FontSize = 13,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
-            });
-            budgetLabels.Children.Add(new TextBlock
-            {
-                Text = "你认为的“满箱”是多少", FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
-                Margin = new Thickness(0, 2, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
             });
             _budgetRow.Children.Add(budgetLabels);
             _budgetBox = new TextBox
@@ -205,9 +210,7 @@ public sealed class SourceCard : Border
             });
             stack.Children.Add(new TextBlock
             {
-                Text = "OpenCode 的每个工作区是一把独立的 API Key、一个独立的额度池。"
-                    + "主账号自动读取本机登录态,不用填;其他工作区在这里添加。",
-                FontSize = 11, TextWrapping = TextWrapping.Wrap,
+                Text = "每个工作区一把独立 Key;主账号自动读取。", FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
                 Margin = new Thickness(0, 2, 0, 4),
             });
@@ -234,13 +237,22 @@ public sealed class SourceCard : Border
             { Content = "添加账号", Width = 78, Height = 30, Margin = new Thickness(6, 0, 0, 0) };
             addButton.SetResourceReference(FrameworkElement.StyleProperty, "PrimaryButton");
             Grid.SetColumn(addButton, 2);
-            addButton.Click += async (_, _) => await AddAccountAsync();
+            // 同 SaveKeyAsync:async void 里漏出的异常会让人永远停在"正在验证…"
+            addButton.Click += async (_, _) =>
+            {
+                try { await AddAccountAsync(); }
+                catch (Exception ex)
+                {
+                    Diagnostics.Note("添加 OpenCode 账号失败", ex);
+                    if (_accountHint is not null) _accountHint.Text = "添加失败:" + ex.Message;
+                }
+            };
             addRow.Children.Add(addButton);
             stack.Children.Add(addRow);
 
             _accountHint = new TextBlock
             {
-                Text = "粘贴那个工作区的 Key,起个名字(如 go2)。未订阅的工作区也能先加进来,环上显示为灰环。",
+                Text = "未订阅的工作区也能先加进来,环上显示为灰环。",
                 TextWrapping = TextWrapping.Wrap, FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
                 Margin = new Thickness(0, 7, 0, 10),
@@ -274,9 +286,15 @@ public sealed class SourceCard : Border
         _loading = false;
     }
 
-    /// <summary>刷状态行(窗口的每秒计时器调用)。</summary>
+    /// <summary>上次写进状态行的内容。状态按分钟级变化，每秒无差别重写会白白触发布局。</summary>
+    private string _lastStatusKey = "";
+
+    /// <summary>刷状态行(窗口的每秒计时器调用)。内容没变就不赋值。</summary>
     public void RefreshStatus(SourceStatus status)
     {
+        string key = status.CredentialSource + "\u0001" + status.StatusText + "\u0001" + status.State;
+        if (key == _lastStatusKey) return;
+        _lastStatusKey = key;
         _sourceText.Text = string.IsNullOrEmpty(status.CredentialSource)
             ? "" : $"凭据来源:{status.CredentialSource}";
         _statusText.Text = status.StatusText;
@@ -328,7 +346,7 @@ public sealed class SourceCard : Border
         _mainStateText = mainState;
 
         // 附加账号行:标签可改、Key 尾号、状态、显示勾选、删除
-        foreach (var account in AppSettings.Current.OpenCodeAccounts)
+        foreach (var account in AppSettings.Current.AccountsSnapshot())
         {
             string entry = SourceKeys.InstanceKey(SourceKeys.OpenCode, account.Id);
             var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
@@ -548,12 +566,9 @@ public sealed class SourceCard : Border
         _budgetRow.Visibility = basis == BalanceBasis.Budget ? Visibility.Visible : Visibility.Collapsed;
         _basisHint.Text = basis switch
         {
-            BalanceBasis.SinceTopUp =>
-                "以本程序观察到的最高余额为满分:余额上涨只可能是充值,所以一涨就重置回满。"
-                + "首次运行没有历史峰值,环会从 0% 开始,直到真的花了钱。",
-            BalanceBasis.BalanceOnly =>
-                "不画百分比,环上直接显示余额金额(短写法,精确值在悬停卡里)。",
-            _ => "以你填的金额为满分:(预算 − 余额) / 预算。留空或填 0 则退回只看余额。",
+            BalanceBasis.SinceTopUp => "以观测到的最高余额为满分,余额一涨即视为充值并重置。",
+            BalanceBasis.BalanceOnly => "不画百分比,环上直接显示余额金额。",
+            _ => "(预算 − 余额) / 预算,留空或填 0 则退回只看余额。",
         };
     }
 

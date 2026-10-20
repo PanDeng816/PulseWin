@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,6 +25,10 @@ public partial class SettingsWindow : Window
     /// <summary>设置改动后通知主窗重绘(阈值/不透明度都属于渲染参数)。</summary>
     public event Action? SettingsChanged;
 
+    /// <summary>只影响绘制、不影响数据的设置(透明度/告警阈值)走这条:主窗立刻重画,
+    /// 但不重读快照。拖动滑块每帧都会触发,不能让它带动磁盘 IO。</summary>
+    public event Action? AppearanceChanged;
+
     /// <summary>源凭据卡:每个数据源一张,按 <see cref="SourceCatalog"/> 生成。</summary>
     private readonly Dictionary<string, SourceCard> _sourceCards = new(StringComparer.Ordinal);
 
@@ -50,7 +54,8 @@ public partial class SettingsWindow : Window
         // 圆环顺序列表:拖动/箭头改序后写设置并让主窗重排
         RingOrder.OrderChanged += RingOrder_OrderChanged;
 
-        _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        // 状态是分钟级变化，2 秒足够；每秒重写所有卡片只会白白触发布局
+        _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _statusTimer.Tick += (_, _) => RefreshStatus();
         _statusTimer.Start();
 
@@ -93,7 +98,6 @@ public partial class SettingsWindow : Window
         BuildSourceCards();
         BuildTintPickers();
         ReloadRingOrder();
-        UpdatePercentHint();
         BuildManualCookieSites();
         UpdateManualCookieHint();
         _loading = false;
@@ -250,7 +254,7 @@ public partial class SettingsWindow : Window
         s.AlertThreshold = AlertSlider.Value / 100d;
         s.SurfaceOpacity = OpacitySlider.Value / 100d;
         s.SyncIntervalSeconds = (int)IntervalSlider.Value;
-        SettingsChanged?.Invoke();   // 让浮窗立刻按新值重绘
+        AppearanceChanged?.Invoke();   // 外观类设置:让浮窗立刻重绘,但不重读数据
         SaveSoon();
     }
 
@@ -304,24 +308,16 @@ public partial class SettingsWindow : Window
     {
         foreach (var (key, card) in _sourceCards)
             card.RefreshStatus(_engine.StatusForSource(key));
-        DataDirText.Text = $"数据目录(便携):{SnapshotSource.DataDirectory}";
+        DataDirText.Text = SnapshotSource.DataDirectory;
     }
 
     // ————————————————— 主界面(显示哪些环 / 是否显示读数) —————————————————
-
-    private void UpdatePercentHint()
-    {
-        PercentHint.Text = ShowPercentBox.IsChecked == true
-            ? "读数显示在圆环下方,每个单元更高。"
-            : "已隐藏读数:rail 上只有圆环,间距与整体高度都会收窄。";
-    }
 
     /// <summary>"在圆环下显示读数"开关(与"显示哪些源"无关,各管各的)。</summary>
     private void ShowPercent_Changed(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
         AppSettings.Current.ShowPercent = ShowPercentBox.IsChecked == true;
-        UpdatePercentHint();
         SettingsChanged?.Invoke();
         SaveSoon();
     }
@@ -473,20 +469,14 @@ public partial class SettingsWindow : Window
         ManualCookieState.Text = hasSession ? "已保存" : "";
         ManualCookieHint.Text = (site, hasSession) switch
         {
-            ("commandcode", true) =>
-                "已保存 commandcode.ai 的登录会话:GOAT 的官方逐模型明细优先用它。"
-                + "服务端判登录态过期后,重新登录或再粘一次即可。",
+            ("commandcode", true) => "已保存 commandcode.ai 会话。",
             ("commandcode", false) =>
-                "登录窗用不了时的手工兜底:在 commandcode.ai 按 F12 → Application → Cookies,"
-                + "复制 __Secure-commandcode_prod_.session_token 的值贴到右边。"
-                + "DPAPI 加密保存,只有当前 Windows 账户能解。",
-            (_, true) =>
-                "已保存 opencode.ai 的登录会话:额度与明细都优先用它,不依赖浏览器。"
-                + "服务端判登录态过期后,重新登录或再粘一次即可。",
+                "登录窗用不了时的兜底:在 commandcode.ai 按 F12 → Application → Cookies,"
+                + "复制 __Secure-commandcode_prod_.session_token 的值贴到右边。",
+            (_, true) => "已保存 opencode.ai 会话。",
             (_, false) =>
-                "登录窗用不了时的手工兜底:在 opencode.ai 控制台按 F12 → Application → Cookies,"
-                + "复制 __Host-console_session 的值贴到右边(老账号是 auth)。"
-                + "DPAPI 加密保存,只有当前 Windows 账户能解。",
+                "登录窗用不了时的兜底:在 opencode.ai 控制台按 F12 → Application → Cookies,"
+                + "复制 __Host-console_session 的值贴到右边。",
         };
     }
 

@@ -29,6 +29,18 @@ public sealed class SessionWindow : Window
         Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F));
 
         var ordered = entries.OrderBy(e => e.Timestamp).ToList();
+        if (ordered.Count == 0)
+        {
+            // 契约不该靠调用方守：空列表进来也要给一个能看的窗，不抛 InvalidOperationException
+            Content = new TextBlock
+            {
+                Text = "没有明细",
+                FontSize = 12,
+                Foreground = Dim(),
+                Margin = new Thickness(20),
+            };
+            return;
+        }
         string title = ordered.LastOrDefault(e => !string.IsNullOrWhiteSpace(e.Title))?.Title
             ?? ordered.First().SessionId
             ?? "无标题会话";
@@ -80,7 +92,7 @@ public sealed class SessionWindow : Window
             {
                 double x = i * slot;
                 long tokensAt = hours[i].Tokens;
-                double barHeight = tokensAt == 0 ? 0 : Math.Max(2, (double)tokensAt / max * 74);
+                double barHeight = tokensAt == 0 || max <= 0 ? 0 : Math.Max(2, (double)tokensAt / max * 74);
                 var bar = new Rectangle
                 {
                     Width = barWidth,
@@ -184,7 +196,7 @@ public sealed class SessionWindow : Window
             Background = Frozen(Color.FromRgb(0xE8, 0xE8, 0xEC)),
             CornerRadius = new CornerRadius(2),
             Height = 4,
-            Width = 180,
+            Width = BarBase,
             HorizontalAlignment = HorizontalAlignment.Left,
             Child = new Border
             {

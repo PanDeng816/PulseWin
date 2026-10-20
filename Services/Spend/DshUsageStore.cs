@@ -136,7 +136,9 @@ public sealed class DshUsageStore : IUsageStore
             if (parsed is null)
             {
                 parsed = Parse(path, sessionId);
-                lock (CacheGate) Store(path, info.Length, ticks, parsed, now);
+                // 中途被中断的结果不落缓存:否则文件继续增长后仍从同一处中断,
+                // 那一段历史会被缓存永久固化,重开程序也不恢复。
+                if (!parsed.Truncated) lock (CacheGate) Store(path, info.Length, ticks, parsed, now);
             }
             files.Add(parsed);
         }
@@ -294,8 +296,13 @@ public sealed class DshUsageStore : IUsageStore
                 detectEncodingFromByteOrderMarks: false, bufferSize: 1 << 16);
 
             string? line;
+            int badLines = 0;
             while ((line = reader.ReadLine()) is not null)
             {
+                // 一行坏 JSON 只丢这一行:以前整个 while 被一个 try 包住,任何一行解析失败
+                // 就会中断整份会话,该行之后的记录全部丢失(而且截断结果还会被缓存固化)。
+                try
+                {
                 ReadOnlySpan<char> type = EventType(line);
                 if (type.IsEmpty) continue;
 
@@ -355,10 +362,21 @@ public sealed class DshUsageStore : IUsageStore
                     if (doc.RootElement.TryGetProperty("data", out var data))
                         title = Str(data, "title") ?? title;
                 }
+                }
+                catch (JsonException)
+                {
+                    badLines++;
+                }
+            }
+            if (badLines > 0)
+            {
+                Diagnostics.Note(
+                    $"DSH 会话 {Path.GetFileName(path)} 有 {badLines} 行解析失败,已逐行跳过(其余行照常统计)");
             }
         }
         catch (Exception ex)
         {
+            // 只剩"文件/流级"异常才算截断(解压中断、读盘失败);行级坏 JSON 已在循环里跳过
             truncated = true;
             NoteTruncation(path, ex);
         }
@@ -368,8 +386,9 @@ public sealed class DshUsageStore : IUsageStore
         var records = new List<AgentUsageRecord>(steps.Count);
         foreach (var s in steps)
         {
+            if (FromUnixMs(s.Time) is not { } timestamp) continue;
             records.Add(new AgentUsageRecord(
-                FromUnixMs(s.Time),
+                timestamp,
                 s.Model,
                 new TokenTally(s.Input, s.CacheWrite, s.CacheRead, s.Output),
                 // 四类之和与来源自报总量的差:实测恒为 0,留着是为了"来源多报了"时不当成没事
@@ -537,12 +556,15 @@ public sealed class DshUsageStore : IUsageStore
         Diagnostics.Note($"DSH 会话读到未写完的尾部,已保留已解析部分({Path.GetFileName(Path.GetDirectoryName(path))})", ex);
     }
 
-    private static DateTime FromUnixMs(long milliseconds)
+    /// <summary>
+    /// 坏时间戳返回 null（不返回 Now）：越界时间会被算进"今天"，污染当日统计。
+    /// 调用方跳过该步即可——少一步好过把昨天的量记到今天。
+    /// </summary>
+    private static DateTime? FromUnixMs(long milliseconds)
     {
         try { return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).LocalDateTime; }
-        catch (ArgumentOutOfRangeException) { return DateTime.Now; }
+        catch (ArgumentOutOfRangeException) { return null; }
     }
-
     private static long GetLong(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number
             && value.TryGetInt64(out long parsed) ? parsed : 0;

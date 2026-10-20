@@ -186,10 +186,12 @@ public static class Native
     /// </summary>
     public static void HookHitTest(Window w, Func<Point, bool> hit)
     {
-        w.SourceInitialized += (_, _) =>
+        void Attach()
         {
             IntPtr h = new WindowInteropHelper(w).Handle;
+            if (h == IntPtr.Zero) return;
             var src = HwndSource.FromHwnd(h);
+            if (src is null) return;
             src.AddHook((IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
             {
                 if (msg != WM_NCHITTEST) return IntPtr.Zero;
@@ -201,7 +203,13 @@ public static class Native
                 handled = true;
                 return new IntPtr(hit(rel) ? HTCLIENT : HTTRANSPARENT);
             });
-        };
+        }
+
+        // 句柄已存在就直接装（在 OnSourceInitialized 之后调用是常见情形——那时
+        // base.OnSourceInitialized 已经触发过 SourceInitialized，再订阅不会执行）；
+        // 否则等 SourceInitialized。两条路径覆盖两种调用顺序。
+        if (new WindowInteropHelper(w).Handle != IntPtr.Zero) Attach();
+        else w.SourceInitialized += (_, _) => Attach();
     }
 
     public static double Scale(Window w) =>

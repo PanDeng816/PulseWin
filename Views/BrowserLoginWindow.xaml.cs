@@ -45,7 +45,10 @@ public partial class BrowserLoginWindow : Window
     private readonly bool _ownsGate;
     private DispatcherTimer? _poll;
     /// <summary>轮询重入守卫:上一次 await 还没回来就不再发一次。</summary>
+    /// <summary>捕获与看门狗各用一个标志。共用时 Tick 里先跑的那个会把标志立起来,
+    /// 后跑的那个每次都第一行返回——2FA 自动续跑因此从未执行过。</summary>
     private bool _polling;
+    private bool _resuming;
     private bool _captured;
     /// <summary>GitHub 已登录、却停在无关页面(2FA/passkey 之后常见的 return_to 丢失)的起点时刻;
     /// 有值就交给看门狗,过了宽限期自动重新发起登录。<c>default</c> = 没卡着。</summary>
@@ -213,14 +216,14 @@ public partial class BrowserLoginWindow : Window
     /// </summary>
     private async Task ResumeIfStuckAsync()
     {
-        if (_captured || _polling) return;
+        if (_captured || _resuming) return;
         if (_githubStuckSince == default || _autoResumes >= MaxAutoResumes) return;
         if (DateTimeOffset.Now - _githubStuckSince < StuckGrace) return;
 
         var core = View.CoreWebView2;
         if (core is null) return;
 
-        _polling = true;
+        _resuming = true;
         try
         {
             // 没登录就别打扰(用户可能正在填密码,只是 URL 还没变成 flow 页)
@@ -241,7 +244,7 @@ public partial class BrowserLoginWindow : Window
         }
         finally
         {
-            _polling = false;
+            _resuming = false;
         }
     }
 

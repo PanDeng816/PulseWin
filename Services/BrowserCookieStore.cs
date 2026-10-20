@@ -21,6 +21,10 @@ internal static class BrowserCookieStore
 {
     private static readonly Dictionary<string, (string Header, DateTimeOffset At)> Cache = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, DpapiSecretStore> ManualStores = new(StringComparer.Ordinal);
+
+    /// <summary>这两个静态字典会被后台同步与设置页(手动粘贴/清空)并发访问;
+    /// 不加锁时 ManualStore 的 check-then-act 会各建一个 store,Dictionary 并发写还会损坏内部结构。</summary>
+    private static readonly object Gate = new();
     private static AppDataPaths? _paths;
 
     /// <summary>上次失败原因(界面显示用);成功后清空。</summary>
@@ -37,6 +41,12 @@ internal static class BrowserCookieStore
     /// 读不到返回 null(原因见 <see cref="LastError"/>)。
     /// </summary>
     public static string? GetCookieHeader(string hostKeyword, bool forceRefresh)
+    {
+        // 读浏览器库/解 DPAPI 都可能慢,但它改的是一组静态状态,必须串行。
+        lock (Gate) return GetCookieHeaderCore(hostKeyword, forceRefresh);
+    }
+
+    private static string? GetCookieHeaderCore(string hostKeyword, bool forceRefresh)
     {
         // **成功读到就一直在**。浏览器 cookie 本身有效期以天计,而"重新从浏览器库读"
         // 有个硬门槛:浏览器开着时那个库是排他锁定的,根本读不到。所以这里不按分钟
@@ -96,26 +106,43 @@ internal static class BrowserCookieStore
     }
 
     /// <summary>登录态被判过期时调用方清缓存,下次强制重解浏览器库。</summary>
-    public static void Invalidate(string hostKeyword) => Cache.Remove(hostKeyword);
+    public static void Invalidate(string hostKeyword)
+    {
+        lock (Gate) Cache.Remove(hostKeyword);
+    }
 
     /// <summary>保存用户手动粘贴的 Cookie 头(DPAPI 加密落盘,与 API Key 同一保护强度)。</summary>
     public static void SaveManual(string hostKeyword, string cookieHeader)
     {
-        ManualStore(hostKeyword)?.Write(Normalize(cookieHeader));
-        Cache.Remove(hostKeyword);
-        LastError = null;
+        lock (Gate)
+        {
+            ManualStoreCore(hostKeyword)?.Write(Normalize(cookieHeader));
+            Cache.Remove(hostKeyword);
+            LastError = null;
+        }
     }
 
     public static void ClearManual(string hostKeyword)
     {
-        ManualStore(hostKeyword)?.Clear();
-        Cache.Remove(hostKeyword);
+        lock (Gate)
+        {
+            ManualStoreCore(hostKeyword)?.Clear();
+            Cache.Remove(hostKeyword);
+        }
     }
 
     /// <summary>是否已经有手动粘贴的 cookie(设置页显示状态用)。</summary>
-    public static bool HasManual(string hostKeyword) => ManualStore(hostKeyword)?.Read() is { Length: > 0 };
+    public static bool HasManual(string hostKeyword)
+    {
+        lock (Gate) return ManualStoreCore(hostKeyword)?.Read() is { Length: > 0 };
+    }
 
     private static DpapiSecretStore? ManualStore(string hostKeyword)
+    {
+        lock (Gate) return ManualStoreCore(hostKeyword);
+    }
+
+    private static DpapiSecretStore? ManualStoreCore(string hostKeyword)
     {
         if (_paths is null) return null;
         if (ManualStores.TryGetValue(hostKeyword, out var existing)) return existing;

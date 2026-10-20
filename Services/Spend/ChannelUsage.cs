@@ -110,6 +110,12 @@ public sealed class ChannelUsage
     /// </summary>
     public IReadOnlyList<RangeHourBucket> RangeHourly { get; init; } = [];
 
+    /// <summary>
+    /// 逐小时分布只覆盖近 35 天（`agg_hour` 的保留期），不是整个区间。
+    /// 为真时界面必须写"近 35 天"，不能写"整个区间累计"——否则用户会以为看到的是全史。
+    /// </summary>
+    public bool RangeHourlyPartial { get; init; }
+
     /// <summary>该渠道用过的模型（按 token 降序）。</summary>
     public IReadOnlyList<ChannelModelRow> Models { get; init; } = [];
 
@@ -159,6 +165,16 @@ public static class ChannelUsageIndex
     public static List<ChannelUsage> Build(SpendLedger ledger, SpendSpan span)
     {
         var (from, to) = SpendSummary.Range(span, DateTime.Now);
+        return Build(ledger, span, from, to);
+    }
+
+    /// <summary>
+    /// 指定区间的重载。**界面切区间必须走这个**——原重载只看 span,而用量窗在
+    /// 自定义区间/按天下钻时用的是 EffectiveRange(),两者不一致时套餐徽标与总览
+    /// 会各说各的(同一屏两套区间)。
+    /// </summary>
+    public static List<ChannelUsage> Build(SpendLedger ledger, SpendSpan span, DateTime from, DateTime to)
+    {
         var registry = ChannelRegistry.Current;
 
         // 按**套餐名**分桶（不是 provider id）：同一个套餐的多个 provider id
@@ -219,11 +235,15 @@ public static class ChannelUsageIndex
                 a.SessionIds.Add(entry.SessionId);
         }
 
+        // 逐小时行只保留 35 天(UsageRepository.HourRetentionDays),所以区间超过 35 天或
+        // 选"全部"时,时段分布必然不全;界面据此标"近 35 天",不许写"整个区间累计"。
+        bool hourlyPartial = span == SpendSpan.All || (to - from).TotalDays > 35;
+
         // 排序:**有数据的按本区间用量降序在前**(tab 行就按这个顺序排,用量最大的套餐排最前),
         // 配置里存在但本区间没用过的排后面;用量相同时按名字定序——
         // 否则顺序取决于字典的遍历顺序,同一个界面重开一次就可能换位置。
         return acc.Values
-            .Select(a => a.ToUsage(ledger))
+            .Select(a => a.ToUsage(ledger, hourlyPartial))
             .Where(c => c.HasData || c.Configured)
             .OrderByDescending(c => c.HasData)
             .ThenByDescending(c => c.TotalTokens)
@@ -349,7 +369,7 @@ public static class ChannelUsageIndex
             h.Add(e);
         }
 
-        public ChannelUsage ToUsage(SpendLedger ledger)
+        public ChannelUsage ToUsage(SpendLedger ledger, bool hourlyPartial)
         {            // 逐日补空白
             var daily = new List<(DateOnly, long, long, long, long, long, double, long)>();
             if (_daily.Count > 0)
@@ -426,6 +446,7 @@ public static class ChannelUsageIndex
                 Daily = daily.Select(x => (x.Item1, x.Item2, x.Item3, x.Item4, x.Item5, x.Item6, x.Item7, x.Item8)).ToList(),
                 TodayHourly = hours,
                 RangeHourly = rangeHours,
+                RangeHourlyPartial = hourlyPartial,
                 Models = models,
             };
         }

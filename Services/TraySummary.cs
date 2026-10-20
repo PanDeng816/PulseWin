@@ -22,6 +22,9 @@ internal static class TraySummary
                 ? $"{sub.Name} {pool.DisplayText}"
                 : $"{sub.Name} {Money.Short(pool.Amount ?? 0, pool.Unit)}";
         });
-        return string.Join(" · ", parts) + "(双击显示/隐藏)";
+        string text = string.Join(" · ", parts) + "(双击显示/隐藏)";
+        // WinForms NotifyIcon.Text 上限 63 字符,超了直接抛 ArgumentException——
+        // 截断必须在这里做,不能指望每个调用方都记得
+        return text.Length > 63 ? text[..63] : text;
     }
 }

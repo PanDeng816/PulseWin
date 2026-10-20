@@ -41,12 +41,16 @@ public sealed class DpapiSecretStore : ISecretStore
             CryptographicOperations.ZeroMemory(clearBytes);
             return string.IsNullOrWhiteSpace(value) ? null : value;
         }
-        catch (CryptographicException)
+        catch (CryptographicException ex)
         {
+            // 解密失败与"没配 Key"必须能区分:DPAPI entropy 变了、凭据被破坏、
+            // 跨用户拷贝,都会走到这里,而界面上只是"未配置凭据,请重新输入"。
+            Diagnostics.Note($"读取加密凭据失败({Path.GetFileName(_credentialFile)})", ex);
             return null;
         }
-        catch (IOException)
+        catch (IOException ex)
         {
+            Diagnostics.Note($"读取凭据文件失败({Path.GetFileName(_credentialFile)})", ex);
             return null;
         }
     }

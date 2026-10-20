@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
 namespace PulseWin;
@@ -31,20 +31,22 @@ public sealed class DeepSeekBaseline
     };
 
     private readonly string _file;
-    private readonly object _gate = new();
+
+    /// <summary>静态锁:同一份基准文件可能被多个实例同时写,实例锁等于没锁。</summary>
+    private static readonly object Gate = new();
 
     public DeepSeekBaseline(AppDataPaths paths) => _file = paths.DeepSeekBaselineFile;
 
     /// <summary>按币种代码存一份。</summary>
     public Dictionary<string, Mark> Load()
     {
-        lock (_gate)
+        lock (Gate)
         {
             try
             {
                 if (!File.Exists(_file)) return new Dictionary<string, Mark>();
                 return JsonSerializer.Deserialize<Dictionary<string, Mark>>(
-                    File.ReadAllText(_file), JsonOptions) ?? new Dictionary<string, Mark>();
+                    AtomicFile.ReadAllTextShared(_file), JsonOptions) ?? new Dictionary<string, Mark>();
             }
             catch (Exception ex)
             {
@@ -56,7 +58,7 @@ public sealed class DeepSeekBaseline
 
     public void Save(Dictionary<string, Mark> marks)
     {
-        lock (_gate)
+        lock (Gate)
         {
             try
             {
