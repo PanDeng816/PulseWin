@@ -369,6 +369,8 @@ public partial class SpendWindow : Window
         Heatmap.DayClicked += EnterDayFocus;
         // 主题/密度在设置里切换时,这个窗可能正开着:重建一遍颜色与内边距
         UiTheme.Changed += OnUiThemeChanged;
+        // 玻璃外壳:此刻句柄还没建出来,Backdrop 会挂到 SourceInitialized 上滞后应用。
+        Backdrop.Apply(this, UiTheme.GlassKind, UiTheme.IsDark);
     }
 
     private void OnUiThemeChanged()
@@ -379,6 +381,8 @@ public partial class SpendWindow : Window
             if (_closed) return;
             RenderAll();
             Heatmap.InvalidateVisual();
+            // 主题变了:标题栏的明暗与背景键的 alpha 都要重套(否则深色窗顶着白标题栏)
+            Backdrop.Apply(this, UiTheme.GlassKind, UiTheme.IsDark);
         });
     }
 

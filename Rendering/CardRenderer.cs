@@ -86,7 +86,16 @@ public static class CardRenderer
         double dpi, DateTimeOffset now)
     {
         double r = Card.CornerRadius;
-        dc.DrawRoundedRectangle(Solid(PanelPalette.Surface), null, body, r, r);
+        // 悬浮卡是"压在图上的信息面板"，比 rail 面板更实：80% 的底叠在白网页上时，
+        // 背后的文字会透上来和卡片自己的字叠在一起（实测完全没法读）。这里兜到 91%，
+        // rail 面板本体仍按用户设的不透明度走。
+        Color surface = PanelPalette.Surface;
+        if (surface.A < 0xE8) surface = Color.FromArgb(0xE8, surface.R, surface.G, surface.B);
+        dc.DrawRoundedRectangle(Solid(surface), null, body, r, r);
+        // 玻璃层:与 rail 面板同一套(内缘亮边 + 底缘暗边),悬浮卡才不会像一块贴纸。
+        // 几何必须用 RoundRect 跟上面那条 DrawRoundedRectangle 对齐 —— 早先用 squircle
+        // 画出来的边缘错位，四个角上会出现暗块缺口。
+        GlassPaint.Paint(dc, GlassPaint.RoundRect(body, r), body, GlassPaint.Strength);
 
         double x = body.X, y = body.Y;
         double w = body.Width;

@@ -23,6 +23,8 @@ public static class UiTheme
     // ————————————————— 颜色 —————————————————
 
     public static Color PageBack => P(0x13, 0x13, 0x16, 0xF4, 0xF4, 0xF7);
+    /// <summary>侧栏底（深色下比页面底更暗一点）。</summary>
+    public static Color SidebarBack => P(0x16, 0x16, 0x1A, 0xF4, 0xF4, 0xF7);
     public static Color WindowBack => P(0x1B, 0x1B, 0x20, 0xFF, 0xFF, 0xFF);
     public static Color CardBack => P(0x1E, 0x1E, 0x23, 0xFF, 0xFF, 0xFF);
     public static Color CardBorder => P(0x2C, 0x2C, 0x33, 0xE8, 0xE8, 0xEC);
@@ -130,6 +132,7 @@ public static class UiTheme
                 });
             }
             ApplyDensity();
+            ApplyGlass();
         }
         if (notify) Changed?.Invoke();
     }
@@ -150,6 +153,46 @@ public static class UiTheme
         r["TilePad"] = TilePad;
         r["TileGap"] = TileGap;
     }
+
+    // ————————————————— 玻璃 —————————————————
+
+    /// <summary>玻璃档位 → 系统材质（设置/用量窗用）。系统低于 Win11 22621 时返回 Off。</summary>
+    public static BackdropKind GlassKind => Backdrop.FromSetting(AppSettings.Current.GlassMode);
+
+    /// <summary>
+    /// 按玻璃开关改写一组**背景类资源键**：开 = 带 alpha（DWM 材质透得出来），
+    /// 关 = 不透明（v1.24 及以前的样子）。
+    ///
+    /// 只改 A 通道，RGB 永远取当前主题的色值，所以深/浅两套自动跟着走，不用维护两份表。
+    /// 层次是三层叠加：窗口底（全透）→ 侧栏/内容页底（半透）→ 卡片（近实）。
+    /// **三层都半透会互相盖死**（0.5 叠三层 ≈ 0.88），所以窗口底必须是 Transparent。
+    /// </summary>
+    public static void ApplyGlass()
+    {
+        if (Application.Current is not { } app) return;
+        var r = app.Resources;
+        bool on = AppSettings.Current.GlassMode > 0;
+
+        r["ShellBackBrush"] = on ? Brushes.Transparent : B(PageBack);
+
+        byte sidebar = IsDark ? (byte)0xB0 : (byte)0xC0;
+        byte page = IsDark ? (byte)0xD8 : (byte)0xDC;
+        byte card = IsDark ? (byte)0xE2 : (byte)0xE8;
+        byte tile = IsDark ? (byte)0xD6 : (byte)0xE0;
+        byte field = IsDark ? (byte)0xF2 : (byte)0xF4;
+        byte seg = IsDark ? (byte)0xD8 : (byte)0xDD;
+
+        SetGlass(r, "SidebarBackBrush", SidebarBack, on, sidebar);
+        SetGlass(r, "PageBackBrush", PageBack, on, page);
+        SetGlass(r, "CardBackBrush", CardBack, on, card);
+        SetGlass(r, "TileBackBrush", TileBack, on, tile);
+        SetGlass(r, "FieldBackBrush", FieldBack, on, field);
+        SetGlass(r, "SegBackBrush", SegBack, on, seg);
+    }
+
+    /// <summary>玻璃关时写回不透明（A=FF），开时给指定 alpha。</summary>
+    private static void SetGlass(ResourceDictionary r, string key, Color baseColor, bool on, byte alpha) =>
+        r[key] = B(Color.FromArgb(on ? alpha : (byte)0xFF, baseColor.R, baseColor.G, baseColor.B));
 
     /// <summary>Windows 应用主题（设置 → 个性化 → 颜色 → 选择默认应用模式）。</summary>
     public static bool SystemPrefersDark()

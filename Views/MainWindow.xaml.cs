@@ -1017,8 +1017,11 @@ public partial class MainWindow : Window
         var full = new Rect(0, 0, Width, Height);
         var berth = BerthGeometry(full);
         _hitBerth = berth;
-        // 面板永远是自绘的黑色玻璃(不透明度可调):v1.7.3 起不再有系统 acrylic 分支。
+        // 面板永远是自绘的黑色玻璃(不透明度可调):v1.7.3 起不再有系统 acrylic 分支
+        // (分层窗口上系统 blur 会不可逆打坏 alpha)。v1.25 的"玻璃"是纯绘制：
+        // 底色之上叠镜面高光/内缘亮边/底缘暗边,见 GlassPaint。
         dc.DrawGeometry(CachedBrush(PanelPalette.Surface), HairlinePen, berth);
+        GlassPaint.Paint(dc, berth, full, GlassPaint.Strength);
 
         for (int s = 0; s < _subs.Count; s++)
             DrawComposite(dc, _subs[s], RingCenter(s), s, now);
@@ -1045,6 +1048,7 @@ public partial class MainWindow : Window
             fill = Color.FromArgb(0xE6, alert.R, alert.G, alert.B);
         }
         dc.DrawRoundedRectangle(CachedBrush(fill), HairlinePen, r, rad, rad);
+        GlassPaint.Paint(dc, GlassPaint.RoundRect(r, rad), r, GlassPaint.Strength);
         _hitBerth = RailGeometry.SquircleRoundRect(r.X, r.Y, r.Width, r.Height, rad);
     }
 

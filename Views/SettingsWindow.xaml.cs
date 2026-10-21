@@ -68,6 +68,9 @@ public partial class SettingsWindow : Window
         };
 
         RefreshStatus();
+
+        // 玻璃外壳:句柄还没建,Backdrop 会挂到 SourceInitialized 上滞后应用。
+        Backdrop.Apply(this, UiTheme.GlassKind, UiTheme.IsDark);
     }
 
     private void LoadSettings()
@@ -92,6 +95,9 @@ public partial class SettingsWindow : Window
         ThemeSystem.IsChecked = s.UiThemeMode == 2;
         DensityComfort.IsChecked = s.UiDensity == 0;
         DensityCompact.IsChecked = s.UiDensity == 1;
+        GlassOff.IsChecked = s.GlassMode == 0;
+        GlassFrost.IsChecked = s.GlassMode == 1;
+        GlassLiquid.IsChecked = s.GlassMode == 2;
         SliverBox.IsChecked = s.HideToSliver;
         FullScreenBox.IsChecked = s.HideInFullScreen;
         BrowserSessionBox.IsChecked = s.UseBrowserSessionForModelDetail;
@@ -508,6 +514,8 @@ public partial class SettingsWindow : Window
         s.Save();
         bool dark = s.UiThemeMode == 1 || (s.UiThemeMode == 2 && UiTheme.SystemPrefersDark());
         UiTheme.Apply(dark);
+        // 深色要连标题栏一起改,否则深色窗顶着一片白标题栏
+        Backdrop.ApplyAll(UiTheme.GlassKind, UiTheme.IsDark);
         RefreshCodeGenerated();
     }
 
@@ -519,6 +527,21 @@ public partial class SettingsWindow : Window
         AppSettings.Current.Save();
         UiTheme.Apply(UiTheme.IsDark);   // 重新写密度资源
         RefreshCodeGenerated();
+    }
+
+    /// <summary>
+    /// 玻璃三档:0 关 / 1 磨砂 / 2 玻璃。
+    /// 一处开关管两层 —— 设置/用量窗换系统材质,rail 换自绘玻璃层(见 GlassPaint)。
+    /// </summary>
+    private void Glass_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        var s = AppSettings.Current;
+        s.GlassMode = GlassLiquid.IsChecked == true ? 2 : GlassFrost.IsChecked == true ? 1 : 0;
+        s.Save();
+        UiTheme.Apply(UiTheme.IsDark);              // 重写背景键的 alpha
+        Backdrop.ApplyAll(UiTheme.GlassKind, UiTheme.IsDark);
+        AppearanceChanged?.Invoke();                // 主窗重画(rail 的自绘玻璃层)
     }
 
     /// <summary>颜色/内边距写死在构造里的这些控件,主题或密度一变就得重建。</summary>

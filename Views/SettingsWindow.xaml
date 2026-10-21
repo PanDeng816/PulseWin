@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="PulseWin 设置" Width="860" Height="600" MinWidth="760" MinHeight="480"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="{DynamicResource PageBackBrush}" Foreground="{DynamicResource TextBrush}"
+        Background="{DynamicResource ShellBackBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <!-- 亮色主题,对齐上游设置窗:左侧分页导航 + 右侧内容,行 = 左标题副标题/右控件,
@@ -145,7 +145,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- ————— 侧栏 ————— -->
-        <Border Grid.Column="0" Background="{DynamicResource PageBackBrush}" BorderBrush="{DynamicResource SeparatorBrush}"
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackBrush}" BorderBrush="{DynamicResource SeparatorBrush}"
                 BorderThickness="0,0,1,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="12,14,12,14">
@@ -220,6 +220,23 @@
                                                      GroupName="density" Checked="Density_Changed"/>
                                         <RadioButton x:Name="DensityCompact" Style="{StaticResource Segment}" Content="紧凑"
                                                      GroupName="density" Checked="Density_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="{DynamicResource RowMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="玻璃效果" Style="{StaticResource RowTitle}" VerticalAlignment="Center"
+                                               ToolTip="磨砂＝模糊桌面壁纸；玻璃＝透出背后的窗口内容（更吃性能，窗口失焦时会变淡）。系统材质需要 Win11 22H2 以上，更早的系统只有悬浮窗会变。"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <RadioButton x:Name="GlassOff" Style="{StaticResource Segment}" Content="关"
+                                                     GroupName="glass" Checked="Glass_Changed"/>
+                                        <RadioButton x:Name="GlassFrost" Style="{StaticResource Segment}" Content="磨砂"
+                                                     GroupName="glass" Checked="Glass_Changed"/>
+                                        <RadioButton x:Name="GlassLiquid" Style="{StaticResource Segment}" Content="玻璃"
+                                                     GroupName="glass" Checked="Glass_Changed"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

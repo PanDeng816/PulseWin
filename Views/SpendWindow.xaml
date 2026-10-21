@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="Pulse 用量" Width="640" Height="780" MinWidth="480" MinHeight="320"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="{DynamicResource PageBackBrush}" Foreground="{DynamicResource TextBrush}"
+        Background="{DynamicResource ShellBackBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <Window.Resources>

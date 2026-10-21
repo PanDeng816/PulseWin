@@ -96,6 +96,16 @@ public sealed class AppSettings
     public int UiDensity { get; set; }
 
     /// <summary>
+    /// 玻璃效果三档:**0=关(不透明,旧样子)、1=磨砂、2=玻璃(默认)**。
+    ///
+    /// 一处开关管两个层面,因为用户看到的只是"透不透":
+    ///  · 设置/用量窗 → 系统材质 <see cref="BackdropKind"/>(Mica / Acrylic)；
+    ///  · rail 与悬浮卡 → 自绘玻璃层 <see cref="GlassPaint"/>(系统 blur 对分层窗口不可用)。
+    /// 系统低于 Win11 22621 时前者的材质会静默降级为关,rail 的自绘层不受影响。
+    /// </summary>
+    public int GlassMode { get; set; } = 2;
+
+    /// <summary>
     /// 圆环尺寸三档:0=Small(环 36pt/线 3.2)、1=Standard(40/3.6,默认)、2=Large(44/4,v1.5 原样)。
     /// rail 宽、环心距等几何全部随档联动(见 MainWindow.RingSizeTable)。
     /// </summary>
@@ -297,6 +307,7 @@ public sealed class AppSettings
         HideIdleInnerRing = clean.HideIdleInnerRing;
         UiThemeMode = clean.UiThemeMode;
         UiDensity = clean.UiDensity;
+        GlassMode = clean.GlassMode;
         RingSize = clean.RingSize;
         RingSpacing = clean.RingSpacing;
         HideToSliver = clean.HideToSliver;
@@ -343,6 +354,7 @@ public sealed class AppSettings
         HideIdleInnerRing = HideIdleInnerRing,
         UiThemeMode = Math.Clamp(UiThemeMode, 0, 2),
         UiDensity = Math.Clamp(UiDensity, 0, 1),
+        GlassMode = Math.Clamp(GlassMode, 0, 2),
         RingSize = Math.Clamp(RingSize, 0, 2),
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
         HideToSliver = HideToSliver,

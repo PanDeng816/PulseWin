@@ -9,6 +9,7 @@
     <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
     <SolidColorBrush x:Key="AccentPressBrush" Color="#0060C8"/>
     <SolidColorBrush x:Key="WindowBackBrush" Color="#1B1B20"/>
+    <SolidColorBrush x:Key="ShellBackBrush" Color="#131316"/>
     <SolidColorBrush x:Key="PageBackBrush" Color="#131316"/>
     <SolidColorBrush x:Key="SidebarBackBrush" Color="#16161A"/>
     <SolidColorBrush x:Key="CardBackBrush" Color="#1E1E23"/>

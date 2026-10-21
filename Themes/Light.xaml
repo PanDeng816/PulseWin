@@ -9,6 +9,9 @@
     <SolidColorBrush x:Key="AccentBrush" Color="#007AFF"/>
     <SolidColorBrush x:Key="AccentPressBrush" Color="#0064D2"/>
     <SolidColorBrush x:Key="WindowBackBrush" Color="#FFFFFF"/>
+    <!-- 窗口壳底色:玻璃开时被 UiTheme.ApplyGlass 改写成 Transparent(让 DWM 材质透出来),
+         关时 = 页面底色。只给 Window.Background 用,别当普通底色。 -->
+    <SolidColorBrush x:Key="ShellBackBrush" Color="#F4F4F7"/>
     <!-- 页面底与卡片分开:白卡压在浅灰底上,层次靠"底色差 + 一圈极淡投影",
          不再靠一条 1px 灰线(那种画法在 200% DPI 下几乎看不见)。 -->
     <SolidColorBrush x:Key="PageBackBrush" Color="#F4F4F7"/>

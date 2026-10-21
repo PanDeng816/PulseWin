@@ -93,8 +93,11 @@ internal sealed class RailPreviewView : FrameworkElement
 
         // rail 本体：黑色玻璃，不透明度跟设置走
         byte alpha = (byte)Math.Clamp(s.SurfaceOpacity * 255, 0, 255);
+        var body = new Rect(x, y, railW, railH);
         dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(alpha, 0x0A, 0x0A, 0x0E)),
-            null, new Rect(x, y, railW, railH), radius, radius);
+            null, body, radius, radius);
+        // 与主窗同一套玻璃层，预览才不会跟真实 rail 长得不一样
+        GlassPaint.Paint(dc, GlassPaint.RoundRect(body, radius), body, GlassPaint.Strength);
 
         double centerX = x + railW / 2;
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
