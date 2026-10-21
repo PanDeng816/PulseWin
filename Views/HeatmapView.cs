@@ -23,12 +23,13 @@ internal sealed class HeatmapView : FrameworkElement
         new(new FontFamily("Segoe UI, Microsoft YaHei UI"), FontStyles.Normal,
             FontWeights.Normal, FontStretches.Normal);
 
-    private static readonly Brush EmptyFill = Frozen(Color.FromRgb(0xED, 0xED, 0xF0));
-    private static readonly Brush L1 = Frozen(Color.FromRgb(0xD2, 0xF0, 0xE1));
-    private static readonly Brush L2 = Frozen(Color.FromRgb(0xA4, 0xE2, 0xC3));
-    private static readonly Brush L3 = Frozen(Color.FromRgb(0x5F, 0xCD, 0x9E));
-    private static readonly Brush L4 = Frozen(Color.FromRgb(0x00, 0xA8, 0x5C));
-    private static readonly Brush LabelBrush = Frozen(Color.FromRgb(0x86, 0x86, 0x8B));
+    // 色阶跟主题走:深色下浅绿格子会刺眼,UiTheme 里另配了一套暗底绿
+    private static Brush EmptyFill => UiTheme.B(UiTheme.HeatEmpty);
+    private static Brush L1 => UiTheme.B(UiTheme.HeatL1);
+    private static Brush L2 => UiTheme.B(UiTheme.HeatL2);
+    private static Brush L3 => UiTheme.B(UiTheme.HeatL3);
+    private static Brush L4 => UiTheme.B(UiTheme.HeatL4);
+    private static Brush LabelBrush => UiTheme.B(UiTheme.TextSub);
     private static readonly Pen HoverPen;
 
     static HeatmapView()

@@ -89,6 +89,12 @@ public sealed class AppSettings
     /// <summary>环下是否显示读数(百分比/金额)。关掉后环间距与 rail 高度同步收窄。</summary>
     public bool ShowPercent { get; set; } = true;
 
+    /// <summary>工具窗(设置/用量)主题:0=浅色(默认)、1=深色、2=跟随系统。</summary>
+    public int UiThemeMode { get; set; }
+
+    /// <summary>工具窗密度:0=舒适(默认)、1=紧凑(卡片内边距与行距各收一档)。</summary>
+    public int UiDensity { get; set; }
+
     /// <summary>
     /// 圆环尺寸三档:0=Small(环 36pt/线 3.2)、1=Standard(40/3.6,默认)、2=Large(44/4,v1.5 原样)。
     /// rail 宽、环心距等几何全部随档联动(见 MainWindow.RingSizeTable)。
@@ -289,6 +295,8 @@ public sealed class AppSettings
         DeepSeekTint = null;
         ShowPercent = clean.ShowPercent;
         HideIdleInnerRing = clean.HideIdleInnerRing;
+        UiThemeMode = clean.UiThemeMode;
+        UiDensity = clean.UiDensity;
         RingSize = clean.RingSize;
         RingSpacing = clean.RingSpacing;
         HideToSliver = clean.HideToSliver;
@@ -333,6 +341,8 @@ public sealed class AppSettings
             .ToList(),
         ShowPercent = ShowPercent,
         HideIdleInnerRing = HideIdleInnerRing,
+        UiThemeMode = Math.Clamp(UiThemeMode, 0, 2),
+        UiDensity = Math.Clamp(UiDensity, 0, 1),
         RingSize = Math.Clamp(RingSize, 0, 2),
         RingSpacing = Math.Clamp(RingSpacing, 0, 2),
         HideToSliver = HideToSliver,
@@ -454,6 +464,8 @@ public sealed class AppSettings
         VisibleSources = new List<string>(VisibleSources),
         ShowPercent = ShowPercent,
         HideIdleInnerRing = HideIdleInnerRing,
+        UiThemeMode = UiThemeMode,
+        UiDensity = UiDensity,
         RingSize = RingSize,
         RingSpacing = RingSpacing,
         HideToSliver = HideToSliver,

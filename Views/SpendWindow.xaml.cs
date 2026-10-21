@@ -54,32 +54,34 @@ public partial class SpendWindow : Window
 
     private const string PeakWindowText = "09–12 / 14–18 点";
 
-    private static readonly Brush BarModels = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF));
-    private static readonly Brush BarAgents = Frozen(Color.FromRgb(0x5E, 0x5C, 0xE6));
-    private static readonly Brush BarProjects = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
-    private static readonly Brush BarSessions = Frozen(Color.FromRgb(0xBF, 0x5A, 0xF2));
-    private static readonly Brush BarEmpty = Frozen(Color.FromRgb(0xC7, 0xC7, 0xCC));
-    private static readonly Brush ChartBar = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF));
-    private static readonly Brush ChartZero = Frozen(Color.FromRgb(0xE5, 0xE5, 0xEA));
-    private static readonly Brush PeakBar = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
+    // 颜色全部走 UiTheme:深浅主题切换后,下一帧/下一次渲染就是新色值
+    // (这里**不能**用 static readonly 缓存:那样会把启动时的主题永久钉死)
+    private static Brush BarModels => UiTheme.B(UiTheme.BarModels);
+    private static Brush BarAgents => UiTheme.B(UiTheme.BarAgents);
+    private static Brush BarProjects => UiTheme.B(UiTheme.BarProjects);
+    private static Brush BarSessions => UiTheme.B(UiTheme.BarSessions);
+    private static Brush BarEmpty => UiTheme.B(UiTheme.BarEmpty);
+    private static Brush ChartBar => UiTheme.B(UiTheme.ChartBar);
+    private static Brush ChartZero => UiTheme.B(UiTheme.ChartZero);
+    private static Brush PeakBar => UiTheme.B(UiTheme.PeakBar);
 
     // 曲线图用的原始颜色(渐变填充/峰时段底纹要按 Color 建画刷,不能直接拿 Brush)
-    private static readonly Color AccentColor = Color.FromRgb(0x00, 0x7A, 0xFF);
-    private static readonly Color GoodColor = Color.FromRgb(0x00, 0xA8, 0x5C);
-    private static readonly Color PeakColor = Color.FromRgb(0xFF, 0x9F, 0x0A);
+    private static Color AccentColor => UiTheme.Accent;
+    private static Color GoodColor => UiTheme.Good;
+    private static Color PeakColor => UiTheme.PeakBar;
 
-    // 套餐页从设置窗搬来,那里用主题资源,这里用同色值的固定画刷
-    private static readonly Brush TextMain = Frozen(Color.FromRgb(0x1D, 0x1D, 0x1F));
-    private static readonly Brush TextSub = Frozen(Color.FromRgb(0x86, 0x86, 0x8B));
-    private static readonly Brush FieldBack = Frozen(Color.FromRgb(0xE8, 0xE8, 0xEC));
-    private static readonly Brush Accent = Frozen(Color.FromRgb(0x00, 0x7A, 0xFF));
-    private static readonly Brush Separator = Frozen(Color.FromRgb(0xEC, 0xEC, 0xEF));
-    private static readonly Brush GoodBrush = Frozen(Color.FromRgb(0x00, 0xA8, 0x5C));
-    private static readonly Brush WarnBrush = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
-    private static readonly Brush BadBrush = Frozen(Color.FromRgb(0xE0, 0x48, 0x3E));
+    // 套餐页从设置窗搬来,那里用主题资源,这里用同色值
+    private static Brush TextMain => UiTheme.B(UiTheme.TextMain);
+    private static Brush TextSub => UiTheme.B(UiTheme.TextSub);
+    private static Brush FieldBack => UiTheme.B(UiTheme.FieldBack);
+    private static Brush Accent => UiTheme.B(UiTheme.Accent);
+    private static Brush Separator => UiTheme.B(UiTheme.Separator);
+    private static Brush GoodBrush => UiTheme.B(UiTheme.Good);
+    private static Brush WarnBrush => UiTheme.B(UiTheme.Warn);
+    private static Brush BadBrush => UiTheme.B(UiTheme.Bad);
 
     /// <summary>浅一档的蓝(强调色的 45% 混白):铺满整行的占比条用它,免得盖过数字。</summary>
-    private static readonly Brush BarSoft = Frozen(Color.FromRgb(0x8C, 0xBF, 0xFF));
+    private static Brush BarSoft => UiTheme.B(UiTheme.AccentSoft);
 
     private static Brush Frozen(Color c)
     {
@@ -164,7 +166,7 @@ public partial class SpendWindow : Window
         for (int i = 0; i < n; i++) max = Math.Max(max, (long)values[i]);
 
         // 基线:无论有没有数据都画,免得图看着"悬空"
-        var baseline = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)) };
+        var baseline = new Rectangle { Width = width, Height = 1, Fill = UiTheme.B(UiTheme.ChartTrack) };
         Canvas.SetLeft(baseline, 0);
         Canvas.SetTop(baseline, plotH);
         canvas.Children.Add(baseline);
@@ -272,7 +274,7 @@ public partial class SpendWindow : Window
             var dot = new Ellipse
             {
                 Width = r * 2, Height = r * 2,
-                Fill = isMax ? Frozen(lineColor) : Frozen(Color.FromRgb(0xFF, 0xFF, 0xFF)),
+                Fill = isMax ? Frozen(lineColor) : UiTheme.B(UiTheme.CardBack),
                 Stroke = Frozen(lineColor), StrokeThickness = isMax ? 0 : 1.2,
             };
             Canvas.SetLeft(dot, pts[i].X - r);
@@ -365,6 +367,19 @@ public partial class SpendWindow : Window
             button.Checked += Span_Checked;
         Loaded += (_, _) => { ReloadLedger(); HookResizeRedraw(); };
         Heatmap.DayClicked += EnterDayFocus;
+        // 主题/密度在设置里切换时,这个窗可能正开着:重建一遍颜色与内边距
+        UiTheme.Changed += OnUiThemeChanged;
+    }
+
+    private void OnUiThemeChanged()
+    {
+        if (_closed) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_closed) return;
+            RenderAll();
+            Heatmap.InvalidateVisual();
+        });
     }
 
     // ————————————————— 数据加载 —————————————————
@@ -554,7 +569,7 @@ public partial class SpendWindow : Window
             {
                 Text = badge,
                 FontSize = 11,
-                Foreground = Frozen(Color.FromRgb(0x92, 0x92, 0x99)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
                 Margin = new Thickness(7, 1, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             });
@@ -668,7 +683,7 @@ public partial class SpendWindow : Window
                 QuotaPanel.Children.Add(new Border
                 {
                     Height = 1,
-                    Background = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)),
+                    Background = UiTheme.B(UiTheme.Separator),
                     Margin = new Thickness(0, 2, 0, 10),
                 });
         }
@@ -737,7 +752,7 @@ public partial class SpendWindow : Window
         {
             line.Children.Add(new Border
             {
-                Background = Frozen(Color.FromRgb(0xEA, 0xF2, 0xFF)),
+                Background = UiTheme.B(UiTheme.ChipBack),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(4, 1, 4, 1),
                 Margin = new Thickness(4, 0, 0, 0),
@@ -1144,7 +1159,7 @@ public partial class SpendWindow : Window
         long max = 0;
         for (int i = 0; i < n; i++) max = Math.Max(max, (long)values[i]);
 
-        var baseline = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)) };
+        var baseline = new Rectangle { Width = width, Height = 1, Fill = UiTheme.B(UiTheme.ChartTrack) };
         Canvas.SetLeft(baseline, 0);
         Canvas.SetTop(baseline, plotH);
         canvas.Children.Add(baseline);
@@ -1161,7 +1176,7 @@ public partial class SpendWindow : Window
         // 两条淡网格线（半格/满格）：让高度可读，又不加刻度文字把图面弄噪
         foreach (double frac in new[] { 0.5, 1.0 })
         {
-            var grid = new Rectangle { Width = width, Height = 1, Fill = Frozen(Color.FromRgb(0xEE, 0xEE, 0xF2)) };
+            var grid = new Rectangle { Width = width, Height = 1, Fill = UiTheme.B(UiTheme.ChartTrack) };
             Canvas.SetLeft(grid, 0);
             Canvas.SetTop(grid, plotH - plotH * frac * 0.94);
             canvas.Children.Add(grid);
@@ -1218,7 +1233,7 @@ public partial class SpendWindow : Window
                 var dot = new Rectangle
                 {
                     Width = barW, Height = 2, RadiusX = 1, RadiusY = 1,
-                    Fill = Frozen(Color.FromRgb(0xE4, 0xE4, 0xEA)),
+                    Fill = UiTheme.B(UiTheme.ChartZero),
                 };
                 Canvas.SetLeft(dot, x);
                 Canvas.SetTop(dot, plotH - 2);
@@ -1424,13 +1439,13 @@ public partial class SpendWindow : Window
     private static Brush HeatBrush(long tokens, long max)
     {
         Color color = max <= 0 || tokens <= 0
-            ? Color.FromRgb(0xED, 0xED, 0xF0)
+            ? UiTheme.HeatEmpty
             : (tokens * 4d / max) switch
             {
-                < 1 => Color.FromRgb(0xD2, 0xF0, 0xE1),
-                < 2 => Color.FromRgb(0xA4, 0xE2, 0xC3),
-                < 3 => Color.FromRgb(0x5F, 0xCD, 0x9E),
-                _ => Color.FromRgb(0x00, 0xA8, 0x5C)
+                < 1 => UiTheme.HeatL1,
+                < 2 => UiTheme.HeatL2,
+                < 3 => UiTheme.HeatL3,
+                _ => UiTheme.HeatL4,
             };
         return Frozen(color);
     }
@@ -2628,11 +2643,11 @@ public partial class SpendWindow : Window
     {
         Brush accent = kind switch
         {
-            "Money" => Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A)),
-            "Tokens" => Frozen(Color.FromRgb(0x00, 0x7A, 0xFF)),
-            "Cache" => Frozen(Color.FromRgb(0x00, 0xA8, 0x5C)),
-            "Requests" => Frozen(Color.FromRgb(0x5E, 0x5C, 0xE6)),
-            "Sessions" => Frozen(Color.FromRgb(0xBF, 0x5A, 0xF2)),
+            "Money" => UiTheme.B(UiTheme.Warn),
+            "Tokens" => UiTheme.B(UiTheme.Accent),
+            "Cache" => UiTheme.B(UiTheme.Good),
+            "Requests" => UiTheme.B(UiTheme.BarAgents),
+            "Sessions" => UiTheme.B(UiTheme.BarSessions),
             _ => TextSub,
         };
 
@@ -2670,10 +2685,10 @@ public partial class SpendWindow : Window
 
         var tile = new Border
         {
-            Background = Frozen(Color.FromRgb(0xF7, 0xF8, 0xFA)),
+            Background = UiTheme.B(UiTheme.TileBack),
             CornerRadius = new CornerRadius(9),
-            Padding = new Thickness(11, 9, 11, 8),
-            Margin = new Thickness(0, 0, 8, 8),
+            Padding = UiTheme.TilePad,
+            Margin = UiTheme.TileGap,
             Child = panel,
         };
         host.Children.Add(tile);
@@ -2866,6 +2881,7 @@ public partial class SpendWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _closed = true;
+        UiTheme.Changed -= OnUiThemeChanged;
         if (_holdsLedgerRef)
         {
             _holdsLedgerRef = false;

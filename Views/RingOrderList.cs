@@ -55,7 +55,7 @@ public sealed class RingOrderList : UserControl
             {
                 Text = "没有已显示的圆环。在「数据源」页勾选要显示的源。",
                 FontSize = 12,
-                Foreground = Frozen(Color.FromRgb(0x8E, 0x8E, 0x93)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
                 Margin = new Thickness(2, 6, 0, 6),
             });
             return;
@@ -84,7 +84,7 @@ public sealed class RingOrderList : UserControl
             Text = "\uE76F",   // Segoe MDL2: GripperBarHorizontal
             FontFamily = new FontFamily("Segoe MDL2 Assets"),
             FontSize = 13,
-            Foreground = Frozen(Color.FromRgb(0xB0, 0xB0, 0xB6)),
+            Foreground = UiTheme.B(UiTheme.Handle),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 10, 0),
             Cursor = Cursors.SizeAll,
@@ -97,7 +97,7 @@ public sealed class RingOrderList : UserControl
             Text = displayName,
             FontSize = 13,
             VerticalAlignment = VerticalAlignment.Center,
-            Foreground = Frozen(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            Foreground = UiTheme.B(UiTheme.TextMain),
         };
         Grid.SetColumn(name, 1);
         grid.Children.Add(name);
@@ -136,7 +136,7 @@ public sealed class RingOrderList : UserControl
         // 轻量扁平样式:默认 Button 模板在亮色卡里太重
         var template = new ControlTemplate(typeof(Button));
         var border = new FrameworkElementFactory(typeof(Border), "bd");
-        border.SetValue(Border.BackgroundProperty, Frozen(Color.FromRgb(0xEB, 0xEB, 0xEF)));
+        border.SetValue(Border.BackgroundProperty, UiTheme.B(UiTheme.SegBack));
         border.SetValue(Border.CornerRadiusProperty, new CornerRadius(5));
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
@@ -144,7 +144,7 @@ public sealed class RingOrderList : UserControl
         border.AppendChild(presenter);
         template.VisualTree = border;
         var hover = new Trigger { Property = IsMouseOverProperty, Value = true };
-        hover.Setters.Add(new Setter(Border.BackgroundProperty, Frozen(Color.FromRgb(0xE0, 0xE0, 0xE4)), "bd"));
+        hover.Setters.Add(new Setter(Border.BackgroundProperty, UiTheme.B(UiTheme.SegHover), "bd"));
         template.Triggers.Add(hover);
         var disabled = new Trigger { Property = IsEnabledProperty, Value = false };
         disabled.Setters.Add(new Setter(UIElement.OpacityProperty, 0.4, "bd"));

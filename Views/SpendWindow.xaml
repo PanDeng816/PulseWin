@@ -4,27 +4,27 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="Pulse 用量" Width="640" Height="780" MinWidth="480" MinHeight="320"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="{StaticResource PageBackBrush}" Foreground="#1D1D1F"
+        Background="{DynamicResource PageBackBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <Window.Resources>
         <!-- 亮色主题,对齐上游 Token spend 页:白底、白卡、蓝控件、灰注释 -->
         <Style x:Key="DarkButton" TargetType="Button">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="White" BorderBrush="#D8D8DC"
+                        <Border x:Name="Bd" Background="{DynamicResource CardBackBrush}" BorderBrush="{DynamicResource FieldBorderBrush}"
                                 BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E9E9EC"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E4"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SegHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -34,23 +34,23 @@
 
         <!-- 区间/视图切换:上游分段控件样式(浅灰轨道、选中蓝块白字) -->
         <Style x:Key="SpanToggle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Bd" Background="#EBEBEF" BorderBrush="Transparent"
+                        <Border x:Name="Bd" Background="{DynamicResource SegBackBrush}" BorderBrush="Transparent"
                                 BorderThickness="1" CornerRadius="7" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E4"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SegHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#007AFF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter TargetName="Bd" Property="Effect">
@@ -86,7 +86,7 @@
                                 <Setter TargetName="Bd" Property="Background" Value="#F2F2F5"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E9F2FF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TabActiveBackBrush}"/>
                                 <Setter Property="Foreground" Value="#0068D9"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
@@ -97,29 +97,29 @@
         </Style>
 
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBackBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="14,12"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-            <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
+            <Setter Property="Padding" Value="{DynamicResource SpendCardPad}"/>
+            <Setter Property="Margin" Value="{DynamicResource SpendCardGap}"/>
+            <Setter Property="Effect" Value="{DynamicResource CardShadow}"/>
         </Style>
 
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="1,4,0,8"/>
+            <Setter Property="Margin" Value="{DynamicResource SpendSectionMargin}"/>
         </Style>
 
         <Style x:Key="Dim" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#86868B"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSubBrush}"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
         <!-- 列表行:名称 / 数字 / 金额 / 比例条。可下钻的行(最近会话)显手型光标 -->
         <DataTemplate x:Key="RowTemplate">
-            <Grid Margin="0,3" Background="Transparent" MouseLeftButtonDown="Row_MouseDown"
+            <Grid Margin="{DynamicResource RowGap}" Background="Transparent" MouseLeftButtonDown="Row_MouseDown"
                   Cursor="{Binding RowCursor}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -136,12 +136,12 @@
                         </Grid.ColumnDefinitions>
                         <!-- 外层裁剪:BarWidth 算大了(满格归一/取整)时填充条也不会糊出 180 的底轨,
                              而在整行上拉一条长线 -->
-                        <Border Background="#ECECF0" CornerRadius="2.5" Height="5" Width="180"
+                        <Border Background="{DynamicResource BarTrackBrush}" CornerRadius="2.5" Height="5" Width="180"
                                 HorizontalAlignment="Left" ClipToBounds="True">
                             <Border Background="{Binding BarBrush}" CornerRadius="2.5" Height="5"
                                     HorizontalAlignment="Left" Width="{Binding BarWidth}" MaxWidth="180"/>
                         </Border>
-                        <TextBlock Grid.Column="1" Text="{Binding Detail}" FontSize="11" Foreground="#86868B"
+                        <TextBlock Grid.Column="1" Text="{Binding Detail}" FontSize="11" Foreground="{DynamicResource TextSubBrush}"
                                    Margin="8,-3,0,0" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding Detail}"/>
                     </Grid>
@@ -158,8 +158,8 @@
 
     <DockPanel>
         <!-- 顶部:视图 tab / 区间 / 刷新与导出 / 价目表来源 -->
-        <Border DockPanel.Dock="Top" Background="White" Padding="20,13,20,11"
-                BorderBrush="#ECECEF" BorderThickness="0,0,0,1">
+        <Border DockPanel.Dock="Top" Background="{DynamicResource CardBackBrush}" Padding="20,13,20,11"
+                BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1">
             <StackPanel MaxWidth="1280" HorizontalAlignment="Stretch">
                 <WrapPanel x:Name="TabRow" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal">
@@ -190,7 +190,7 @@
             <StackPanel Margin="20,14,20,18" MaxWidth="1280" HorizontalAlignment="Stretch">
 
                 <!-- 下钻面包屑(点柱图/热图某天后出现) -->
-                <DockPanel x:Name="DayFilterRow" Visibility="Collapsed" Margin="0,0,0,12">
+                <DockPanel x:Name="DayFilterRow" Visibility="Collapsed" Margin="{DynamicResource SpendCardGap}">
                     <Button x:Name="DayFilterBack" DockPanel.Dock="Left" Style="{StaticResource DarkButton}"
                             Content="← 返回" Click="DayFilterBack_Click" Padding="10,3"/>
                     <TextBlock x:Name="DayFilterText" Margin="10,0,0,0" VerticalAlignment="Center"
@@ -215,7 +215,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="TotalTokens" FontSize="34" FontWeight="SemiBold"
                                            VerticalAlignment="Bottom" Typography.NumeralAlignment="Tabular"/>
-                                <TextBlock Text="tokens" FontSize="12.5" Foreground="#86868B" Margin="8,0,0,9"/>
+                                <TextBlock Text="tokens" FontSize="12.5" Foreground="{DynamicResource TextSubBrush}" Margin="8,0,0,9"/>
                                 <TextBlock x:Name="TotalCost" FontSize="34" FontWeight="SemiBold" Margin="30,0,0,0"
                                            VerticalAlignment="Bottom" Typography.NumeralAlignment="Tabular"/>
                             </StackPanel>
@@ -253,7 +253,7 @@
                                 <ItemsControl x:Name="RecentSessionList" ItemTemplate="{StaticResource RowTemplate}"/>
                                 <!-- 其余会话合计:让"6 行"与顶部总量能对上,而不是两套数字各说各的 -->
                                 <TextBlock x:Name="RecentSessionMore" Margin="0,8,0,0" FontSize="11"
-                                           Foreground="#86868B" TextWrapping="Wrap"/>
+                                           Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -288,7 +288,7 @@
                             <TextBlock x:Name="ChannelTitle" FontSize="15" FontWeight="SemiBold"/>
                             <TextBlock x:Name="ChannelSubtitle" Style="{StaticResource Dim}" Margin="0,3,0,0"/>
                             <UniformGrid x:Name="ChannelKpiGrid" Columns="3" Margin="0,12,0,2"/>
-                            <Border Background="#ECECEF" Height="1" Margin="0,10,0,10"/>
+                            <Border Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,10,0,10"/>
                             <TextBlock Text="Token 构成" Style="{StaticResource SectionTitle}" Margin="1,0,0,0"/>
                             <UniformGrid x:Name="ChannelTokenGrid" Columns="3" Margin="0,4,0,2"/>
                         </StackPanel>
@@ -314,7 +314,7 @@
                             <!-- 只有 GOAT 与 OpenCode Go 有账号级用量接口(GOAT 走 charts,
                                  OpenCode 走 console api/usage/*);别的渠道这块折叠 -->
                             <StackPanel x:Name="AccountModelSection">
-                                <Border Background="#ECECEF" Height="1" Margin="0,10,0,10"/>
+                                <Border Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,10,0,10"/>
                                 <Grid Margin="0,0,0,6">
                                     <TextBlock Text="官方逐模型明细(账号级)" Style="{StaticResource SectionTitle}" Margin="0"/>
                                 </Grid>

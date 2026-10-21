@@ -147,13 +147,13 @@ public partial class MainWindow : Window
     // 环尺寸**固定**,不随订阅数缩放:多一个源就整体变长,不缩小环。
     // 单元高度由"环心 + 环半径 + 读数行高"加出来,所以环与环之间不留多余空白。
     // 环的尺寸与间距来自设置三档(尺寸三档的默认档比 v1.5 的小一圈、细一号)。
-    private static double RailWpt => RingSizeTable(AppSettings.Current.RingSize).RailW;
+    internal static double RailWpt => RingSizeTable(AppSettings.Current.RingSize).RailW;
 
     /// <summary>环外缘半径 = 中线直径/2 + 线宽/2(环的最外沿,不是中心线)。</summary>
-    private static double RingOuterRadius => OuterRingDpt / 2 + OuterWpt / 2;
+    internal static double RingOuterRadius => OuterRingDpt / 2 + OuterWpt / 2;
 
     /// <summary>环心距单元顶,即环外缘上方留 4pt。</summary>
-    private static double RingCenterInUnit => RingOuterRadius + 4;
+    internal static double RingCenterInUnit => RingOuterRadius + 4;
 
     /// <summary>
     /// rail 两端的留白。两个约束决定了这两个数:
@@ -162,11 +162,11 @@ public partial class MainWindow : Window
     /// ② `PadBottom = PadTop + (环外缘到单元顶那段)`,这样**第一个环到 rail 顶的距离
     ///    和最后一个环(或它下方读数)到 rail 底的距离相等**,上下对称。
     /// </summary>
-    private const double PadTopPt = 24;
-    private static double PadBottomPt => PadTopPt + (RingCenterInUnit - RingOuterRadius);
+    internal const double PadTopPt = 24;
+    internal static double PadBottomPt => PadTopPt + (RingCenterInUnit - RingOuterRadius);
 
     /// <summary>相邻单元之间的间距(三档)。</summary>
-    private static double UnitGappt => AppSettings.Current.RingSpacing switch
+    internal static double UnitGappt => AppSettings.Current.RingSpacing switch
     {
         0 => 2,
         2 => 10,
@@ -174,16 +174,16 @@ public partial class MainWindow : Window
     };
 
     /// <summary>环外缘到读数的间距。</summary>
-    private const double RingToTextGap = 6;
+    internal const double RingToTextGap = 6;
     /// <summary>读数行高(13pt)。中文字体行距比拉丁大,算小了文字会被下一个环压住。</summary>
-    private const double TextLineHeight = 17;
+    internal const double TextLineHeight = 17;
 
     /// <summary>
     /// 环几何三档:{rail 宽, 外环中线直径, 外环线宽, 内环中线直径, 内环线宽}。
     /// Small=36/3.2、Standard=40/3.6(默认,比 v1.5 的 44/4 小一圈细一号)、Large=44/4(=v1.5 原样)。
     /// 约束:内环比外环小一圈;rail 宽 = 外环外缘直径 + 两侧各 4pt。
     /// </summary>
-    private static (double RailW, double OuterD, double OuterW, double InnerD, double InnerW) RingSizeTable(
+    internal static (double RailW, double OuterD, double OuterW, double InnerD, double InnerW) RingSizeTable(
         int size) => size switch
     {
         0 => (48, 36, 3.2, 26, 2.2),
@@ -191,10 +191,10 @@ public partial class MainWindow : Window
         _ => (52, 40, 3.6, 30, 2.4),
     };
 
-    private static double OuterRingDpt => RingSizeTable(AppSettings.Current.RingSize).OuterD;
-    private static double OuterWpt => RingSizeTable(AppSettings.Current.RingSize).OuterW;
-    private static double InnerRingDpt => RingSizeTable(AppSettings.Current.RingSize).InnerD;
-    private static double InnerWpt => RingSizeTable(AppSettings.Current.RingSize).InnerW;
+    internal static double OuterRingDpt => RingSizeTable(AppSettings.Current.RingSize).OuterD;
+    internal static double OuterWpt => RingSizeTable(AppSettings.Current.RingSize).OuterW;
+    internal static double InnerRingDpt => RingSizeTable(AppSettings.Current.RingSize).InnerD;
+    internal static double InnerWpt => RingSizeTable(AppSettings.Current.RingSize).InnerW;
 
     /// <summary>
     /// berth 外形(圆角/喇叭口/贴边细条宽)相对 v1.5 基准轨宽(56pt)的缩放。

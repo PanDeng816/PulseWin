@@ -87,6 +87,11 @@ public partial class SettingsWindow : Window
         SpacingTight.IsChecked = s.RingSpacing == 0;
         SpacingStandard.IsChecked = s.RingSpacing == 1;
         SpacingLoose.IsChecked = s.RingSpacing == 2;
+        ThemeLight.IsChecked = s.UiThemeMode == 0;
+        ThemeDark.IsChecked = s.UiThemeMode == 1;
+        ThemeSystem.IsChecked = s.UiThemeMode == 2;
+        DensityComfort.IsChecked = s.UiDensity == 0;
+        DensityCompact.IsChecked = s.UiDensity == 1;
         SliverBox.IsChecked = s.HideToSliver;
         FullScreenBox.IsChecked = s.HideInFullScreen;
         BrowserSessionBox.IsChecked = s.UseBrowserSessionForModelDetail;
@@ -102,6 +107,7 @@ public partial class SettingsWindow : Window
         UpdateManualCookieHint();
         _loading = false;
         UpdateLabels();
+        RailPreview?.Refresh();
     }
 
     // ————————————————— 数据源 / 圆环顺序(都按注册表生成) —————————————————
@@ -150,8 +156,7 @@ public partial class SettingsWindow : Window
                 Text = source.DisplayName,
                 FontSize = 13,
                 VerticalAlignment = VerticalAlignment.Center,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x1D, 0x1D, 0x1F)),
+                Foreground = UiTheme.B(UiTheme.TextMain),
             });
             var picker = new TintPicker { Value = AppSettings.Current.TintFor(source.Key) };
             picker.ValueChanged += (_, _) =>
@@ -255,6 +260,7 @@ public partial class SettingsWindow : Window
         s.SurfaceOpacity = OpacitySlider.Value / 100d;
         s.SyncIntervalSeconds = (int)IntervalSlider.Value;
         AppearanceChanged?.Invoke();   // 外观类设置:让浮窗立刻重绘,但不重读数据
+        RailPreview?.Refresh();        // 背景不透明度也在预览里
         SaveSoon();
     }
 
@@ -318,6 +324,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         AppSettings.Current.ShowPercent = ShowPercentBox.IsChecked == true;
+        RailPreview?.Refresh();
         SettingsChanged?.Invoke();
         SaveSoon();
     }
@@ -327,6 +334,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         AppSettings.Current.HideIdleInnerRing = IdleInnerRingBox.IsChecked == true;
+        RailPreview?.Refresh();
         SettingsChanged?.Invoke();
         SaveSoon();
     }
@@ -491,10 +499,42 @@ public partial class SettingsWindow : Window
 
     // ————————————————— 行为/外观的批 1 设置 —————————————————
 
+    /// <summary>主题三档:浅色 / 深色 / 跟随系统。切换即时生效(不再要求重启)。</summary>
+    private void Theme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        var s = AppSettings.Current;
+        s.UiThemeMode = ThemeDark.IsChecked == true ? 1 : ThemeSystem.IsChecked == true ? 2 : 0;
+        s.Save();
+        bool dark = s.UiThemeMode == 1 || (s.UiThemeMode == 2 && UiTheme.SystemPrefersDark());
+        UiTheme.Apply(dark);
+        RefreshCodeGenerated();
+    }
+
+    /// <summary>密度两档。XAML 侧靠 DynamicResource 自动换,Padding 写在代码里的控件要重建。</summary>
+    private void Density_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        AppSettings.Current.UiDensity = DensityCompact.IsChecked == true ? 1 : 0;
+        AppSettings.Current.Save();
+        UiTheme.Apply(UiTheme.IsDark);   // 重新写密度资源
+        RefreshCodeGenerated();
+    }
+
+    /// <summary>颜色/内边距写死在构造里的这些控件,主题或密度一变就得重建。</summary>
+    private void RefreshCodeGenerated()
+    {
+        BuildSourceCards();
+        BuildTintPickers();
+        ReloadRingOrder();
+        RailPreview?.Refresh();
+    }
+
     private void RingSize_Changed(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
         AppSettings.Current.RingSize = SizeSmall.IsChecked == true ? 0 : SizeLarge.IsChecked == true ? 2 : 1;
+        RailPreview?.Refresh();
         SettingsChanged?.Invoke();
         SaveSoon();
     }
@@ -503,6 +543,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
         AppSettings.Current.RingSpacing = SpacingTight.IsChecked == true ? 0 : SpacingLoose.IsChecked == true ? 2 : 1;
+        RailPreview?.Refresh();
         SettingsChanged?.Invoke();
         SaveSoon();
     }

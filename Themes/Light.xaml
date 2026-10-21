@@ -25,12 +25,27 @@
     <SolidColorBrush x:Key="NavActiveBackBrush" Color="#E7F1FF"/>
     <SolidColorBrush x:Key="FieldBackBrush" Color="#F0F0F2"/>
     <SolidColorBrush x:Key="FieldBorderBrush" Color="#D8D8DC"/>
+    <!-- 以下键在 Themes\Dark.xaml 里有同名覆盖:两边的键名必须一一对应 -->
+    <SolidColorBrush x:Key="TileBackBrush" Color="#F7F8FA"/>
+    <SolidColorBrush x:Key="SegBackBrush" Color="#EBEBEF"/>
+    <SolidColorBrush x:Key="SegHoverBrush" Color="#E0E0E4"/>
+    <SolidColorBrush x:Key="TabActiveBackBrush" Color="#E9F2FF"/>
+    <SolidColorBrush x:Key="TabActiveTextBrush" Color="#0068D9"/>
+    <SolidColorBrush x:Key="ChipBackBrush" Color="#EAF2FF"/>
+    <SolidColorBrush x:Key="BarTrackBrush" Color="#ECECF0"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#C7502E"/>
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#C9C9D0"/>
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#AFAFB8"/>
+    <SolidColorBrush x:Key="ScrollThumbDragBrush" Color="#96969F"/>
+    <SolidColorBrush x:Key="ComboHoverBorderBrush" Color="#B9B9BF"/>
+    <SolidColorBrush x:Key="SliderThumbBorderBrush" Color="#C9C9CF"/>
+    <SolidColorBrush x:Key="SelectionBrush" Color="#B3D7FF"/>
 
     <!-- 次要按钮:白底灰边。主按钮:蓝底白字。 -->
     <Style x:Key="LightButton" TargetType="Button">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Padding" Value="12,5"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontSize" Value="12.5"/>
@@ -47,10 +62,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{StaticResource NavHoverBrush}"/>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{StaticResource SeparatorBrush}"/>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource SeparatorBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -62,7 +77,7 @@
     </Style>
 
     <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource LightButton}">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -75,7 +90,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentPressBrush}"/>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentPressBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="#0058B8"/>
@@ -90,10 +105,10 @@
     </Style>
 
     <Style x:Key="LightTextBox" TargetType="TextBox">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
         <Setter Property="SelectionBrush" Value="#B3D7FF"/>
         <!-- 垂直 padding 只能用 2:模板里 ScrollViewer 的高度 = 控件高 − 边框 − 上下 padding,
              12.5pt 中文字行高约 33px,30px 高的控件扣掉 2+2*4 只剩 20px,居中后上下各裁 ~6px,
@@ -113,7 +128,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -126,7 +141,7 @@
 
     <!-- 勾选框:18px 圆角方块,选中蓝底白勾。 -->
     <Style x:Key="LightCheckBox" TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -135,7 +150,7 @@
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
                         <Border x:Name="box" Width="18" Height="18" CornerRadius="5"
-                                Background="White" BorderBrush="{StaticResource FieldBorderBrush}"
+                                Background="{DynamicResource CardBackBrush}" BorderBrush="{DynamicResource FieldBorderBrush}"
                                 BorderThickness="1" VerticalAlignment="Center">
                             <Path x:Name="check" Data="M3,8.2 L6.8,12 L13,4.6" Stroke="White" StrokeThickness="1.8"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0"
@@ -146,12 +161,12 @@
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="box" Property="Background" Value="{StaticResource AccentBrush}"/>
-                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="box" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                             <Setter TargetName="check" Property="Opacity" Value="1"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -164,7 +179,7 @@
 
     <!-- 下拉:白底灰边圆角,弹层白卡带阴影。替代旧 DarkCombo。 -->
     <Style x:Key="LightComboItem" TargetType="ComboBoxItem">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="Padding" Value="9,5"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -178,10 +193,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{StaticResource NavHoverBrush}"/>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -191,7 +206,7 @@
     </Style>
 
     <Style x:Key="LightCombo" TargetType="ComboBox">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource LightComboItem}"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -203,20 +218,20 @@
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="bd" Background="White" BorderBrush="{StaticResource FieldBorderBrush}"
+                                    <Border x:Name="bd" Background="{DynamicResource CardBackBrush}" BorderBrush="{DynamicResource FieldBorderBrush}"
                                             BorderThickness="1" CornerRadius="6" Padding="9,4">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Path Grid.Column="1" Data="M0,0 L4,4 8,0" Stroke="#86868B" StrokeThickness="1.5"
+                                            <Path Grid.Column="1" Data="M0,0 L4,4 8,0" Stroke="{DynamicResource TextSubBrush}" StrokeThickness="1.5"
                                                   VerticalAlignment="Center" Margin="6,1,0,0"/>
                                         </Grid>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="bd" Property="BorderBrush" Value="#B9B9BF"/>
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource ComboHoverBorderBrush}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -230,7 +245,7 @@
                         <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
                                Placement="Bottom" AllowsTransparency="True" StaysOpen="False"
                                PopupAnimation="Fade">
-                            <Border Background="White" CornerRadius="8" BorderBrush="#E0E0E4"
+                            <Border Background="{DynamicResource CardBackBrush}" CornerRadius="8" BorderBrush="{DynamicResource SegHoverBrush}"
                                     BorderThickness="1" Margin="10,4,10,12" Padding="4" MinWidth="{TemplateBinding ActualWidth}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270"
@@ -257,7 +272,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Ellipse Width="18" Height="18" Fill="White" Stroke="#C9C9CF" StrokeThickness="1">
+                    <Ellipse Width="18" Height="18" Fill="White" Stroke="{DynamicResource SliderThumbBorderBrush}" StrokeThickness="1">
                         <Ellipse.Effect>
                             <DropShadowEffect BlurRadius="5" ShadowDepth="1" Direction="270" Opacity="0.3" Color="#000000"/>
                         </Ellipse.Effect>
@@ -280,7 +295,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="RepeatButton">
                                             <Grid Background="Transparent">
-                                                <Border Height="4" CornerRadius="2" Background="{StaticResource AccentBrush}"
+                                                <Border Height="4" CornerRadius="2" Background="{DynamicResource AccentBrush}"
                                                         VerticalAlignment="Center"/>
                                             </Grid>
                                         </ControlTemplate>
@@ -292,7 +307,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="RepeatButton">
                                             <Grid Background="Transparent">
-                                                <Border Height="4" CornerRadius="2" Background="{StaticResource FieldBorderBrush}"
+                                                <Border Height="4" CornerRadius="2" Background="{DynamicResource FieldBorderBrush}"
                                                         VerticalAlignment="Center"/>
                                             </Grid>
                                         </ControlTemplate>
@@ -334,14 +349,14 @@
                                 <Thumb>
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border x:Name="thumb" Background="#C9C9D0" CornerRadius="3"
+                                            <Border x:Name="thumb" Background="{DynamicResource ScrollThumbBrush}" CornerRadius="3"
                                                     Margin="1,2"/>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="thumb" Property="Background" Value="#AFAFB8"/>
+                                                    <Setter TargetName="thumb" Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}"/>
                                                 </Trigger>
                                                 <Trigger Property="IsDragging" Value="True">
-                                                    <Setter TargetName="thumb" Property="Background" Value="#96969F"/>
+                                                    <Setter TargetName="thumb" Property="Background" Value="{DynamicResource ScrollThumbDragBrush}"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -386,11 +401,11 @@
                                         <Thumb>
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Border x:Name="thumb" Background="#C9C9D0" CornerRadius="3"
+                                                    <Border x:Name="thumb" Background="{DynamicResource ScrollThumbBrush}" CornerRadius="3"
                                                             Margin="2,1"/>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="thumb" Property="Background" Value="#AFAFB8"/>
+                                                            <Setter TargetName="thumb" Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -417,4 +432,19 @@
 
     <!-- 全局默认滚动条(隐式):所有 ScrollViewer / 列表 / TextBox 内部都走这套细滑块 -->
     <Style TargetType="ScrollBar" BasedOn="{StaticResource LightScrollBar}"/>
+
+    <!-- 自定义区间用的日期框:系统模板是白底黑字,深色主题下会跳出来两块白。
+         这里只改配色(模板仍用系统默认),日期文本与边框跟主题走。 -->
+    <Style TargetType="DatePicker">
+        <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderBrush}"/>
+        <Setter Property="FontSize" Value="12.5"/>
+    </Style>
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+    </Style>
 </ResourceDictionary>

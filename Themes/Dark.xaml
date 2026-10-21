@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        工具窗深色主题:只覆盖颜色/阴影键,样式模板仍在 Themes\Light.xaml。
+        切换方式 = 把这份字典合并到 Light.xaml 之后(后合并者优先),
+        所以**键名必须与 Light.xaml 一一对应**,少一个键就会掉回亮色值。
+    -->
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
+    <SolidColorBrush x:Key="AccentPressBrush" Color="#0060C8"/>
+    <SolidColorBrush x:Key="WindowBackBrush" Color="#1B1B20"/>
+    <SolidColorBrush x:Key="PageBackBrush" Color="#131316"/>
+    <SolidColorBrush x:Key="SidebarBackBrush" Color="#16161A"/>
+    <SolidColorBrush x:Key="CardBackBrush" Color="#1E1E23"/>
+    <DropShadowEffect x:Key="CardShadow" BlurRadius="22" ShadowDepth="2" Direction="270"
+                      Opacity="0.42" Color="#000000"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#EDEDF1"/>
+    <SolidColorBrush x:Key="TextSubBrush" Color="#9A9AA2"/>
+    <SolidColorBrush x:Key="TextGroupBrush" Color="#8A8A92"/>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#2C2C33"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#2A2A30"/>
+    <SolidColorBrush x:Key="NavHoverBrush" Color="#2A2A30"/>
+    <SolidColorBrush x:Key="NavActiveBackBrush" Color="#0A6CD8"/>
+    <SolidColorBrush x:Key="FieldBackBrush" Color="#2A2A31"/>
+    <SolidColorBrush x:Key="FieldBorderBrush" Color="#3A3A42"/>
+    <SolidColorBrush x:Key="TileBackBrush" Color="#26262C"/>
+    <SolidColorBrush x:Key="SegBackBrush" Color="#2C2C33"/>
+    <SolidColorBrush x:Key="SegHoverBrush" Color="#35353D"/>
+    <SolidColorBrush x:Key="TabActiveBackBrush" Color="#17324E"/>
+    <SolidColorBrush x:Key="TabActiveTextBrush" Color="#6FB6FF"/>
+    <SolidColorBrush x:Key="ChipBackBrush" Color="#17324E"/>
+    <SolidColorBrush x:Key="BarTrackBrush" Color="#2E2E35"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#FF8A65"/>
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#4A4A52"/>
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#5C5C66"/>
+    <SolidColorBrush x:Key="ScrollThumbDragBrush" Color="#6E6E78"/>
+    <SolidColorBrush x:Key="ComboHoverBorderBrush" Color="#4A4A52"/>
+    <SolidColorBrush x:Key="SliderThumbBorderBrush" Color="#4A4A52"/>
+    <SolidColorBrush x:Key="SelectionBrush" Color="#2C5A8A"/>
+</ResourceDictionary>

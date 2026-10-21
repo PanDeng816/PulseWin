@@ -30,6 +30,17 @@ internal static class UiShot
         try
         {
             using var engine = new UsageEngine();   // 不 Start:引擎只有 Start 后才发网络请求
+            // 出图要跟用户设置的主题/密度一致;验另一套时用环境变量强制(只改本进程内存)
+            if (Environment.GetEnvironmentVariable("PULSEWIN_UISHOT_DENSITY") == "1")
+                AppSettings.Current.UiDensity = 1;
+            string? shotTheme = Environment.GetEnvironmentVariable("PULSEWIN_UISHOT_THEME");
+            if (shotTheme is "0" or "1")
+            {
+                // 设置项也一起改(只在内存),否则截图上主题单选框还停在"浅色",看着自相矛盾
+                AppSettings.Current.UiThemeMode = shotTheme == "1" ? 1 : 0;
+                UiTheme.Apply(shotTheme == "1");
+            }
+            else UiTheme.Load();
             RenderSettingsPage(engine, Path.Combine(dir, "settings-appearance.png"), "外观", "NavAppearance");
             RenderSettingsPage(engine, Path.Combine(dir, "settings-behavior.png"), "行为", "NavBehavior");
             RenderSettingsPage(engine, Path.Combine(dir, "settings-rings.png"), "圆环与数字", "NavRings");

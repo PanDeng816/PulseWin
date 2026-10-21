@@ -231,6 +231,9 @@ public partial class App : System.Windows.Application
         _main.RailMenuRequested += ShowRailMenu;
 
         _engine = new UsageEngine();
+        // 主题/密度必须在设置真正 Attach 之后、任何工具窗 Show 之前应用:
+        // AppSettings.Current 是懒加载的,过早读会把默认值缓存下来(等于把用户设置重置)。
+        UiTheme.Load();
         _engine.SnapshotsChanged += () =>
             Dispatcher.BeginInvoke(() =>
             {

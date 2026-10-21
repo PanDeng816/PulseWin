@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="PulseWin 设置" Width="860" Height="600" MinWidth="760" MinHeight="480"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="{StaticResource PageBackBrush}" Foreground="#1D1D1F"
+        Background="{DynamicResource PageBackBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <!-- 亮色主题,对齐上游设置窗:左侧分页导航 + 右侧内容,行 = 左标题副标题/右控件,
@@ -13,7 +13,7 @@
     <Window.Resources>
         <!-- 侧栏导航项:选中蓝底白字,hover 浅灰。图标用系统 Segoe MDL2。 -->
         <Style x:Key="NavItem" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,1.5"/>
@@ -31,10 +31,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#E9E9EC"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#007AFF"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter TargetName="icon" Property="Foreground" Value="White"/>
@@ -48,7 +48,7 @@
         <!-- 侧栏分组小标签 -->
         <Style x:Key="NavGroup" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11.5"/>
-            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextGroupBrush}"/>
             <Setter Property="Margin" Value="12,18,0,6"/>
         </Style>
 
@@ -56,46 +56,46 @@
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#1D1D1F"/>
-            <Setter Property="Margin" Value="1,0,0,10"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Margin" Value="{DynamicResource SettingsSectionMargin}"/>
         </Style>
 
         <!-- 分组白卡:白底 + 12 圆角 + 一圈极淡投影(压在浅灰页面底上) -->
         <Style x:Key="GroupCard" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBackBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="16,5"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
+            <Setter Property="Padding" Value="{DynamicResource SettingsCardPad}"/>
+            <Setter Property="Margin" Value="{DynamicResource SettingsCardGap}"/>
+            <Setter Property="Effect" Value="{DynamicResource CardShadow}"/>
         </Style>
 
         <!-- 行:左标题+副标题,右控件 -->
         <Style x:Key="RowTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
         <Style x:Key="RowSub" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="#86868B"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSubBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,2,0,0"/>
         </Style>
         <Style x:Key="RowHint" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="#86868B"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSubBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         <Style x:Key="RowSeparator" TargetType="Border">
-            <Setter Property="Background" Value="#ECECEF"/>
+            <Setter Property="Background" Value="{DynamicResource SeparatorBrush}"/>
             <Setter Property="Height" Value="1"/>
             <Setter Property="Margin" Value="-16,10"/>
         </Style>
 
         <!-- 三档分段选择(尺寸/间距):浅灰轨道、选中蓝块白字,上游 Size/Spacing 同款 -->
         <Style x:Key="Segment" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
@@ -103,16 +103,16 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bd" Background="#EBEBEF" CornerRadius="7"
+                        <Border x:Name="bd" Background="{DynamicResource SegBackBrush}" CornerRadius="7"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#E0E0E4"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource SegHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#007AFF"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter TargetName="bd" Property="Effect">
@@ -134,7 +134,7 @@
             <Setter Property="TextAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="Foreground" Value="#1D1D1F"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
     </Window.Resources>
 
@@ -145,7 +145,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- ————— 侧栏 ————— -->
-        <Border Grid.Column="0" Background="{StaticResource PageBackBrush}" BorderBrush="#ECECEF"
+        <Border Grid.Column="0" Background="{DynamicResource PageBackBrush}" BorderBrush="{DynamicResource SeparatorBrush}"
                 BorderThickness="0,0,1,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="12,14,12,14">
@@ -169,16 +169,16 @@
         </Border>
 
         <!-- ————— 内容区:浅灰页面底,页头白色一条,卡片白底浮在上面 ————— -->
-        <Grid Grid.Column="1" Background="{StaticResource PageBackBrush}">
+        <Grid Grid.Column="1" Background="{DynamicResource PageBackBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Background="White" BorderBrush="#ECECEF" BorderThickness="0,0,0,1"
+            <Border Grid.Row="0" Background="{DynamicResource CardBackBrush}" BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1"
                     Padding="34,22,34,15">
                 <TextBlock x:Name="PageTitle" Text="外观" FontSize="21" FontWeight="Bold"
-                           Foreground="#1D1D1F"/>
+                           Foreground="{DynamicResource TextBrush}"/>
             </Border>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
@@ -190,10 +190,45 @@
 
                     <!-- ============ 外观 ============ -->
                     <StackPanel x:Name="PageAppearance">
+                        <TextBlock Text="界面" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}">
+                            <StackPanel>
+                                <Grid Margin="{DynamicResource RowMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="主题" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <RadioButton x:Name="ThemeLight" Style="{StaticResource Segment}" Content="浅色"
+                                                     GroupName="theme" Checked="Theme_Changed"/>
+                                        <RadioButton x:Name="ThemeDark" Style="{StaticResource Segment}" Content="深色"
+                                                     GroupName="theme" Checked="Theme_Changed"/>
+                                        <RadioButton x:Name="ThemeSystem" Style="{StaticResource Segment}" Content="跟随系统"
+                                                     GroupName="theme" Checked="Theme_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource RowSeparator}"/>
+                                <Grid Margin="{DynamicResource RowMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="界面密度" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <RadioButton x:Name="DensityComfort" Style="{StaticResource Segment}" Content="舒适"
+                                                     GroupName="density" Checked="Density_Changed"/>
+                                        <RadioButton x:Name="DensityCompact" Style="{StaticResource Segment}" Content="紧凑"
+                                                     GroupName="density" Checked="Density_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="悬浮窗" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -206,7 +241,7 @@
                                     </StackPanel>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -219,7 +254,7 @@
                                     </StackPanel>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -233,7 +268,7 @@
                                     </StackPanel>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -244,7 +279,7 @@
                                               Checked="ShowPercent_Changed" Unchecked="ShowPercent_Changed"/>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -256,6 +291,12 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
+
+                        <!-- 实时预览:尺寸/间距/读数/不透明度改一下这里就跟着重画 -->
+                        <TextBlock Text="预览" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource GroupCard}" Padding="10">
+                            <local:RailPreviewView x:Name="RailPreview" Height="300"/>
+                        </Border>
                     </StackPanel>
 
                     <!-- ============ 行为 ============ -->
@@ -263,7 +304,7 @@
                         <TextBlock Text="自动隐藏" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -274,7 +315,7 @@
                                               Checked="Sliver_Changed" Unchecked="Sliver_Changed"/>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -289,7 +330,7 @@
 
                         <TextBlock Text="圆环顺序" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
-                            <StackPanel Margin="0,11">
+                            <StackPanel Margin="{DynamicResource RowMargin}">
                                 <!-- 可重排列表:源一多时不会像"排列组合下拉框"那样爆炸 -->
                                 <local:RingOrderList x:Name="RingOrder"/>
                             </StackPanel>
@@ -301,7 +342,7 @@
                         <TextBlock Text="读数与报警" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -331,13 +372,13 @@
                          不用在这里复制一整块 XAML、再去代码里同步命名控件。 -->
                     <StackPanel x:Name="PageSources" Visibility="Collapsed">
                         <StackPanel x:Name="SourceCardsPanel"/>
-                        <TextBlock x:Name="SourceHint" FontSize="11" Foreground="#C7502E"
-                                   Margin="1,0,0,10" TextWrapping="Wrap" Visibility="Collapsed"/>
+                        <TextBlock x:Name="SourceHint" FontSize="11" Foreground="{DynamicResource WarningBrush}"
+                                   Margin="{DynamicResource SettingsSectionMargin}" TextWrapping="Wrap" Visibility="Collapsed"/>
 
                         <!-- 用量展示已整体搬到「用量」窗口(原"套餐用量"页),这里只留入口 -->
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -354,7 +395,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="BigModel 包月预算(元/月,选填)" Style="{StaticResource RowTitle}" VerticalAlignment="Center"/>
-                                    <TextBox x:Name="BigModelBudgetBox" Grid.Column="1" Width="90" VerticalAlignment="Center"
+                                    <TextBox x:Name="BigModelBudgetBox" Grid.Column="1" Width="90" Height="30"
+                                             VerticalContentAlignment="Center" Style="{StaticResource LightTextBox}"
                                              HorizontalContentAlignment="Right" TextChanged="BigModelBudget_Changed"/>
                                 </Grid>
                             </StackPanel>
@@ -363,7 +405,7 @@
                         <!-- 可选:Command Code 浏览器会话明细(默认关,有 AV 误判风险) -->
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -433,7 +475,7 @@
                         <TextBlock Text="同步" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -452,7 +494,7 @@
                         <TextBlock Text="网络" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -485,7 +527,7 @@
                         <TextBlock Text="数据" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
                             <StackPanel>
-                                <Grid Margin="0,11">
+                                <Grid Margin="{DynamicResource RowMargin}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -496,7 +538,7 @@
                                              LostFocus="UsdRateBox_LostFocus"/>
                                 </Grid>
                                 <Border Style="{StaticResource RowSeparator}"/>
-                                <StackPanel Margin="0,11">
+                                <StackPanel Margin="{DynamicResource RowMargin}">
                                     <TextBlock Text="数据目录(便携)" Style="{StaticResource RowTitle}"/>
                                     <TextBlock x:Name="DataDirText" Style="{StaticResource RowSub}" Margin="0,3,0,10"/>
                                 </StackPanel>
@@ -508,7 +550,7 @@
                     <StackPanel x:Name="PageAbout" Visibility="Collapsed">
                         <TextBlock Text="应用" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource GroupCard}">
-                            <StackPanel Margin="0,11">
+                            <StackPanel Margin="{DynamicResource RowMargin}">
                                 <TextBlock Text="PulseWin" Style="{StaticResource RowTitle}" FontSize="14" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="AboutVersion" Style="{StaticResource RowSub}" Margin="0,3,0,0"/>
                                 <TextBlock Style="{StaticResource RowSub}" Margin="0,6,0,0"

@@ -55,8 +55,8 @@ public sealed class SourceCard : Border
         _source = source;
         _engine = engine;
 
-        Background = Brushes.White;
-        BorderBrush = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xEC));
+        Background = UiTheme.B(UiTheme.CardBack);
+        BorderBrush = UiTheme.B(UiTheme.CardBorder);
         BorderThickness = new Thickness(1);
         CornerRadius = new CornerRadius(12);
         Margin = new Thickness(0, 0, 0, 16);
@@ -78,11 +78,11 @@ public sealed class SourceCard : Border
         title.Children.Add(new TextBlock
         {
             Text = source.DisplayName, FontSize = 14, FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            Foreground = UiTheme.B(UiTheme.TextMain),
         });
         _sourceText = new TextBlock
         {
-            FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+            FontSize = 11, Foreground = UiTheme.B(UiTheme.TextSub),
             Margin = new Thickness(0, 2, 0, 0),
         };
         title.Children.Add(_sourceText);
@@ -91,7 +91,7 @@ public sealed class SourceCard : Border
 
         _statusText = new TextBlock
         {
-            FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+            FontSize = 12, Foreground = UiTheme.B(UiTheme.TextSub),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 6, 0, 0),
         };
@@ -127,7 +127,7 @@ public sealed class SourceCard : Border
         _hintText = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap, FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+            Foreground = UiTheme.B(UiTheme.TextSub),
             Margin = new Thickness(0, 7, 0, source.IsBalance ? 0 : 10),
         };
         stack.Children.Add(_hintText);
@@ -137,7 +137,7 @@ public sealed class SourceCard : Border
         {
             stack.Children.Add(new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xEC)),
+                Background = UiTheme.B(UiTheme.CardBorder),
                 Height = 1, Margin = new Thickness(-16, 10, -16, 10),
             });
 
@@ -148,12 +148,12 @@ public sealed class SourceCard : Border
             basisLabels.Children.Add(new TextBlock
             {
                 Text = "环的基准", FontSize = 13,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+                Foreground = UiTheme.B(UiTheme.TextMain),
             });
             _basisHint = new TextBlock
             {
                 FontSize = 11, TextWrapping = TextWrapping.Wrap,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
                 Margin = new Thickness(0, 2, 0, 0),
             };
             basisLabels.Children.Add(_basisHint);
@@ -179,7 +179,7 @@ public sealed class SourceCard : Border
             budgetLabels.Children.Add(new TextBlock
             {
                 Text = "预算金额", FontSize = 13,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+                Foreground = UiTheme.B(UiTheme.TextMain),
                 VerticalAlignment = VerticalAlignment.Center,
             });
             _budgetRow.Children.Add(budgetLabels);
@@ -201,19 +201,19 @@ public sealed class SourceCard : Border
         {
             stack.Children.Add(new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xEC)),
+                Background = UiTheme.B(UiTheme.CardBorder),
                 Height = 1, Margin = new Thickness(-16, 10, -16, 10),
             });
 
             stack.Children.Add(new TextBlock
             {
                 Text = "账号(工作区)", FontSize = 13,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+                Foreground = UiTheme.B(UiTheme.TextMain),
             });
             stack.Children.Add(new TextBlock
             {
                 Text = "每个工作区一把独立 Key;主账号自动读取。", FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
                 Margin = new Thickness(0, 2, 0, 4),
             });
 
@@ -256,7 +256,7 @@ public sealed class SourceCard : Border
             {
                 Text = "未订阅的工作区也能先加进来,环上显示为灰环。",
                 TextWrapping = TextWrapping.Wrap, FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
                 Margin = new Thickness(0, 7, 0, 10),
             };
             stack.Children.Add(_accountHint);
@@ -264,7 +264,11 @@ public sealed class SourceCard : Border
             RebuildAccounts();
         }
 
-        Child = new Border { Padding = new Thickness(16, 4, 16, 4), Child = stack };
+        Child = new Border
+        {
+            Padding = UiTheme.Compact ? new Thickness(12, 3, 12, 3) : new Thickness(16, 4, 16, 4),
+            Child = stack,
+        };
         LoadFromSettings();
     }
 
@@ -326,13 +330,13 @@ public sealed class SourceCard : Border
         {
             Text = "主账号(自动)", FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F)),
+            Foreground = UiTheme.B(UiTheme.TextMain),
         });
         var mainTail = new TextBlock
         {
             Text = TailText(_engine.OpenCodeMainKeyTail()), FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0),
-            Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+            Foreground = UiTheme.B(UiTheme.TextSub),
         };
         Grid.SetColumn(mainTail, 1);
         mainRow.Children.Add(mainTail);
@@ -340,7 +344,7 @@ public sealed class SourceCard : Border
         {
             FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
-            Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+            Foreground = UiTheme.B(UiTheme.TextSub),
         };
         Grid.SetColumn(mainState, 2);
         mainRow.Children.Add(mainState);
@@ -375,7 +379,7 @@ public sealed class SourceCard : Border
             {
                 Text = TailText(_engine.OpenCodeAccountTail(account.Id)), FontSize = 12,
                 VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
             };
             Grid.SetColumn(tail, 1);
             row.Children.Add(tail);
@@ -384,7 +388,7 @@ public sealed class SourceCard : Border
             {
                 FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                Foreground = UiTheme.B(UiTheme.TextSub),
             };
             Grid.SetColumn(state, 2);
             row.Children.Add(state);
@@ -505,7 +509,7 @@ public sealed class SourceCard : Border
         };
         var template = new ControlTemplate(typeof(Button));
         var border = new FrameworkElementFactory(typeof(Border), "bd");
-        border.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0xEB, 0xEB, 0xEF)));
+        border.SetValue(Border.BackgroundProperty, UiTheme.B(UiTheme.SegBack));
         border.SetValue(Border.CornerRadiusProperty, new CornerRadius(5));
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
@@ -513,7 +517,7 @@ public sealed class SourceCard : Border
         border.AppendChild(presenter);
         template.VisualTree = border;
         var hover = new Trigger { Property = IsMouseOverProperty, Value = true };
-        hover.Setters.Add(new Setter(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE4)), "bd"));
+        hover.Setters.Add(new Setter(Border.BackgroundProperty, UiTheme.B(UiTheme.SegHover), "bd"));
         template.Triggers.Add(hover);
         button.Template = template;
         return button;
