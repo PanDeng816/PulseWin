@@ -160,7 +160,7 @@ internal sealed class RailPreviewView : FrameworkElement
         }
         if (sweep <= 0.3) return;
 
-        // 与主窗同一条规则：两端各留 1.2° 的缝，短弧不留
+        // 与主窗同一条规则：起点 9 点方向（-90°），两端各留 1.2° 的缝，短弧不留
         const double gap = 1.2;
         if (sweep > 3)
         {
@@ -168,8 +168,8 @@ internal sealed class RailPreviewView : FrameworkElement
             var geometry = new StreamGeometry();
             using (var ctx = geometry.Open())
             {
-                var start = PointOn(c, r, gap);
-                var end = PointOn(c, r, gap + sweep);
+                var start = PointOn(c, r, -90 + gap);
+                var end = PointOn(c, r, -90 + gap + sweep);
                 ctx.BeginFigure(start, false, false);
                 ctx.ArcTo(end, new Size(r, r), 0, sweep > 180, SweepDirection.Clockwise, true, false);
             }
@@ -181,8 +181,8 @@ internal sealed class RailPreviewView : FrameworkElement
         var shortArc = new StreamGeometry();
         using (var ctx = shortArc.Open())
         {
-            var start = PointOn(c, r, 0);
-            var end = PointOn(c, r, sweep);
+            var start = PointOn(c, r, -90);
+            var end = PointOn(c, r, -90 + sweep);
             ctx.BeginFigure(start, false, false);
             ctx.ArcTo(end, new Size(r, r), 0, sweep > 180, SweepDirection.Clockwise, true, false);
         }

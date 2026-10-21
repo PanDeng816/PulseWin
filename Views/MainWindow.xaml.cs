@@ -1252,7 +1252,7 @@ public partial class MainWindow : Window
         {
             dc.DrawGeometry(null,
                 CachedRingPen(CachedBrush(Color.FromArgb(0x59, tint.R, tint.G, tint.B)), lineW + Pt.P(8)),
-                RailGeometry.Arc(c, midR, 0, frac * 360));
+                RailGeometry.Arc(c, midR, ArcStartDeg, frac * 360));
         }
 
         // 用量弧(刷新时变暗;满额整圈)
@@ -1261,13 +1261,11 @@ public partial class MainWindow : Window
         {
             double op = refreshing ? 0.3 : 1;
             var arc = CachedBrush(Color.FromArgb((byte)(op * 255 * 0.98), tint.R, tint.G, tint.B));
-            // 两端各留 1.2° 的缝:内外两圈的起点都在 12 点,两个圆头叠在一起会显得毛。
+            // 两端各留 1.2° 的缝:内外两圈的起点相同,两个圆头叠在一起会显得毛。
             // 很短的弧(<3°)不留缝,否则会缩成一个点。
-            // **起点是 0 而不是 -90°**:RailGeometry.Arc 的 0° 已经在 12 点方向,
-            // 老代码额外减 90° 让所有弧都从 9 点开始画(注释与实现一直对不上)。
             const double gap = 1.2;
             double drawn = sweep >= 359.5 ? 360 : Math.Max(0.5, sweep - gap * 2);
-            double start = sweep >= 359.5 ? 0 : gap;
+            double start = sweep >= 359.5 ? ArcStartDeg : ArcStartDeg + gap;
             dc.DrawGeometry(null, CachedRingPen(arc, lineW),
                 RailGeometry.Arc(c, midR, start, drawn));
         }
@@ -1278,9 +1276,16 @@ public partial class MainWindow : Window
             double phase = ((now - _refreshStart[idx]) % Dock.RefreshPeriodS) / Dock.RefreshPeriodS;
             if (phase < 0) phase = 0;
             dc.DrawGeometry(null, CachedRingPen(CachedBrush(tint), lineW),
-                RailGeometry.Arc(c, midR, phase * 360, Dock.RefreshSweep * 360));
+                RailGeometry.Arc(c, midR, ArcStartDeg + phase * 360, Dock.RefreshSweep * 360));
         }
     }
+
+    /// <summary>
+    /// 用量弧的起点角度。**-90° = 9 点方向**,是用户 2026-10-21 明确选的观感:
+    /// 12 点起(0°)试过一版,反馈"之前的圆弧起点还好看一点",于是改回来。
+    /// 别按注释把这里"修正"成 0°:那正是当时被否掉的那版。
+    /// </summary>
+    private const double ArcStartDeg = -90;
 
     /// <summary>
     /// 文字缓存:FormattedText 的构建(字体回退解析)不便宜,而内容变化很少。
