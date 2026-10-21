@@ -38,8 +38,44 @@ internal static class Backdrop
     /// <summary>缩小倍数：越大越糊。16 倍在 200% DPI 下是干净的磨砂（12 倍还能看出字块）。</summary>
     private const int Downscale = 16;
 
-    /// <summary>每个窗口一份背景快照（窗口关掉后自动回收）。</summary>
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window, ImageSource> Shots = new();
+    /// <summary>每个窗口一份原始缩略图（窗口关掉后自动回收）。合成按当前主题现做，所以切主题不用重抓屏。</summary>
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window, ImageSource> RawShots = new();
+
+    /// <summary>背景图往主题色里压多少：浅色压白、深色压黑。越大越"淡"。</summary>
+    private const byte LightVeil = 0x70;
+    private const byte DarkVeil = 0x84;
+
+    /// <summary>
+    /// 把缩略图合成到主题色里（其实就是盖一层半透明色膜）。
+    /// 目的不是把图变白，而是**压掉对比度**：否则背后一块深色区域透上来，
+    /// 在半透明卡片上就是一个边界清楚的灰斑 —— 那正是"看不清"的来源。
+    /// </summary>
+    private static ImageSource Compose(ImageSource source, bool dark)
+    {
+        if (source is not BitmapSource bitmap) return source;
+
+        int w = bitmap.PixelWidth;
+        int h = bitmap.PixelHeight;
+        if (w <= 0 || h <= 0) return source;
+
+        Color tint = dark ? Color.FromRgb(0x13, 0x13, 0x16) : Color.FromRgb(0xF4, 0xF4, 0xF7);
+        byte veil = dark ? DarkVeil : LightVeil;
+
+        var veilBrush = new SolidColorBrush(Color.FromArgb(veil, tint.R, tint.G, tint.B));
+        veilBrush.Freeze();
+
+        var visual = new DrawingVisual();
+        using (DrawingContext dc = visual.RenderOpen())
+        {
+            dc.DrawImage(bitmap, new Rect(0, 0, w, h));
+            dc.DrawRectangle(veilBrush, null, new Rect(0, 0, w, h));
+        }
+
+        var composed = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        composed.Render(visual);
+        composed.Freeze();
+        return composed;
+    }
 
     /// <summary>设置里的三档 → 实际材质。</summary>
     public static BackdropKind FromSetting(int mode) => (BackdropKind)Math.Clamp(mode, 0, 2);
@@ -70,16 +106,20 @@ internal static class Backdrop
 
         if (kind == BackdropKind.Off)
         {
-            Shots.Remove(w);
+            RawShots.Remove(w);
             // 恢复 XAML 里的 {DynamicResource ShellBackBrush}，回到不透明
             w.SetResourceReference(Window.BackgroundProperty, "ShellBackBrush");
         }
         else
         {
-            var shot = Shots.GetValue(w, _ => Capture()!);
-            if (shot is not null)
+            var raw = RawShots.GetValue(w, _ => Capture()!);
+            if (raw is not null)
             {
-                var brush = new ImageBrush(shot)
+                // 先合成再当背景：原始抓屏对比度太高（DSH 的深色卡片会缩成一大块灰），
+                // 页底那 12% 的透过率就足以让卡片上出现明显的灰斑。这里把图压到主题色里，
+                // 只留"氛围"不留"形状"——真磨砂玻璃也会把背后的东西冲淡。
+                var composed = Compose(raw, dark);
+                var brush = new ImageBrush(composed)
                 {
                     Stretch = Stretch.UniformToFill,
                     AlignmentX = AlignmentX.Center,

@@ -175,12 +175,14 @@ public static class UiTheme
 
         r["ShellBackBrush"] = on ? Brushes.Transparent : B(PageBack);
 
-        byte sidebar = IsDark ? (byte)0xB0 : (byte)0xC0;
-        byte page = IsDark ? (byte)0xD8 : (byte)0xDC;
-        byte card = IsDark ? (byte)0xE2 : (byte)0xE8;
-        byte tile = IsDark ? (byte)0xD6 : (byte)0xE0;
-        byte field = IsDark ? (byte)0xF2 : (byte)0xF4;
-        byte seg = IsDark ? (byte)0xD8 : (byte)0xDD;
+        // 侧栏是最"透"的一层：它是导航、没有密集数据，玻璃感主要靠它。
+        // 内容区与卡片必须够实 —— 背后是深色区域时，12% 的透过率就足以在卡片上留下灰斑。
+        byte sidebar = IsDark ? (byte)0x96 : (byte)0xA6;
+        byte page = IsDark ? (byte)0xE6 : (byte)0xEA;
+        byte card = IsDark ? (byte)0xF4 : (byte)0xF6;
+        byte tile = IsDark ? (byte)0xE8 : (byte)0xEC;
+        byte field = IsDark ? (byte)0xF8 : (byte)0xFA;
+        byte seg = IsDark ? (byte)0xE4 : (byte)0xE6;
 
         SetGlass(r, "SidebarBackBrush", SidebarBack, on, sidebar);
         SetGlass(r, "PageBackBrush", PageBack, on, page);

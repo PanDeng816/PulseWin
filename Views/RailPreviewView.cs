@@ -61,10 +61,11 @@ internal sealed class RailPreviewView : FrameworkElement
         double w = ActualWidth, h = ActualHeight;
         if (w <= 8 || h <= 8) return;
 
-        // 桌面底 + 右侧一条"屏幕边缘"，rail 贴在它旁边
+        // 桌面底 + 右侧一条"屏幕边缘"。矩形往右多画 12px，把右侧的两个圆角推出可视区
+        // —— 贴屏那一侧必须是直边，否则 rail 的直边会架在圆角上，看着像被切掉半条。
         dc.DrawRoundedRectangle(UiTheme.B(UiTheme.IsDark ? Color.FromRgb(0x22, 0x22, 0x28)
                                                         : Color.FromRgb(0xE7, 0xE7, 0xEC)),
-            null, new Rect(0, 0, w, h), 10, 10);
+            null, new Rect(0, 0, w + 12, h), 10, 10);
 
         var s = AppSettings.Current;
         int size = s.RingSize;
@@ -87,17 +88,26 @@ internal sealed class RailPreviewView : FrameworkElement
         double scale = Math.Min(1, (h - 20) / Pt.P(railHpt));
         double railW = Pt.P(railWpt) * scale;
         double railH = Pt.P(railHpt) * scale;
-        double x = w - railW - 12;
+        // 贴着"屏幕边缘"（预览区的右边）。留 4px 余量，免得被父级裁剪切掉右缘。
+        double x = w - railW - 4;
         double y = (h - railH) / 2;
-        double radius = Math.Min(Dock.CornerRadius * (railWpt / 56.0) * scale, railW / 2);
+
+        // 形状必须和主窗是同一个几何：RailGeometry.Berth 画的是"贴屏侧直边、
+        // 另一侧圆角、上下端带喇叭口凹弧"，用 DrawRoundedRectangle 四角全圆是另一回事
+        // （预览里那个近似胶囊的圆角就是这么来的）。
+        var body = new Rect(x, y, railW, railH);
+        var shape = RailGeometry.Berth(new Rect(0, 0, railW, railH),
+            DockEdge.Right, isDocked: true, openness: 1, scale);
+        if (shape.CanFreeze) shape.Freeze();
+        var placed = shape.Clone();
+        placed.Transform = new TranslateTransform(x, y);
+        placed.Freeze();
 
         // rail 本体：黑色玻璃，不透明度跟设置走
         byte alpha = (byte)Math.Clamp(s.SurfaceOpacity * 255, 0, 255);
-        var body = new Rect(x, y, railW, railH);
-        dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(alpha, 0x0A, 0x0A, 0x0E)),
-            null, body, radius, radius);
+        dc.DrawGeometry(new SolidColorBrush(Color.FromArgb(alpha, 0x0A, 0x0A, 0x0E)), null, placed);
         // 与主窗同一套玻璃层，预览才不会跟真实 rail 长得不一样
-        GlassPaint.Paint(dc, GlassPaint.RoundRect(body, radius), body, GlassPaint.Strength);
+        GlassPaint.Paint(dc, placed, body, GlassPaint.Strength);
 
         double centerX = x + railW / 2;
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
