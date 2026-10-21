@@ -74,10 +74,14 @@ internal sealed class RailPreviewView : FrameworkElement
         double unitHpt = showPercent
             ? MainWindow.RingCenterInUnit + MainWindow.RingOuterRadius + MainWindow.RingToTextGap
               + MainWindow.TextLineHeight
-            : MainWindow.RingCenterInUnit + MainWindow.RingOuterRadius;
-        double gapPt = s.RingSpacing switch { 0 => 2, 2 => 10, _ => 4 };
+            : MainWindow.RingCenterInUnit + MainWindow.RingOuterRadius - 2;
+        double baseGap = s.RingSpacing switch { 0 => 2, 2 => 10, _ => 4 };
+        double gapPt = showPercent ? baseGap : Math.Min(baseGap, 2);
+        double padBottomPt = MainWindow.PadTopPt
+                             + (MainWindow.RingCenterInUnit - MainWindow.RingOuterRadius)
+                             - (showPercent ? 0 : 2);
         double railHpt = MainWindow.PadTopPt + Demo.Count * unitHpt + (Demo.Count - 1) * gapPt
-                         + MainWindow.PadBottomPt;
+                         + padBottomPt;
         double railWpt = table.RailW;
 
         double scale = Math.Min(1, (h - 20) / Pt.P(railHpt));
@@ -85,7 +89,7 @@ internal sealed class RailPreviewView : FrameworkElement
         double railH = Pt.P(railHpt) * scale;
         double x = w - railW - 12;
         double y = (h - railH) / 2;
-        double radius = Math.Min(Pt.P(26) * (railWpt / 56.0) * scale, railW / 2);
+        double radius = Math.Min(Dock.CornerRadius * (railWpt / 56.0) * scale, railW / 2);
 
         // rail 本体：黑色玻璃，不透明度跟设置走
         byte alpha = (byte)Math.Clamp(s.SurfaceOpacity * 255, 0, 255);
@@ -110,7 +114,7 @@ internal sealed class RailPreviewView : FrameworkElement
         var month = sub.Pools.FirstOrDefault(p => p.PoolKind == "Monthly");
         var balance = sub.Pools.FirstOrDefault(p => p.PoolKind == "Balance");
 
-        var track = new Pen(UiTheme.B(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF)), Pt.P(table.OuterW) * scale);
+        var track = new Pen(UiTheme.B(PanelPalette.Track), Pt.P(table.OuterW) * scale);
         double outerR = Pt.P(table.OuterD) / 2 * scale;
 
         // 外圈轨道 + 外圈用量
@@ -123,7 +127,7 @@ internal sealed class RailPreviewView : FrameworkElement
         if (balance is null && (burning || !AppSettings.Current.HideIdleInnerRing))
         {
             double innerR = Pt.P(table.InnerD) / 2 * scale;
-            var innerTrack = new Pen(UiTheme.B(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF)),
+            var innerTrack = new Pen(UiTheme.B(PanelPalette.Track),
                 Pt.P(table.InnerW) * scale);
             dc.DrawEllipse(null, innerTrack, c, innerR, innerR);
             if (five is { IsAvailable: true, HasPercent: true })
@@ -156,22 +160,41 @@ internal sealed class RailPreviewView : FrameworkElement
         }
         if (sweep <= 0.3) return;
 
-        var geometry = new StreamGeometry();
-        using (var ctx = geometry.Open())
+        // 与主窗同一条规则：两端各留 1.2° 的缝，短弧不留
+        const double gap = 1.2;
+        if (sweep > 3)
         {
-            var start = PointOn(c, r, -90);
-            var end = PointOn(c, r, -90 + sweep);
+            sweep -= gap * 2;
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                var start = PointOn(c, r, gap);
+                var end = PointOn(c, r, gap + sweep);
+                ctx.BeginFigure(start, false, false);
+                ctx.ArcTo(end, new Size(r, r), 0, sweep > 180, SweepDirection.Clockwise, true, false);
+            }
+            geometry.Freeze();
+            dc.DrawGeometry(null, pen, geometry);
+            return;
+        }
+
+        var shortArc = new StreamGeometry();
+        using (var ctx = shortArc.Open())
+        {
+            var start = PointOn(c, r, 0);
+            var end = PointOn(c, r, sweep);
             ctx.BeginFigure(start, false, false);
             ctx.ArcTo(end, new Size(r, r), 0, sweep > 180, SweepDirection.Clockwise, true, false);
         }
-        geometry.Freeze();
-        dc.DrawGeometry(null, pen, geometry);
+        shortArc.Freeze();
+        dc.DrawGeometry(null, pen, shortArc);
     }
 
+    /// <summary>0° = 12 点方向，顺时针为正（与 <see cref="RailGeometry.Arc"/> 同一套角度）。</summary>
     private static Point PointOn(Point c, double r, double degrees)
     {
         double rad = degrees * Math.PI / 180;
-        return new Point(c.X + r * Math.Cos(rad), c.Y + r * Math.Sin(rad));
+        return new Point(c.X + r * Math.Sin(rad), c.Y - r * Math.Cos(rad));
     }
 
     private static void DrawIcon(DrawingContext dc, string key, Point c, double scale)

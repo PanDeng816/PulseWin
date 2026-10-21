@@ -34,7 +34,8 @@ public static class Dock
     public static double SecondRingDiameter => Pt.P(26);
     public static double SecondRingLineWidth => Pt.P(2.5);
 
-    public static double CornerRadius => Pt.P(26);
+    /// <summary>26pt → 22pt:大屏下 26pt 的圆角让整条 rail 偏"软",收一点更利落。</summary>
+    public static double CornerRadius => Pt.P(22);
     public static double FlareHeight => Pt.P(24);
     public static double FlareWidth => Pt.P(38);
 

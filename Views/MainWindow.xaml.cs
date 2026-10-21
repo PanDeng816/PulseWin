@@ -157,13 +157,14 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// rail 两端的留白。两个约束决定了这两个数:
-    /// ① 都**大于 berth 的圆角半径(26pt)**——圆角是从上下边缘往里缩的,留白小于它,
-    ///    首尾读数就会落进圆角区域,看着像被挤出去;
+    /// ① 都**大于 berth 的圆角半径**——圆角是从上下边缘往里缩的,留白小于它,
+    ///    首尾读数就会落进圆角区域、看着像被挤出去;
     /// ② `PadBottom = PadTop + (环外缘到单元顶那段)`,这样**第一个环到 rail 顶的距离
     ///    和最后一个环(或它下方读数)到 rail 底的距离相等**,上下对称。
+    /// 不显示读数时单元底部只留 2pt,两端跟着收 2pt(否则上下会比中间空)。
     /// </summary>
     internal const double PadTopPt = 24;
-    internal static double PadBottomPt => PadTopPt + (RingCenterInUnit - RingOuterRadius);
+    private double PadBottomPt => PadTopPt + (RingCenterInUnit - RingOuterRadius) - (ShowPercent ? 0 : 2);
 
     /// <summary>相邻单元之间的间距(三档)。</summary>
     internal static double UnitGappt => AppSettings.Current.RingSpacing switch
@@ -172,6 +173,9 @@ public partial class MainWindow : Window
         2 => 10,
         _ => 4,
     };
+
+    /// <summary>实际生效的环间距:不显示读数时没有"读数行"做缓冲,再收一档。</summary>
+    private double UnitGapEffective => ShowPercent ? UnitGappt : Math.Min(UnitGappt, 2);
 
     /// <summary>环外缘到读数的间距。</summary>
     internal const double RingToTextGap = 6;
@@ -207,10 +211,10 @@ public partial class MainWindow : Window
     /// <summary>环下是否显示读数(设置项)。关掉后 rail 是一条纯环列。</summary>
     private bool ShowPercent => AppSettings.Current.ShowPercent;
 
-    /// <summary>单元高度:显示读数时"环 + 读数",否则只装环。</summary>
+    /// <summary>单元高度:显示读数时"环 + 读数",否则只装环(底部余量收到 2pt)。</summary>
     private double UnitHpt => ShowPercent
         ? RingCenterInUnit + RingOuterRadius + RingToTextGap + TextLineHeight
-        : RingCenterInUnit + RingOuterRadius;
+        : RingCenterInUnit + RingOuterRadius - 2;
 
     private static readonly Brush TrackBrush = Frz(PanelPalette.Track);
     private static readonly Brush WhiteBrush = Frz(PanelPalette.Primary);
@@ -418,7 +422,7 @@ public partial class MainWindow : Window
         {
             _ringY.Add(y + RingCenterInUnit);
             y += UnitHpt;
-            if (s < _subs.Count - 1) y += UnitGappt;
+            if (s < _subs.Count - 1) y += UnitGapEffective;
         }
         _railHeight = y + PadBottomPt;
         // 池数变化会改变 rail 长度;窗口尺寸必须跟着走,否则环会画到窗外
@@ -1248,7 +1252,7 @@ public partial class MainWindow : Window
         {
             dc.DrawGeometry(null,
                 CachedRingPen(CachedBrush(Color.FromArgb(0x59, tint.R, tint.G, tint.B)), lineW + Pt.P(8)),
-                RailGeometry.Arc(c, midR, -90, frac * 360));
+                RailGeometry.Arc(c, midR, 0, frac * 360));
         }
 
         // 用量弧(刷新时变暗;满额整圈)
@@ -1257,8 +1261,15 @@ public partial class MainWindow : Window
         {
             double op = refreshing ? 0.3 : 1;
             var arc = CachedBrush(Color.FromArgb((byte)(op * 255 * 0.98), tint.R, tint.G, tint.B));
+            // 两端各留 1.2° 的缝:内外两圈的起点都在 12 点,两个圆头叠在一起会显得毛。
+            // 很短的弧(<3°)不留缝,否则会缩成一个点。
+            // **起点是 0 而不是 -90°**:RailGeometry.Arc 的 0° 已经在 12 点方向,
+            // 老代码额外减 90° 让所有弧都从 9 点开始画(注释与实现一直对不上)。
+            const double gap = 1.2;
+            double drawn = sweep >= 359.5 ? 360 : Math.Max(0.5, sweep - gap * 2);
+            double start = sweep >= 359.5 ? 0 : gap;
             dc.DrawGeometry(null, CachedRingPen(arc, lineW),
-                RailGeometry.Arc(c, midR, -90, sweep));
+                RailGeometry.Arc(c, midR, start, drawn));
         }
 
         // 刷新亮段(画在最外圈)
@@ -1267,7 +1278,7 @@ public partial class MainWindow : Window
             double phase = ((now - _refreshStart[idx]) % Dock.RefreshPeriodS) / Dock.RefreshPeriodS;
             if (phase < 0) phase = 0;
             dc.DrawGeometry(null, CachedRingPen(CachedBrush(tint), lineW),
-                RailGeometry.Arc(c, midR, -90 + phase * 360, Dock.RefreshSweep * 360));
+                RailGeometry.Arc(c, midR, phase * 360, Dock.RefreshSweep * 360));
         }
     }
 

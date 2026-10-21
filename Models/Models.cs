@@ -29,8 +29,8 @@ public static class PanelPalette
     private static Color WithOpacity(byte r, byte g, byte b, double opacity) =>
         Color.FromArgb((byte)Math.Clamp(opacity * 255, 0, 255), r, g, b);
 
-    /// <summary>18% 白轨道。</summary>
-    public static readonly Color Track = Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF);
+    /// <summary>13% 白轨道。原来是 18%:环轨道压过用量弧,整条 rail 显得灰蒙蒙的。</summary>
+    public static readonly Color Track = Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF);
     /// <summary>前景白。</summary>
     public static readonly Color Primary = Color.FromRgb(0xF5, 0xF5, 0xF7);
     /// <summary>55% 白(次要文字)。</summary>
