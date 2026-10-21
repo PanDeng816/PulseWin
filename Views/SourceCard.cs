@@ -56,10 +56,12 @@ public sealed class SourceCard : Border
         _engine = engine;
 
         Background = Brushes.White;
-        BorderBrush = new SolidColorBrush(Color.FromRgb(0xE3, 0xE3, 0xE6));
+        BorderBrush = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xEC));
         BorderThickness = new Thickness(1);
-        CornerRadius = new CornerRadius(10);
-        Margin = new Thickness(0, 0, 0, 14);
+        CornerRadius = new CornerRadius(12);
+        Margin = new Thickness(0, 0, 0, 16);
+        // 与设置窗的 GroupCard 同一层观感:白卡压在浅灰页面底上,靠极淡投影分界
+        SetResourceReference(EffectProperty, "CardShadow");
 
         var stack = new StackPanel();
 

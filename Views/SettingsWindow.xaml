@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="PulseWin 设置" Width="860" Height="600" MinWidth="760" MinHeight="480"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="#F5F5F7" Foreground="#1D1D1F"
+        Background="{StaticResource PageBackBrush}" Foreground="#1D1D1F"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <!-- 亮色主题,对齐上游设置窗:左侧分页导航 + 右侧内容,行 = 左标题副标题/右控件,
@@ -16,11 +16,11 @@
             <Setter Property="Foreground" Value="#1D1D1F"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Margin" Value="0,1.5"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bd" Background="Transparent" CornerRadius="6" Padding="11,7">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="7" Padding="11,7.5">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="icon" FontFamily="Segoe MDL2 Assets"
                                            FontSize="14" Margin="0,1,10,0"
@@ -36,6 +36,7 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#007AFF"/>
                                 <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter TargetName="icon" Property="Foreground" Value="White"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -48,7 +49,7 @@
         <Style x:Key="NavGroup" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11.5"/>
             <Setter Property="Foreground" Value="#8E8E93"/>
-            <Setter Property="Margin" Value="12,16,0,5"/>
+            <Setter Property="Margin" Value="12,18,0,6"/>
         </Style>
 
         <!-- 页内分节标题 -->
@@ -56,17 +57,18 @@
             <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#1D1D1F"/>
-            <Setter Property="Margin" Value="1,0,0,8"/>
+            <Setter Property="Margin" Value="1,0,0,10"/>
         </Style>
 
-        <!-- 分组白卡 -->
+        <!-- 分组白卡:白底 + 12 圆角 + 一圈极淡投影(压在浅灰页面底上) -->
         <Style x:Key="GroupCard" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E3E3E6"/>
+            <Setter Property="Background" Value="{StaticResource CardBackBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="16,4"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16,5"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
         </Style>
 
         <!-- 行:左标题+副标题,右控件 -->
@@ -86,7 +88,7 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         <Style x:Key="RowSeparator" TargetType="Border">
-            <Setter Property="Background" Value="#E8E8EC"/>
+            <Setter Property="Background" Value="#ECECEF"/>
             <Setter Property="Height" Value="1"/>
             <Setter Property="Margin" Value="-16,10"/>
         </Style>
@@ -95,13 +97,13 @@
         <Style x:Key="Segment" TargetType="RadioButton">
             <Setter Property="Foreground" Value="#1D1D1F"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bd" Background="#EBEBEF" CornerRadius="6"
+                        <Border x:Name="bd" Background="#EBEBEF" CornerRadius="7"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -113,6 +115,12 @@
                                 <Setter TargetName="bd" Property="Background" Value="#007AFF"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="7" ShadowDepth="1" Direction="270"
+                                                          Opacity="0.22" Color="#007AFF"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -137,10 +145,11 @@
         </Grid.ColumnDefinitions>
 
         <!-- ————— 侧栏 ————— -->
-        <Border Grid.Column="0" Background="#F5F5F7" BorderBrush="#E3E3E6" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{StaticResource PageBackBrush}" BorderBrush="#ECECEF"
+                BorderThickness="0,0,1,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="12,14,12,14">
-                    <TextBlock Text="面板" Style="{StaticResource NavGroup}" Margin="12,2,0,5"/>
+                    <TextBlock Text="面板" Style="{StaticResource NavGroup}" Margin="12,4,0,6"/>
                     <RadioButton x:Name="NavAppearance" Style="{StaticResource NavItem}" Tag="&#xE790;"
                                  GroupName="nav" IsChecked="True" Content="外观" Checked="Nav_Checked"/>
                     <RadioButton x:Name="NavBehavior" Style="{StaticResource NavItem}" Tag="&#xE7A7;"
@@ -159,19 +168,25 @@
             </ScrollViewer>
         </Border>
 
-        <!-- ————— 内容区 ————— -->
-        <Grid Grid.Column="1" Background="White">
+        <!-- ————— 内容区:浅灰页面底,页头白色一条,卡片白底浮在上面 ————— -->
+        <Grid Grid.Column="1" Background="{StaticResource PageBackBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock x:Name="PageTitle" Text="外观" FontSize="22" FontWeight="Bold"
-                       Foreground="#1D1D1F" Margin="34,24,34,14"/>
+            <Border Grid.Row="0" Background="White" BorderBrush="#ECECEF" BorderThickness="0,0,0,1"
+                    Padding="34,22,34,15">
+                <TextBlock x:Name="PageTitle" Text="外观" FontSize="21" FontWeight="Bold"
+                           Foreground="#1D1D1F"/>
+            </Border>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0">
-                <StackPanel Margin="34,0,34,26" TextElement.FontFamily="Segoe UI, Microsoft YaHei UI">
+                <!-- 内容限宽:窗口拉很宽时卡片不至于横贯整屏。**必须 Stretch**——
+                     换成 Left 会让 StackPanel 按内容测量,卡片缩成一条窄块(实测 292 宽)。 -->
+                <StackPanel Margin="34,18,34,28" MaxWidth="720" HorizontalAlignment="Stretch"
+                            TextElement.FontFamily="Segoe UI, Microsoft YaHei UI">
 
                     <!-- ============ 外观 ============ -->
                     <StackPanel x:Name="PageAppearance">

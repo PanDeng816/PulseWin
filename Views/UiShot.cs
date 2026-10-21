@@ -154,9 +154,11 @@ internal static class UiShot
             Left = -32000,          // 屏幕外:布局照算,人看不见
             Top = -32000,
             ShowInTaskbar = false,
-            // 默认 640 宽会把对照格与逐模型行的右缘文字压出画面——出图是给人看排版的,
-            // 就按用户实际会把窗口拉到的宽度渲染。
-            Width = 1400,
+            // 宽窗口出图是给人看排版的(默认 640 会压掉对照格右缘文字);窄窗口的布局
+            // 另用 PULSEWIN_UISHOT_WIDTH=640 再跑一遍——两种宽度都有卡片会被裁的风险,
+            // 只验一种会漏(实测 640 下「网页控制台」chip 被顶出卡片)。
+            Width = int.TryParse(Environment.GetEnvironmentVariable("PULSEWIN_UISHOT_WIDTH"), out var shotWidth)
+                && shotWidth >= 480 ? shotWidth : 1400,
         };
         window.Show();
 

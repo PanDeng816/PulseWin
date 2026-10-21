@@ -9,13 +9,20 @@
     <SolidColorBrush x:Key="AccentBrush" Color="#007AFF"/>
     <SolidColorBrush x:Key="AccentPressBrush" Color="#0064D2"/>
     <SolidColorBrush x:Key="WindowBackBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SidebarBackBrush" Color="#F5F5F7"/>
+    <!-- 页面底与卡片分开:白卡压在浅灰底上,层次靠"底色差 + 一圈极淡投影",
+         不再靠一条 1px 灰线(那种画法在 200% DPI 下几乎看不见)。 -->
+    <SolidColorBrush x:Key="PageBackBrush" Color="#F4F4F7"/>
+    <SolidColorBrush x:Key="SidebarBackBrush" Color="#F4F4F7"/>
+    <SolidColorBrush x:Key="CardBackBrush" Color="#FFFFFF"/>
+    <DropShadowEffect x:Key="CardShadow" BlurRadius="16" ShadowDepth="1" Direction="270"
+                      Opacity="0.055" Color="#000000"/>
     <SolidColorBrush x:Key="TextBrush" Color="#1D1D1F"/>
     <SolidColorBrush x:Key="TextSubBrush" Color="#86868B"/>
     <SolidColorBrush x:Key="TextGroupBrush" Color="#8E8E93"/>
-    <SolidColorBrush x:Key="CardBorderBrush" Color="#E3E3E6"/>
-    <SolidColorBrush x:Key="SeparatorBrush" Color="#E8E8EC"/>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#E8E8EC"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#ECECEF"/>
     <SolidColorBrush x:Key="NavHoverBrush" Color="#E9E9EC"/>
+    <SolidColorBrush x:Key="NavActiveBackBrush" Color="#E7F1FF"/>
     <SolidColorBrush x:Key="FieldBackBrush" Color="#F0F0F2"/>
     <SolidColorBrush x:Key="FieldBorderBrush" Color="#D8D8DC"/>
 
@@ -301,4 +308,113 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- 滚动条:系统默认那条深灰粗轨在浅色窗里像一道裂缝(实测 200% DPI 下宽 17px)。
+         这里只留 10px 透明轨道 + 圆角淡灰滑块,无箭头;垂直/水平各一套布局。
+         **用隐式样式挂进 App 资源**,否则每个 ScrollViewer 都要单独写模板。 -->
+    <Style x:Key="LightScrollBar" TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Width" Value="10"/>
+        <Setter Property="MinWidth" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border x:Name="thumb" Background="#C9C9D0" CornerRadius="3"
+                                                    Margin="1,2"/>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="thumb" Property="Background" Value="#AFAFB8"/>
+                                                </Trigger>
+                                                <Trigger Property="IsDragging" Value="True">
+                                                    <Setter TargetName="thumb" Property="Background" Value="#96969F"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="Height" Value="10"/>
+                <Setter Property="MinHeight" Value="10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="Transparent">
+                                <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Background="Transparent"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border x:Name="thumb" Background="#C9C9D0" CornerRadius="3"
+                                                            Margin="2,1"/>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="thumb" Property="Background" Value="#AFAFB8"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Background="Transparent"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 全局默认滚动条(隐式):所有 ScrollViewer / 列表 / TextBox 内部都走这套细滑块 -->
+    <Style TargetType="ScrollBar" BasedOn="{StaticResource LightScrollBar}"/>
 </ResourceDictionary>

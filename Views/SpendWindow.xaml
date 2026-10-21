@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:PulseWin"
         Title="Pulse 用量" Width="640" Height="780" MinWidth="480" MinHeight="320"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="#F5F5F7" Foreground="#1D1D1F"
+        Background="{StaticResource PageBackBrush}" Foreground="#1D1D1F"
         FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True">
 
     <Window.Resources>
@@ -42,7 +42,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="Bd" Background="#EBEBEF" BorderBrush="Transparent"
-                                BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                BorderThickness="1" CornerRadius="7" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -53,6 +53,42 @@
                                 <Setter TargetName="Bd" Property="Background" Value="#007AFF"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="7" ShadowDepth="1" Direction="270"
+                                                          Opacity="0.18" Color="#007AFF"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 视图页签:导航用,一眼能分出"当前在哪个视图"。浅蓝底 + 强调色文字,
+             与下面那排"区间筛选"(实心蓝块)拉开权重——两者管的事不同。 -->
+        <Style x:Key="ViewTab" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#6E6E73"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="11,6"/>
+            <Setter Property="Margin" Value="0,0,2,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F2F2F5"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E9F2FF"/>
+                                <Setter Property="Foreground" Value="#0068D9"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -61,18 +97,19 @@
         </Style>
 
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E3E3E6"/>
+            <Setter Property="Background" Value="{StaticResource CardBackBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="11"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
         </Style>
 
         <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="1,2,0,6"/>
+            <Setter Property="Margin" Value="1,4,0,8"/>
         </Style>
 
         <Style x:Key="Dim" TargetType="TextBlock">
@@ -90,35 +127,40 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="{Binding Name}" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
                     <!-- 说明文字放星号列:窄窗口(默认 640)下不至于被硬裁出半个字 -->
-                    <Grid Margin="0,3,0,0">
+                    <Grid Margin="0,4,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Background="#E8E8EC" CornerRadius="2" Height="4" Width="180" HorizontalAlignment="Left">
-                            <Border Background="{Binding BarBrush}" CornerRadius="2" Height="4"
-                                    HorizontalAlignment="Left" Width="{Binding BarWidth}"/>
+                        <!-- 外层裁剪:BarWidth 算大了(满格归一/取整)时填充条也不会糊出 180 的底轨,
+                             而在整行上拉一条长线 -->
+                        <Border Background="#ECECF0" CornerRadius="2.5" Height="5" Width="180"
+                                HorizontalAlignment="Left" ClipToBounds="True">
+                            <Border Background="{Binding BarBrush}" CornerRadius="2.5" Height="5"
+                                    HorizontalAlignment="Left" Width="{Binding BarWidth}" MaxWidth="180"/>
                         </Border>
                         <TextBlock Grid.Column="1" Text="{Binding Detail}" FontSize="11" Foreground="#86868B"
                                    Margin="8,-3,0,0" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding Detail}"/>
                     </Grid>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding Tokens}" FontSize="12.5" VerticalAlignment="Top"
-                           HorizontalAlignment="Right" Margin="0,0,10,0" ToolTip="{Binding TokensTip}"/>
-                <TextBlock Grid.Column="2" Text="{Binding Amount}" FontSize="12.5" VerticalAlignment="Top"
-                           HorizontalAlignment="Right" MinWidth="62" TextAlignment="Right"
-                           ToolTip="{Binding AmountTip}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Tokens}" FontSize="13" VerticalAlignment="Top"
+                           HorizontalAlignment="Right" Margin="0,0,12,0" ToolTip="{Binding TokensTip}"
+                           Typography.NumeralAlignment="Tabular"/>
+                <TextBlock Grid.Column="2" Text="{Binding Amount}" FontSize="13" VerticalAlignment="Top"
+                           HorizontalAlignment="Right" MinWidth="64" TextAlignment="Right"
+                           ToolTip="{Binding AmountTip}" Typography.NumeralAlignment="Tabular"/>
             </Grid>
         </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
         <!-- 顶部:视图 tab / 区间 / 刷新与导出 / 价目表来源 -->
-        <Border DockPanel.Dock="Top" Background="White" Padding="20,12" BorderBrush="#E3E3E6" BorderThickness="0,0,0,1">
-            <StackPanel>
+        <Border DockPanel.Dock="Top" Background="White" Padding="20,13,20,11"
+                BorderBrush="#ECECEF" BorderThickness="0,0,0,1">
+            <StackPanel MaxWidth="1280" HorizontalAlignment="Stretch">
                 <WrapPanel x:Name="TabRow" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="SpanToday" Style="{StaticResource SpanToggle}" Content="今天" GroupName="Span" Tag="Today"/>
@@ -145,7 +187,7 @@
         </Border>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0">
-            <StackPanel Margin="18,12,18,16">
+            <StackPanel Margin="20,14,20,18" MaxWidth="1280" HorizontalAlignment="Stretch">
 
                 <!-- 下钻面包屑(点柱图/热图某天后出现) -->
                 <DockPanel x:Name="DayFilterRow" Visibility="Collapsed" Margin="0,0,0,12">
@@ -171,9 +213,11 @@
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="TotalTokens" FontSize="32" FontWeight="Bold" VerticalAlignment="Bottom"/>
-                                <TextBlock Text="tokens" FontSize="12" Foreground="#86868B" Margin="7,0,0,8"/>
-                                <TextBlock x:Name="TotalCost" FontSize="32" FontWeight="Bold" Margin="26,0,0,0" VerticalAlignment="Bottom"/>
+                                <TextBlock x:Name="TotalTokens" FontSize="34" FontWeight="SemiBold"
+                                           VerticalAlignment="Bottom" Typography.NumeralAlignment="Tabular"/>
+                                <TextBlock Text="tokens" FontSize="12.5" Foreground="#86868B" Margin="8,0,0,9"/>
+                                <TextBlock x:Name="TotalCost" FontSize="34" FontWeight="SemiBold" Margin="30,0,0,0"
+                                           VerticalAlignment="Bottom" Typography.NumeralAlignment="Tabular"/>
                             </StackPanel>
                             <TextBlock x:Name="DeltaLine" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>
                             <TextBlock x:Name="CostNote" Style="{StaticResource Dim}" Margin="0,5,0,0" TextWrapping="Wrap"/>

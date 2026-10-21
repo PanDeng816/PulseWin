@@ -516,7 +516,7 @@ public partial class SpendWindow : Window
     {
         _syncingTabs = true;
         TabRow.Children.Clear();
-        AddTab("总览", isActive: _selectedChannel is null, () =>
+        AddTab("总览", null, isActive: _selectedChannel is null, () =>
         {
             _selectedChannel = null;
             _dayFilter = null;
@@ -530,7 +530,7 @@ public partial class SpendWindow : Window
                 ? SpendFormat.Tokens(ch.TotalTokens)
                 : (ch.Enabled == false ? "未启用" : "无用量");
             var captured = ch;
-            AddTab($"{ch.Name}  {badge}", isActive: _selectedChannel?.Key == ch.Key, () =>
+            AddTab(ch.Name, badge, isActive: _selectedChannel?.Key == ch.Key, () =>
             {
                 _selectedChannel = captured;
                 _dayFilter = null;
@@ -540,15 +540,34 @@ public partial class SpendWindow : Window
         _syncingTabs = false;
     }
 
-    private void AddTab(string text, bool isActive, Action onClick)
+    /// <summary>
+    /// 视图页签。名称与徽标分开排:徽标(本区间用量/未启用)用 11 号灰字,
+    /// 换视图时不跟着权重一起变粗——页签名才是可点的那个词。
+    /// </summary>
+    private void AddTab(string name, string? badge, bool isActive, Action onClick)
     {
+        var content = new StackPanel { Orientation = Orientation.Horizontal };
+        content.Children.Add(new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center });
+        if (!string.IsNullOrEmpty(badge))
+        {
+            content.Children.Add(new TextBlock
+            {
+                Text = badge,
+                FontSize = 11,
+                Foreground = Frozen(Color.FromRgb(0x92, 0x92, 0x99)),
+                Margin = new Thickness(7, 1, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
         var tab = new RadioButton
         {
-            Style = (Style)FindResource("SpanToggle"),
-            Content = text,
+            Style = (Style)FindResource("ViewTab"),
+            Content = content,
+            // Content 现在是 StackPanel(名称+徽标),不是字符串;Tag 留给诊断取名用
+            Tag = name,
             GroupName = "ViewTab",
-            Margin = new Thickness(0, 0, 4, 0),
-            FontSize = 12.5,
+            Margin = new Thickness(0, 0, 2, 0),
         };
         tab.Checked += (_, _) =>
         {
@@ -610,13 +629,13 @@ public partial class SpendWindow : Window
 
         foreach (var sub in _subs)
         {
-            var row = new Grid { Margin = new Thickness(0, 0, 0, 9) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(128) });
+            var row = new Grid { Margin = new Thickness(0, 0, 0, 10) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(118) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             row.Children.Add(new TextBlock
             {
                 Text = sub.Name,
-                FontSize = 12.5,
+                FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Top,
                 Foreground = TextMain,
@@ -643,6 +662,15 @@ public partial class SpendWindow : Window
             Grid.SetColumn(pools, 1);
             row.Children.Add(pools);
             QuotaPanel.Children.Add(row);
+
+            // 订阅之间一条极淡的分隔线:三四个订阅叠在一个卡里时,行与行才分得清
+            if (sub != _subs[^1])
+                QuotaPanel.Children.Add(new Border
+                {
+                    Height = 1,
+                    Background = Frozen(Color.FromRgb(0xF0, 0xF0, 0xF3)),
+                    Margin = new Thickness(0, 2, 0, 10),
+                });
         }
 
         QuotaHint.Text = "";
@@ -651,32 +679,36 @@ public partial class SpendWindow : Window
     /// <summary>一条 pool 读数:标签 + 进度条 + 百分比/金额 + 重置倒计时。</summary>
     private FrameworkElement BuildPoolLine(PoolData pool)
     {
-        var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+        var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2.5, 0, 2.5) };
         line.Children.Add(new TextBlock
         {
             Text = pool.Label,
             FontSize = 11.5,
-            Width = 46,
+            Width = 44,
             VerticalAlignment = VerticalAlignment.Center,
             Foreground = TextSub,
         });
 
         if (pool.HasPercent)
         {
-            line.Children.Add(BuildBar(pool.Fraction, 132));
+            // 条宽 112:默认 640 窗口下,标签+条+读数+重置时间+「网页控制台」chip
+            // 必须挤在约 520 里,132 会把 chip 顶出卡片右缘(实测被裁掉半个字)。
+            line.Children.Add(BuildBar(pool.Fraction, 112));
             // 网页口径把 meters 的微美分原值一起带回来了:这时写金额比写"10.6 / 100"
             // 这种百分比分数好读,也正是网页卡片上那两个数($6.38 / $60)。
             string readout = pool is { LimitAmount: { } limitUsd, UsedAmount: { } usedUsd }
                 ? $"{Money.Exact(usedUsd, "$")} / {Money.Exact(limitUsd, "$")}"
                 : $"已用 {Money.Short(pool.Used ?? 0, pool.Unit)}"
                     + (pool.Cap is { } cap ? $" / {Money.Short(cap, pool.Unit)}" : "");
-            line.Children.Add(new TextBlock
+            var reading = new TextBlock
             {
                 Text = $" {pool.PercentText} · {readout}",
                 FontSize = 11.5,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = TextMain,
-            });
+            };
+            System.Windows.Documents.Typography.SetNumeralAlignment(reading, FontNumeralAlignment.Tabular);
+            line.Children.Add(reading);
         }
         else if (pool.Amount is { } amount)
         {
@@ -695,7 +727,7 @@ public partial class SpendWindow : Window
         line.Children.Add(new TextBlock
         {
             Text = remain,
-            FontSize = 11.5,
+            FontSize = 11,
             VerticalAlignment = VerticalAlignment.Center,
             Foreground = TextSub,
         });
@@ -703,13 +735,20 @@ public partial class SpendWindow : Window
         // 接口是整数、向下取整,与网页可能差 1 个百分点,不标就等于默认口径。
         if (pool.ReadingFrom is { Length: > 0 } readingFrom)
         {
-            line.Children.Add(new TextBlock
+            line.Children.Add(new Border
             {
-                Text = " · " + readingFrom,
-                FontSize = 11,
+                Background = Frozen(Color.FromRgb(0xEA, 0xF2, 0xFF)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(4, 1, 4, 1),
+                Margin = new Thickness(4, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                Foreground = Accent,
                 ToolTip = "来自 opencode.ai 网页控制台(与网页卡片同一个公式),不是 API Key 接口的整数口径",
+                Child = new TextBlock
+                {
+                    Text = readingFrom,
+                    FontSize = 10,
+                    Foreground = Accent,
+                },
             });
         }
         return line;
@@ -721,14 +760,14 @@ public partial class SpendWindow : Window
         fraction = Math.Clamp(fraction, 0, 1);
         var track = new Border
         {
-            Height = 6,
-            CornerRadius = new CornerRadius(3),
+            Height = 7,
+            CornerRadius = new CornerRadius(3.5),
             Background = FieldBack,
             Width = width,
             VerticalAlignment = VerticalAlignment.Center,
             Child = new Border
             {
-                CornerRadius = new CornerRadius(3),
+                CornerRadius = new CornerRadius(3.5),
                 Background = fraction >= 0.85 ? BadBrush : fraction >= 0.6 ? WarnBrush : GoodBrush,
                 Width = Math.Max(2, width * fraction),
                 HorizontalAlignment = HorizontalAlignment.Left,
@@ -1512,9 +1551,10 @@ public partial class SpendWindow : Window
             + (ch.UnclassifiedTokens > 0
                 ? $"\n其中 {SpendFormat.TokensExact(ch.UnclassifiedTokens)} 来源只报总量、不参与计价"
                 : "");
-        // 这两格的值短,列宽下限可以更松:用户窗口 560 宽(内容区约 466)也要排成一排
-        AutoColumns(ChannelKpiGrid, minCell: 88);
-        AutoColumns(ChannelTokenGrid, minCell: 88);
+        // 这两格的值短,列宽下限可以更松:用户窗口 560 宽(内容区约 466)也要排成一排。
+        // 瓦片化后每格多了左右 22 的内边距,下限跟着上调:640 宽时仍是 5 格一排。
+        AutoColumns(ChannelKpiGrid, minCell: 104);
+        AutoColumns(ChannelTokenGrid, minCell: 104);
 
         // 本区间无用量:给一条说明,免得看着像"没统计到"
         ChannelStatusLine.Text = ch.HasData ? "" : ch.LifetimeTokens > 0
@@ -2423,14 +2463,16 @@ public partial class SpendWindow : Window
 
             // 占比条铺满整行(按排序键的比例):窗口多宽就多宽,不再固定 200。
             // 用浅一档的蓝:第一名的条是 100% 满宽,实心强调色会看着像条分隔线。
+            // 第一名也只到 97%:完全贴边时整行一条浅蓝横线,第一眼会被读成"表头下的分隔线"。
+            double fillRatio = Math.Clamp(ratio, 0.0001, 0.97);
             var track = new Grid { Margin = new Thickness(0, 5, 0, 0) };
             track.ColumnDefinitions.Add(new ColumnDefinition
             {
-                Width = new GridLength(Math.Max(ratio, 0.0001), GridUnitType.Star),
+                Width = new GridLength(fillRatio, GridUnitType.Star),
             });
             track.ColumnDefinitions.Add(new ColumnDefinition
             {
-                Width = new GridLength(Math.Max(1 - ratio, 0.0001), GridUnitType.Star),
+                Width = new GridLength(Math.Max(1 - fillRatio, 0.0001), GridUnitType.Star),
             });
             track.Children.Add(new Border
             {
@@ -2578,10 +2620,12 @@ public partial class SpendWindow : Window
             + life;
     }
 
-    /// <summary>KPI 小格:大数字 + 小标签 + 可选脚注。金额/缓存类用强调色。返回格子本身(调用方偶尔要挂 ToolTip)。</summary>
-    private StackPanel AddCell(Panel host, string label, string value, string? note, string kind)
+    /// <summary>
+    /// KPI 小格:标签 + 大数字 + 可选脚注,装在一块浅灰瓦片里(白卡上的"卡中卡"),
+    /// 一排数字因此有边界、不散在空白里。返回瓦片本身(调用方偶尔要挂 ToolTip)。
+    /// </summary>
+    private FrameworkElement AddCell(Panel host, string label, string value, string? note, string kind)
     {
-        var panel = new StackPanel { Margin = new Thickness(0, 0, 12, 9) };
         Brush accent = kind switch
         {
             "Money" => Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A)),
@@ -2591,33 +2635,49 @@ public partial class SpendWindow : Window
             "Sessions" => Frozen(Color.FromRgb(0xBF, 0x5A, 0xF2)),
             _ => TextSub,
         };
+
+        var panel = new StackPanel();
         panel.Children.Add(new TextBlock
         {
             Text = label,
-            FontSize = 10.5,
+            FontSize = 11,
+            // 窄窗口下"官方已用(5h/周/月)"这类长标签必须能折行,否则会被瓦片右缘硬裁
+            TextWrapping = TextWrapping.Wrap,
             Foreground = TextSub,
         });
-        panel.Children.Add(new TextBlock
+        var number = new TextBlock
         {
             Text = value,
-            FontSize = 16.5,
+            FontSize = 17.5,
             FontWeight = FontWeights.SemiBold,
-            Margin = new Thickness(0, 1, 0, 0),
+            Margin = new Thickness(0, 2, 0, 0),
             Foreground = accent,
-        });
+        };
+        // 等宽数字:几块瓦片并排时小数点/位数不会各自抖动
+        System.Windows.Documents.Typography.SetNumeralAlignment(number, FontNumeralAlignment.Tabular);
+        panel.Children.Add(number);
         if (!string.IsNullOrEmpty(note))
         {
             panel.Children.Add(new TextBlock
             {
                 Text = note,
-                FontSize = 10,
-                Margin = new Thickness(0, 1, 0, 0),
+                FontSize = 10.5,
+                Margin = new Thickness(0, 2, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = TextSub,
             });
         }
-        host.Children.Add(panel);
-        return panel;
+
+        var tile = new Border
+        {
+            Background = Frozen(Color.FromRgb(0xF7, 0xF8, 0xFA)),
+            CornerRadius = new CornerRadius(9),
+            Padding = new Thickness(11, 9, 11, 8),
+            Margin = new Thickness(0, 0, 8, 8),
+            Child = panel,
+        };
+        host.Children.Add(tile);
+        return tile;
     }
 
     /// <summary>已挂过自适应列数监听的网格(避免每次重渲染重复订阅 SizeChanged)。</summary>
@@ -2627,12 +2687,13 @@ public partial class SpendWindow : Window
     /// 指标网格按可用宽度决定列数。固定 3 列时窗口一拉宽,每格右边就空出一大片
     /// (实测 1400 宽下三个半格都空着);改成自适应后一排能摆下整组数字,
     /// 而且列宽一律均等——一排里几个数就是均匀铺满整行。
-    /// <paramref name="minCell"/> 是列宽下限:值短的网格(KPI / Token 构成)可以给到 88,
-    /// 让默认窗口那一排也能装下 5 格;其余网格留 108。
+    /// <paramref name="minCell"/> 是列宽下限:值短的网格(KPI / Token 构成)可以给到 104,
+    /// 让默认窗口那一排也能装下 5 格;其余网格留 118(瓦片左右内边距 22 要算进去,
+    /// 否则一格只剩七十来像素,标签与数值都得换行)。
     /// **不"匀"末行**:曾经为了不让末行只剩一格而减列数(5 格排 3 列),结果正是用户抱怨的
     /// "一排才两三个"——宁可末行落单,也不减列。
     /// </summary>
-    private void AutoColumns(UniformGrid grid, double minCell = 108)
+    private void AutoColumns(UniformGrid grid, double minCell = 118)
     {
         void Apply()
         {
@@ -2824,7 +2885,9 @@ public partial class SpendWindow : Window
     internal string UiShotTabLabel(int index)
     {
         var tabs = TabRow.Children.OfType<RadioButton>().ToList();
-        return index >= 0 && index < tabs.Count ? tabs[index].Content?.ToString() ?? "" : "";
+        if (index < 0 || index >= tabs.Count) return "";
+        // Tag 里是纯名称;Content 是"名称 + 用量徽标"的 StackPanel,直接 ToString 会得到类型名
+        return tabs[index].Tag as string ?? tabs[index].Content?.ToString() ?? "";
     }
 
     /// <summary>UiShot 用:切到第 i 个视图 tab(直接驱动真实 tab 按钮,与手点同一条路径)。</summary>
