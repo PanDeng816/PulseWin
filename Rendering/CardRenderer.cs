@@ -86,11 +86,12 @@ public static class CardRenderer
         double dpi, DateTimeOffset now)
     {
         double r = Card.CornerRadius;
-        // 悬浮卡是"压在图上的信息面板"，比 rail 面板更实：80% 的底叠在白网页上时，
-        // 背后的文字会透上来和卡片自己的字叠在一起（实测完全没法读）。这里兜到 91%，
-        // rail 面板本体仍按用户设的不透明度走。
+        // 悬浮卡与 rail 面板共用同一层底（设置 › 外观 › 背景不透明度）。
+        // v1.25.0 曾把卡片单独兜到 91%（怕 80% 叠在白网页上背后文字透上来），
+        // 结果用户一眼看出"卡片比侧栏实"——同一块玻璃两个透过率，比轻微透字更显眼。
+        // v1.25.2 起把透字这件事交给 CardWindow 铺的**磨砂底**（背后内容先糊成色块），
+        // 这里就只管与 rail 同一条面色，不再单独抬 alpha。
         Color surface = PanelPalette.Surface;
-        if (surface.A < 0xE8) surface = Color.FromArgb(0xE8, surface.R, surface.G, surface.B);
         dc.DrawRoundedRectangle(Solid(surface), null, body, r, r);
         // 玻璃层:与 rail 面板同一套(内缘亮边 + 底缘暗边),悬浮卡才不会像一块贴纸。
         // 几何必须用 RoundRect 跟上面那条 DrawRoundedRectangle 对齐 —— 早先用 squircle

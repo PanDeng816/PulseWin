@@ -80,6 +80,74 @@ internal static class Backdrop
     /// <summary>设置里的三档 → 实际材质。</summary>
     public static BackdropKind FromSetting(int mode) => (BackdropKind)Math.Clamp(mode, 0, 2);
 
+    /// <summary>
+    /// 悬停卡表面用的磨砂底。<b>必须在卡片显示之前调用</b>（否则抓到的画面里就有卡片自己）。
+    ///
+    /// 和工具窗的区别：工具窗的磨砂图是整块窗口背景，压色压得很重（只留氛围）；
+    /// 悬浮卡上面还要叠一层 80% 的 <see cref="PanelPalette.Surface"/>，所以这里只压到
+    /// 「亮度与 rail 背后的壁纸相当」——压太狠卡片会比 rail 还黑，那就又回到两处不一致。
+    /// 压完之后背后的文字已经被 16 倍下采样糊成色块，20% 的透过率不会再让字浮上来。
+    /// </summary>
+    /// <param name="windowTopLeft">卡片窗口左上角（DIP）。</param>
+    /// <param name="body">卡片表面在窗口内的矩形（DIP）。</param>
+    /// <param name="scale">DIP→物理像素的缩放（分层窗口在 200% DPI 下是 2）。</param>
+    internal static ImageBrush? FrostedFill(Point windowTopLeft, Rect body, double scale)
+    {
+        if (body.Width <= 0 || body.Height <= 0) return null;
+
+        double screenW = GetSystemMetrics(SM_CXSCREEN);
+        double screenH = GetSystemMetrics(SM_CYSCREEN);
+        if (screenW <= 0 || screenH <= 0) return null;
+
+        var raw = Capture();
+        if (raw is null) return null;
+
+        double px = (windowTopLeft.X + body.X) * scale;
+        double py = (windowTopLeft.Y + body.Y) * scale;
+        double pw = body.Width * scale;
+        double ph = body.Height * scale;
+
+        var frost = ComposeFrost(raw);
+        var brush = new ImageBrush(frost)
+        {
+            Stretch = Stretch.Fill,
+            ViewboxUnits = BrushMappingMode.RelativeToBoundingBox,
+            Viewbox = new Rect(px / screenW, py / screenH, pw / screenW, ph / screenH),
+            ViewportUnits = BrushMappingMode.RelativeToBoundingBox,
+            Viewport = new Rect(0, 0, 1, 1),
+        };
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>磨砂图层往主题色里压多少：只为压对比度，不为改色。见 <see cref="FrostedFill"/>。
+    /// 取值按"叠完 80% 面后与 rail 面板亮度相当"反推：白页缩略图 ≈ #E8，压 0x30 后 ≈ #BE，
+    /// 再叠 80% 黑得 ≈ #2E —— 与 rail 在浅色壁纸上的 #32 只差几级。</summary>
+    private const byte FrostVeil = 0x30;
+
+    private static ImageSource ComposeFrost(ImageSource source)
+    {
+        if (source is not BitmapSource bitmap) return source;
+
+        int w = bitmap.PixelWidth, h = bitmap.PixelHeight;
+        if (w <= 0 || h <= 0) return source;
+
+        var veil = new SolidColorBrush(Color.FromArgb(FrostVeil, 0x13, 0x13, 0x16));
+        veil.Freeze();
+
+        var visual = new DrawingVisual();
+        using (DrawingContext dc = visual.RenderOpen())
+        {
+            dc.DrawImage(bitmap, new Rect(0, 0, w, h));
+            dc.DrawRectangle(veil, null, new Rect(0, 0, w, h));
+        }
+
+        var composed = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        composed.Render(visual);
+        composed.Freeze();
+        return composed;
+    }
+
     /// <summary>把所有已开着的窗口重套一遍（设置窗里改档位时，已打开的用量窗要跟着变）。</summary>
     public static void ApplyAll(BackdropKind kind, bool dark)
     {

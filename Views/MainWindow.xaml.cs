@@ -934,14 +934,16 @@ public partial class MainWindow : Window
         var (win, body) = CardLayout.SubCard(sub.Pools.Count, stale, sub.HourlySpend is not null);
         _cardFor = sub.Key;
         _card.Configure(sub, win, body, stale);
-        _card.ShowCard();
+        // 先摆位、再显示:卡片窗口的磨砂底只在不可见时抓屏(否则会把卡片自己抓进去),
+        // 所以墨砂必须等 PositionCard 把最终位置定下来之后才可能抓对。
         PositionCard();
+        _card.ShowCard();
     }
 
     /// <summary>把卡窗放到当前 rail 位置旁。每帧调用,rail 滑入/拖动时卡片跟着走,不会与 rail 重叠。</summary>
     private void PositionCard()
     {
-        if (!_card.IsVisible || _cardFor is not { } key) return;
+        if (_cardFor is not { } key) return;
         // 用 key 反查下标：源数量减少时旧下标可能越界，宁可收卡也不抛异常
         int ringIndex = _subs.FindIndex(s => s.Key == key);
         if (ringIndex < 0) { HideCard(); return; }
