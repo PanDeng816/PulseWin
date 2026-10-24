@@ -510,6 +510,17 @@ v1.7.0 曾加过一个"液态玻璃"开关(用 `SetWindowCompositionAttribute` �
   (Key 只存在于 DeepSeek 控制台),所以没配 Key 时这个环不显示,也不会拖慢另外两个源
   的刷新节奏
 
+## 出图回归比对
+
+改版后重跑 `--ui-shot` / `--card-shot` / `--rail-shot`，与上一版留存的出图目录逐张比像素，
+在没有逐张肉眼核对的情况下先发现"排版跑版 / 文字裁切 / 整体变黑"这类视觉回归：
+
+```powershell
+python tools\ui_diff.py <基线目录> Data\ui-shot -o Data\ui-diff.md
+```
+
+判据：尺寸变化 = `FAIL`；差异像素 >0.1% = `CHANGED`（需目视确认）；其余 `SAME`。退出码 1 表示有 `FAIL`。
+
 ## 隐私
 
 - **无硬编码密钥、无遥测、无第三方服务器**:请求只发给 Command Code / OpenCode 官方接口
