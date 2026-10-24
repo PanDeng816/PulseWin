@@ -1948,15 +1948,20 @@ public partial class SpendWindow : Window
         var sub = _subs.FirstOrDefault(s => s.Key == "opencode" || s.Key.StartsWith("opencode:", StringComparison.Ordinal));
         var (range, windowLabel) = OpenCodeUsageStatsClient.WindowFor(_span);
         long localTokens, localRequests;
+        // 本机一律按**自然日**取窗口(今天 00:00 起 / 近 7 天 / 近 30 天),与顶部 KPI 同源。
+        // 不能改成本机也走滚动 24 小时来"对齐官方":账本的天级聚合行时间戳是"当天 12:00"
+        // 占位(见 UsageRepository.LoadDayRows),滚动窗口会把前一天整个自然日都算进来;
+        // 而只统计明细又会漏掉已被灌进聚合行的当天数据(MergeIn 后明细不再单列)。
+        // 两个窗口的差异(官方多含昨晚)写进 AccountMeterHint,不靠把本机改成滚动来掩盖。
         if (_span is SpendSpan.Today or SpendSpan.Week)
         {
-            var from = range == "24h" ? DateTime.Now.AddHours(-24) : DateTime.Now.AddDays(-7);
+            var from = _span == SpendSpan.Today ? DateTime.Today : DateTime.Today.AddDays(-6);
             (localTokens, localRequests) = CountLocalSince(ch, from);
         }
         else
         {
             // 自定义/全部也按官方的 30 天上限对齐,取本机同一窗口
-            (localTokens, localRequests) = CountLocalSince(ch, DateTime.Now.AddDays(-30));
+            (localTokens, localRequests) = CountLocalSince(ch, DateTime.Today.AddDays(-29));
         }
 
         AccountMeterGrid.Children.Clear();
