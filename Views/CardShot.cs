@@ -80,13 +80,14 @@ internal static class CardShot
 
         // 5) OpenCode Go **网页口径**:行3 应写"$6.38 / $60"而不是百分比分数
         //    (meters 的微美分原值折出来的金额,与 opencode.ai 网页卡片同两个数)
-        //    PeriodTokens 照真实情形给上 ⇒ 头部应显示"5.7亿 · 本月已用 Token"。
+        //    PeriodTokens 照真实情形给上 ⇒ 头部应显示"5.7亿 · 近30天已用 Token"。
         yield return ("opencode-web", new SubData
         {
             Key = "opencode",
             Name = "GO",
             AccountLabel = "PanDeng",
             PeriodTokens = 570_000_000,
+            PeriodTokensCaption = "近30天已用 Token",
             Pools = new List<PoolData>
             {
                 new()
@@ -107,6 +108,41 @@ internal static class CardShot
                     Used = 10.63, Cap = 100, ReadingFrom = "网页控制台",
                     UsedAmount = 6.38, LimitAmount = 60,
                     ResetAt = DateTimeOffset.UtcNow.AddDays(19),
+                },
+            },
+        }, false);
+
+        // 6) OpenCode Go **本账期口径**:头部显示"13.8M · 本账期已用 Token",账期刚重置
+        //    ⇒ 三个池几乎为 0,而头部的数也跟着从 0 起算(不再是 30 天的 4458M)。
+        yield return ("opencode-period", new SubData
+        {
+            Key = "opencode",
+            Name = "GO",
+            AccountLabel = "PanDeng",
+            PeriodTokens = 13_834_533,
+            PeriodTokensCaption = "本账期已用 Token",
+            Pools = new List<PoolData>
+            {
+                new()
+                {
+                    Label = "5小时", PoolKind = "FiveHour", Unit = "%", IsAvailable = true,
+                    Used = 1.4, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 12,
+                    ResetAt = DateTimeOffset.UtcNow.AddHours(4.5),
+                },
+                new()
+                {
+                    Label = "本周", PoolKind = "Weekly", Unit = "%", IsAvailable = true,
+                    Used = 0.56, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 30,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(4.6),
+                },
+                new()
+                {
+                    Label = "本月", PoolKind = "Monthly", Unit = "%", IsAvailable = true,
+                    Used = 0.28, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 60,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(30.9),
                 },
             },
         }, false);

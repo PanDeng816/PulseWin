@@ -450,4 +450,45 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
     </Style>
+
+    <!-- 悬停提示(全局隐式):系统默认模板是直角灰框,和整窗的圆角卡片完全两个时代。
+         换成 mac 风格小卡片:8px 圆角 + 1px 浅描边 + 一层很淡的投影,并固定与主界面同一套字体
+         (ToolTip 是弹出层,不继承窗口的 FontFamily,不设就会掉回系统默认字体)。
+         深色主题在 Themes\Dark.xaml 覆盖 Tip 三个键。 -->
+    <SolidColorBrush x:Key="TipBackBrush" Color="#FCFCFD"/>
+    <SolidColorBrush x:Key="TipBorderBrush" Color="#DCDCE1"/>
+    <DropShadowEffect x:Key="TipShadow" BlurRadius="12" ShadowDepth="2" Direction="270"
+                      Opacity="0.10" Color="#000000"/>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="MaxWidth" Value="340"/>
+        <!-- 出现在鼠标右下方,别压住正在看的那根柱子;贴近屏幕边缘时 WPF 会自动翻转 -->
+        <Setter Property="Placement" Value="Mouse"/>
+        <Setter Property="HorizontalOffset" Value="12"/>
+        <Setter Property="VerticalOffset" Value="18"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Grid Margin="8">
+                        <Border Background="{DynamicResource TipBackBrush}"
+                                BorderBrush="{DynamicResource TipBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="10,8"
+                                Effect="{DynamicResource TipShadow}">
+                            <ContentPresenter TextElement.Foreground="{DynamicResource TextBrush}"
+                                              TextElement.FontFamily="Segoe UI, Microsoft YaHei UI"
+                                              TextElement.FontSize="11.5"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

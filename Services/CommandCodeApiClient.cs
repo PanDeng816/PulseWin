@@ -94,8 +94,7 @@ public sealed class CommandCodeApiClient : IUsageProvider
             ?? "unknown";
         var planName = PlanDisplayName(planId);
         var currentPeriodStart = ReadString(subscription, "currentPeriodStart");
-        var currentPeriodEnd = ParseDate(ReadString(subscription, "currentPeriodEnd"));
-        var monthlyRemaining = ReadDouble(credits, "monthlyCredits");
+        var currentPeriodEnd = ParseDate(ReadString(subscription, "currentPeriodEnd"));        var monthlyRemaining = ReadDouble(credits, "monthlyCredits");
         var purchasedCredits = ReadDouble(credits, "purchasedCredits") ?? 0d;
         var freeCredits = ReadDouble(credits, "freeCredits") ?? 0d;
 
@@ -142,7 +141,10 @@ public sealed class CommandCodeApiClient : IUsageProvider
             periodRequests,
             periodTokens,
             _utcNow(),
-            studioUrl);
+            studioUrl,
+            // 账期起点给用量窗的「本账期」区间用:GOAT 的 currentPeriodStart 与官方
+            // summary 的 from 是同一个值,两边口径天然对齐。
+            PeriodStartAt: ParseDate(currentPeriodStart));
     }
 
     private async Task<ApiIdentity> GetIdentityAsync(string apiKey, CancellationToken cancellationToken)

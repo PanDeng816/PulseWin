@@ -94,6 +94,13 @@ public sealed record QuotaWindow(
     public bool HasReading => IsAvailable && (Percent is not null || Amount is not null);
 }
 
+/// <summary>
+/// 一次同步拿到的套餐读数。
+///
+/// <c>PeriodTokens</c> 的**窗口因源而异**:GOAT 是官方账期(<c>currentPeriodStart</c> 起),
+/// OpenCode Go 只有官方滚动 30 天(`range=30d`,官方不给账期档)——配额一重置,前者会归零、
+/// 后者不会。界面上的说明文字由 <see cref="SourceDescriptor.PeriodTokenCaption"/> 提供。
+/// </summary>
 public sealed record UsageSnapshot(
     string PlanId,
     string PlanName,
@@ -106,7 +113,16 @@ public sealed record UsageSnapshot(
     long? PeriodRequests,
     long? PeriodTokens,
     DateTimeOffset FetchedAt,
-    string StudioUsageUrl)
+    string StudioUsageUrl,
+    /// <summary>true = <c>PeriodTokens</c> 是**本账期**累计(从 <c>access.startsAt</c> 起,
+    /// 配额重置即归零);false = 它是官方滚动 30 天的量。两者的界面标签不同,不能混用。</summary>
+    bool PeriodTokensFromAccountPeriod = false,
+    /// <summary>
+    /// 本账期的**起点**(服务端给的确切时刻)。用量窗的「本账期」区间靠它把统计切在重置那一刻:
+    /// OpenCode Go 取 <c>go/status</c> 的 <c>access.startsAt</c>,GOAT 取 <c>currentPeriodStart</c>。
+    /// null = 这条源拿不到账期边界,用量窗会退回"今天"。
+    /// </summary>
+    DateTimeOffset? PeriodStartAt = null)
 {
     public double ExtraCredits => Math.Max(0, PurchasedCredits) + Math.Max(0, FreeCredits);
 

@@ -22,6 +22,10 @@ public partial class SpendWindow : Window
 {
     private SpendLedger? _ledger;
     private SpendSpan _span = SpendSpan.Today;
+    /// <summary>用户手动点过区间按钮。没点过时,套餐页默认落在「本账期」(见 <see cref="NormalizeSpan"/>)。</summary>
+    private bool _spanTouched;
+    /// <summary>正在同步区间按钮的选中态(此时 Checked 事件不能再走点击路径,否则递归渲染)。</summary>
+    private bool _syncingSpan;
     private bool _loading;
     private bool _closed;
 
@@ -41,18 +45,22 @@ public partial class SpendWindow : Window
     /// <summary>比例条的基准宽度(像素)。</summary>
     private const double BarBase = 180;
 
-    /// <summary>计费峰时段(本地小时;口径:北京 09–12、14–18)。**GOAT 与 OpenCode Go 用同一套时段**
-    /// ——OpenCode Go 也是这两个时段加价(用户实测确认)。</summary>
-    private static readonly int[] PeakHours = { 9, 10, 11, 14, 15, 16, 17 };
+    /// <summary>
+    /// 高峰**窗口**覆盖的整点小时（口径见 <see cref="PeakPricing.Windows"/>）。
+    /// **GOAT 与 OpenCode Go 用同一套时段**——OpenCode Go 也是这两个时段加价（用户实测确认）。
+    /// 注意这只用来画"工作日峰窗口"的底纹：某小时到底算不算峰价还取决于当天是不是工作日、
+    /// 是不是法定节假日，必须用 <see cref="PeakPricing.IsPeak"/> 按具体时刻判。
+    /// </summary>
+    private static readonly int[] PeakHours = [.. Enumerable.Range(0, 24).Where(PeakPricing.IsPeakHour)];
 
-    /// <summary>该渠道的**计费峰时段**;null = 不按时段加价,柱子统一配色,也不拆峰/谷。</summary>
+    /// <summary>该渠道的**计时段加价**信息;null = 不按时段加价,柱子统一配色,也不拆峰/谷。</summary>
     private static int[]? PeakHoursFor(string? sourceKey) => sourceKey switch
     {
         "goat" or "opencode" => PeakHours,
         _ => null,
     };
 
-    private const string PeakWindowText = "09–12 / 14–18 点";
+    private const string PeakWindowText = PeakPricing.WindowText;
 
     // 颜色全部走 UiTheme:深浅主题切换后,下一帧/下一次渲染就是新色值
     // (这里**不能**用 static readonly 缓存:那样会把启动时的主题永久钉死)
@@ -120,7 +128,8 @@ public partial class SpendWindow : Window
     private static Brush BandFill(Color c)
     {
         if (BandFills.TryGetValue(c, out var cached)) return cached;
-        var brush = Frozen(Color.FromArgb(0x14, c.R, c.G, c.B));
+        // 深色底上 8% 的橙会浮成一块脏棕（实测很扎眼），深色档再压一半
+        var brush = Frozen(Color.FromArgb(UiTheme.IsDark ? (byte)0x0C : (byte)0x14, c.R, c.G, c.B));
         BandFills[c] = brush;
         return brush;
     }
@@ -363,7 +372,9 @@ public partial class SpendWindow : Window
         // 合并卡的分段默认项:总览看"模型",套餐页看"今天"
         BreakdownModels.IsChecked = true;
         HourToday.IsChecked = true;
-        foreach (var button in new[] { SpanToday, SpanWeek, SpanMonth, SpanCustom, SpanAll })
+        // **每个区间按钮都要挂**:漏掉 SpanPeriod 时点"本账期"只有按钮高亮、_span 不变,
+        // 界面停在上一个区间(用户 2026-10-29 实测:点 30 天再点本账期,数字还是 30 天)。
+        foreach (var button in new[] { SpanToday, SpanPeriod, SpanWeek, SpanMonth, SpanCustom, SpanAll })
             button.Checked += Span_Checked;
         Loaded += (_, _) => { ReloadLedger(); HookResizeRedraw(); };
         Heatmap.DayClicked += EnterDayFocus;
@@ -390,10 +401,12 @@ public partial class SpendWindow : Window
 
     private void Span_Checked(object sender, RoutedEventArgs e)
     {
+        if (_syncingSpan) return;   // 程序在同步选中态,不是用户点的
         if (sender is not RadioButton { Tag: string tag }) return;
         if (tag == "Custom") return;   // "自定义"只展开日期面板,等"应用"才生效
         if (!Enum.TryParse<SpendSpan>(tag, out var span)) return;
         _span = span;
+        _spanTouched = true;
         _customActive = false;
         _dayFilter = null;
         // 换区间只重算加法,不重读库(读一次要扫两万多行)。
@@ -462,6 +475,10 @@ public partial class SpendWindow : Window
             if (task.IsFaulted)
             {
                 PriceSourceText.Text = "读取失败:" + task.Exception?.GetBaseException().Message;
+                // 构建失败也要还掉**本次** Acquire 的引用:这个分支不还的话计数虚高,
+                // 账本永远等不到归零释放(内存不回落);而 _holdsLedgerRef 管的是上一次
+                // 成功的那份(由 OnClosed 还),两者不冲突。窗口已关也一样要还。
+                SpendLedgerCache.Release();
                 return;
             }
             var ledger = task.Result;
@@ -488,7 +505,69 @@ public partial class SpendWindow : Window
     private (DateTime From, DateTime To) EffectiveRange() =>
         _customActive
             ? (_customFrom, _customTo.AddDays(1))
-            : SpendSummary.Range(_span, DateTime.Now);
+            // 账期起点交给 SpendSummary.Range 处理(它按天对齐——当天归档后只有天级聚合行,
+            // 按时刻切会把整天丢掉,详见那边的注释)。
+            : SpendSummary.Range(_span, DateTime.Now, PeriodStartFor(_selectedChannel));
+
+    /// <summary>当前套餐的账期起点(本地时间)。拿不到返回 null(DeepSeek、没开浏览器会话的 OpenCode)。</summary>
+    private DateTime? PeriodStartFor(ChannelUsage? channel)
+    {
+        if (channel?.SourceKey is not { } key) return null;
+        foreach (var sub in _subs)
+        {
+            if (SourceKeys.BaseKey(sub.Key) != key) continue;
+            if (sub.PeriodStartAt is { } start) return start.LocalDateTime;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 区间按钮的可用性与默认值。
+    ///
+    /// ①「本账期」只在当前套餐**拿得到服务端账期起点**时出现——套餐一重置,这一档自动只剩
+    /// 新周期的数据,时段分布/逐模型/性能统计因此不会把上个周期混进来(用户要的就是这个)。
+    /// ②用户还没手动点过区间时,套餐页默认落在「本账期」:重置后打开这一页看到的就是新账期,
+    /// 不必每次都手动切。总览页没有单一账期,保持"今天"。
+    /// </summary>
+    private void NormalizeSpan()
+    {
+        if (_customActive) return;   // 自定义区间生效时不动按钮组
+
+        DateTime? start = PeriodStartFor(_selectedChannel);
+        bool hasPeriod = start is not null;
+        SpanPeriod.Visibility = hasPeriod ? Visibility.Visible : Visibility.Collapsed;
+        SpanPeriod.ToolTip = hasPeriod
+            ? $"账期起点 {start:yyyy-MM-dd HH:mm}\n统计从当天 00:00 起算——本机当天只有日级记录，切不到分钟"
+            : null;
+
+        if (!hasPeriod && _span == SpendSpan.Period) _span = SpendSpan.Today;
+        if (!_spanTouched && hasPeriod) _span = SpendSpan.Period;
+
+        SyncSpanButtons();
+    }
+
+    /// <summary>把按钮组的选中态对齐到 <see cref="_span"/>(带重入保护,避免 Checked 递归)。</summary>
+    private void SyncSpanButtons()
+    {
+        _syncingSpan = true;
+        try
+        {
+            var target = _span switch
+            {
+                SpendSpan.Today => SpanToday,
+                SpendSpan.Week => SpanWeek,
+                SpendSpan.Month => SpanMonth,
+                SpendSpan.All => SpanAll,
+                SpendSpan.Period => SpanPeriod,
+                _ => SpanToday,
+            };
+            target.IsChecked = true;
+        }
+        finally
+        {
+            _syncingSpan = false;
+        }
+    }
 
     // ————————————————— 渲染总流程 —————————————————
 
@@ -506,6 +585,9 @@ public partial class SpendWindow : Window
 
         // 渠道列表(tab 徽标)。**区间必须与下面的 Render 用同一个**:自定义区间/按天下钻时
         // EffectiveRange() 才是真正生效的区间,只传 _span 会让徽标停在"今天"。
+        // 额度快照要先读:账期起点(「本账期」区间的左端点)就在它里面。
+        _subs = SnapshotSource.LoadAllSources();
+        NormalizeSpan();
         var (rangeFrom, rangeTo) = _dayFilter is { } day
             ? (day.ToDateTime(TimeOnly.MinValue), day.ToDateTime(TimeOnly.MinValue).AddDays(1))
             : (EffectiveRange().From, EffectiveRange().To);
@@ -513,9 +595,6 @@ public partial class SpendWindow : Window
         // 区间变了尽量停在同一个套餐上
         if (_selectedChannel is { } keep)
             _selectedChannel = _channels.FirstOrDefault(c => c.Key == keep.Key);
-
-        // 额度快照(磁盘小文件,每次刷新顺手重读,悬浮环那边每分钟落一次盘)
-        _subs = SnapshotSource.LoadAllSources();
 
         RenderViewTabs();
         RenderQuotaBar();
@@ -912,6 +991,7 @@ public partial class SpendWindow : Window
         : _span switch
         {
             SpendSpan.Today => "今天",
+            SpendSpan.Period => "本账期",
             SpendSpan.Week => "近 7 天",
             SpendSpan.Month => "近 30 天",
             _ => "全部",
@@ -1139,7 +1219,7 @@ public partial class SpendWindow : Window
         double width,
         double height,
         IReadOnlyList<double> values,
-        IReadOnlyList<string?> tips,
+        IReadOnlyList<object?> tips,
         Color barColor,
         Color bandColor,
         Func<int, bool>? band,
@@ -1268,7 +1348,14 @@ public partial class SpendWindow : Window
                     Height = plotH,
                     Fill = Brushes.Transparent,
                 };
-                if (hasTip) hit.ToolTip = tips[i];
+                if (hasTip)
+                {
+                    // 卡片内容由 TipCard 排版（外壳样式在主题里），字符串提示原样交给默认文本呈现
+                    hit.ToolTip = tips[i] is TipCard.Data card ? TipCard.Build(card) : tips[i];
+                    // 图表上悬停要"立刻出、停住不走"：默认 400ms 延迟 + 5s 后消失，看长图时很烦
+                    ToolTipService.SetInitialShowDelay(hit, 140);
+                    ToolTipService.SetShowDuration(hit, 40000);
+                }
                 if (onClick is not null)
                 {
                     hit.Cursor = Cursors.Hand;
@@ -1359,10 +1446,15 @@ public partial class SpendWindow : Window
         int count = bars.Count;
 
         var values = bars.Select(b => (double)b.Tokens).ToList();
-        var tips = bars.Select(b => b.Start == b.End
-            ? $"{b.Start:yyyy-MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
-            : $"{b.Start:MM-dd} ~ {b.End:MM-dd}\n{SpendFormat.TokensExact(b.Tokens)} tokens\n{SpendFormat.MoneyExact(b.Cost)}"
-                + (b.HasUnpriced ? "\n(含无公开价的模型)" : "")).ToList<string?>();
+        var tips = bars.Select(b =>
+        {
+            var lines = new List<string> { SpendFormat.MoneyExact(b.Cost) };
+            if (b.HasUnpriced) lines.Add("含无公开价的模型");
+            return (object?)new TipCard.Data(
+                b.Start == b.End ? $"{b.Start:yyyy-MM-dd}" : $"{b.Start:MM-dd} ~ {b.End:MM-dd}",
+                $"{SpendFormat.TokensExact(b.Tokens)} tokens",
+                lines);
+        }).ToList();
         var labels = new List<(int, string)>();
         foreach (var index in new[] { 0, count / 2, count - 1 }.Distinct())
             labels.Add((index, bars[index].Start.ToString("MM-dd")));
@@ -2197,7 +2289,11 @@ public partial class SpendWindow : Window
         // 按峰谷加价的套餐(GOAT 与 OpenCode Go,两者同一套峰时段)才在图上打橙色底纹——
         // 别的渠道那样画等于暗示它有时段价
         var peakHours = PeakHoursFor(ch.SourceKey);
-        ChannelTodayHint.Text = $"{SpendFormat.Tokens(total)} tokens · 最忙 {ch.TodayHourly.OrderByDescending(h => h.Tokens).First().Hour}:00";
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        string dayNote = peakHours is null || !PeakPricing.IsOffPeakDay(today)
+            ? ""
+            : PeakPricing.IsHoliday(today) ? " · 今天法定节假日，全天谷价" : " · 今天周末，全天谷价";
+        ChannelTodayHint.Text = $"{SpendFormat.Tokens(total)} tokens · 最忙 {ch.TodayHourly.OrderByDescending(h => h.Tokens).First().Hour}:00{dayNote}";
         canvas.SizeChanged += (_, _) => DrawHourly(canvas, ch.TodayHourly, peakHours);
         DrawHourly(canvas, ch.TodayHourly, peakHours);
     }
@@ -2207,22 +2303,37 @@ public partial class SpendWindow : Window
         double w = ChannelHourBox.ActualWidth, h = ChannelHourBox.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
+        // 今天整天是谷价时（周末/节假日）不该画橙色峰底纹——那等于说"这几小时在加价"
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        bool peakDay = peakHours is not null && !PeakPricing.IsOffPeakDay(today);
+
         var values = new List<double>(24);
         var outputOnly = new List<double>(24);
-        var tips = new List<string?>(24);
+        var tips = new List<object?>(24);
         for (int i = 0; i < 24; i++)
         {
             var hr = hours[i];
             values.Add(hr.Tokens);
             outputOnly.Add(hr.Output);
-            bool isPeak = peakHours?.Contains(i) == true;
-            tips.Add(hr.Tokens <= 0
-                ? $"{i:00}:00 没有记录"
-                : $"{i:00}:00  {SpendFormat.TokensExact(hr.Tokens)} tokens\n"
-                    + $"输入 {SpendFormat.TokensExact(hr.Input + hr.CacheRead + hr.CacheWrite)} · 输出 {SpendFormat.TokensExact(hr.Output)}\n"
-                    + $"{hr.Requests} 次调用" + (isPeak ? "\n(高价时段)" : ""));
+            if (hr.Tokens <= 0)
+            {
+                tips.Add(null);
+                continue;
+            }
+
+            bool isPeak = peakDay && PeakPricing.IsPeakHour(i);
+            tips.Add(new TipCard.Data(
+                $"{i:00}:00",
+                $"{SpendFormat.TokensExact(hr.Tokens)} tokens",
+                [
+                    $"输入 {SpendFormat.TokensExact(hr.Input + hr.CacheRead + hr.CacheWrite)} · 输出 {SpendFormat.TokensExact(hr.Output)}",
+                    $"{hr.Requests:N0} 次调用",
+                ],
+                peakHours is null ? TipCard.Tag.None
+                    : isPeak ? TipCard.Tag.Peak
+                    : TipCard.Tag.OffPeak));
         }
-        Func<int, bool>? band = peakHours is null ? null : i => peakHours.Contains(i);
+        Func<int, bool>? band = peakDay ? i => peakHours!.Contains(i) : null;
 
         // 柱 = 合计,虚线 = 其中的输出;峰时段打浅橙底纹
         DrawBarChart(canvas, w, h, values, tips, AccentColor, PeakColor, band,
@@ -2285,18 +2396,23 @@ public partial class SpendWindow : Window
             return;
         }
 
-        long peak = ch.RangeHourly.Where(h => peakHours!.Contains(h.Hour)).Sum(h => h.Tokens);
-        double peakCost = ch.RangeHourly.Where(h => peakHours!.Contains(h.Hour)).Sum(h => h.Cost);
+        // 峰谷按**真实计费口径**取：同一小时在周二 10 点是峰、在周六 10 点是谷，
+        // 所以不能用"小时在 9–12/14–18 窗口里"反推（那会把周末与节假日的用量全算成峰时）。
+        long peak = ch.RangePeakTokens;
+        double peakCost = ch.RangePeakCost;
 
         AddCell(ChannelPeakGrid, "峰时段占比", $"{(double)peak / total:P1}",
             $"{PeakWindowText} · {SpendFormat.Tokens(peak)} tokens", "Money");
         AddCell(ChannelPeakGrid, "其余时段", $"{(double)(total - peak) / total:P1}",
-            $"{SpendFormat.Tokens(total - peak)} tokens", "Tokens");
+            $"{SpendFormat.Tokens(total - peak)} tokens · 含周末与节假日", "Tokens");
         AddCell(ChannelPeakGrid, "峰时段金额", SpendFormat.Amount(peakCost, ch.HasUnpriced),
             totalCost > 0 ? $"占本期金额 {(double)peakCost / totalCost:P1}" : null, "Cache");
-        ChannelPeakHint.Text = "橙色底纹 = 峰时段(本地 09:00–12:00、14:00–18:00),这些时段单价更高。"
+        ChannelPeakHint.Text = "橙色底纹 = 工作日峰窗口 09:00–12:00、14:00–18:00；周末与法定节假日全天按谷价。"
+            + (PeakPricing.CoverageNote(DateOnly.FromDateTime(DateTime.Now)) is { } note
+                ? "   ·   " + note + "。"
+                : "")
             + (ch.RangeHourlyPartial
-                ? "   ·   本图只覆盖近 35 天(逐小时明细的保留期),上方 KPI 是全区间。"
+                ? "   ·   本图只覆盖近 35 天（逐小时明细的保留期），上方 KPI 是全区间。"
                 : "");
         AutoColumns(ChannelPeakGrid);
     }
@@ -2311,17 +2427,37 @@ public partial class SpendWindow : Window
         string hourRangeLabel = partial ? "近 35 天" : "整个区间累计";
 
         var values = new List<double>(24);
-        var tips = new List<string?>(24);
+        var tips = new List<object?>(24);
         for (int i = 0; i < 24; i++)
         {
             var hr = hours[i];
             values.Add(hr.Tokens);
-            bool isPeak = peakHours?.Contains(i) == true;
-            tips.Add(hr.Tokens <= 0
-                ? $"{i:00}:00 没有记录"
-                : $"{i:00}:00({hourRangeLabel})\n{SpendFormat.TokensExact(hr.Tokens)} tokens\n"
-                    + $"{SpendFormat.MoneyExact(hr.Cost)} · {hr.Requests:N0} 次调用"
-                    + (isPeak ? "\n(高价时段)" : ""));
+            if (hr.Tokens <= 0)
+            {
+                tips.Add(null);
+                continue;
+            }
+
+            // 该小时的合计里混着"工作日峰价"与"周末/节假日谷价"两种记录：
+            // 全峰、全谷、以及混合三种情况都不能用一句"高价时段"糊过去。
+            bool inWindow = peakHours?.Contains(i) == true;
+            bool allPeak = inWindow && hr.PeakTokens >= hr.Tokens;
+            bool noPeak = hr.PeakTokens <= 0;
+
+            var lines = new List<string> { $"{SpendFormat.MoneyExact(hr.Cost)} · {hr.Requests:N0} 次调用", hourRangeLabel };
+            if (inWindow && !allPeak && !noPeak)
+                lines.Insert(0, $"其中峰时 {SpendFormat.Tokens(hr.PeakTokens)} tokens");
+            else if (inWindow && noPeak)
+                lines.Insert(0, "这些时刻都在周末/节假日 → 谷价");
+
+            tips.Add(new TipCard.Data(
+                $"{i:00}:00",
+                $"{SpendFormat.TokensExact(hr.Tokens)} tokens",
+                lines,
+                peakHours is null ? TipCard.Tag.None
+                    : allPeak ? TipCard.Tag.Peak
+                    : noPeak ? TipCard.Tag.OffPeak
+                    : TipCard.Tag.None));
         }
         Func<int, bool>? band = peakHours is null ? null : i => peakHours.Contains(i);
 
@@ -2403,9 +2539,10 @@ public partial class SpendWindow : Window
 
         int n = daily.Count;
         var values = daily.Select(d => (double)d.Tokens).ToList();
-        var tips = daily.Select(d =>
-            $"{d.Day:yyyy-MM-dd}\n{SpendFormat.TokensExact(d.Tokens)} tokens\n"
-            + $"{SpendFormat.MoneyExact(d.Cost)} · {d.Requests} 次调用").ToList<string?>();
+        var tips = daily.Select(d => (object?)new TipCard.Data(
+            $"{d.Day:yyyy-MM-dd}",
+            $"{SpendFormat.TokensExact(d.Tokens)} tokens",
+            [$"{SpendFormat.MoneyExact(d.Cost)} · {d.Requests:N0} 次调用"])).ToList();
         var labels = new List<(int, string)> { (0, daily[0].Day.ToString("MM-dd")) };
         if (n > 1) labels.Add((n - 1, daily[^1].Day.ToString("MM-dd")));
         if (n > 4) labels.Add((n / 2, daily[n / 2].Day.ToString("MM-dd")));
@@ -2922,6 +3059,33 @@ public partial class SpendWindow : Window
         var tabs = TabRow.Children.OfType<RadioButton>().ToList();
         if (index >= 0 && index < tabs.Count && tabs[index].IsChecked != true)
             tabs[index].IsChecked = true;
+    }
+
+    /// <summary>
+    /// UiShot 用:「时段分布」切到"整个区间"档。峰谷 KPI 与那行口径说明只在这一档渲染，
+    /// 只出"今天"档的图等于没验到峰谷本身（也看不出周末/节假日被算成谷时）。
+    /// </summary>
+    internal void UiShotShowRange()
+    {
+        if (HourRange.IsChecked != true) HourRange.IsChecked = true;
+    }
+
+    /// <summary>
+    /// UiShot 用:切到"全部"区间。峰谷口径的差异只在**跨过周末**时才看得出来——
+    /// 只出"今天"两张图，周末到底有没有被算成谷时是验不出来的。
+    /// </summary>
+    internal void UiShotShowAllSpan()
+    {
+        if (SpanAll.IsChecked != true) SpanAll.IsChecked = true;
+    }
+
+    /// <summary>
+    /// UiShot 用:从"全部"切回"本账期"。专门验一条曾经断掉的链路——按钮高亮不等于区间生效
+    /// （SpanPeriod 漏挂 Checked 时，点它只会亮、数字不动）。
+    /// </summary>
+    internal void UiShotShowPeriodSpan()
+    {
+        if (SpanPeriod.IsChecked != true) SpanPeriod.IsChecked = true;
     }
 
     /// <summary>列表行。<see cref="BarWidth"/> 已算成像素,绑定直接用。</summary>

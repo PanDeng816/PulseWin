@@ -151,8 +151,9 @@ public sealed class UsageEngine : IDisposable
         }
     }
 
-    /// <summary>把手动刷新标记只交给紧随其后的那一轮。</summary>
-    private bool _forceNextSync;
+    /// <summary>把手动刷新标记只交给紧随其后的那一轮。UI 线程写、同步循环读,
+    /// volatile 保证标记对下一轮立即可见(不靠"下一轮迟早能看见")。</summary>
+    private volatile bool _forceNextSync;
 
     /// <summary>
     /// 一轮同步最多给多久。各客户端自己那点超时(10~30s)管不住"响应头到了、正文不来"
@@ -427,7 +428,7 @@ public sealed class UsageEngine : IDisposable
                 {
                     var snapshot = await provider.GetUsageAsync(candidate, token);
                     if (source == MonitorSource.OpenCodeGo)
-                        snapshot = await MergeWebMetersAsync(snapshot, token);
+                        snapshot = await MergeWebMetersAsync(snapshot, 1, token);
                     await CacheFor(source).SaveAsync(snapshot, token);
                     status.State = SourceState.Connected;
                     status.StatusText = $"已连接 · {snapshot.AccountLabel}";
@@ -508,7 +509,7 @@ public sealed class UsageEngine : IDisposable
         {
             var snapshot = await _goApi.GetUsageAsync(
                 new CredentialCandidate(CredentialSource.ManualEntry, apiKey), token);
-            snapshot = await MergeWebMetersAsync(snapshot, token);
+            snapshot = await MergeWebMetersAsync(snapshot, instance, token);
             snapshot = snapshot with { AccountLabel = label };
             await new SnapshotCache(_paths, _paths.OpenCodeSnapshotFileFor(instance)).SaveAsync(snapshot, token);
             status.State = SourceState.Connected;
@@ -618,7 +619,7 @@ public sealed class UsageEngine : IDisposable
     ///
     /// 整条通道挂在「浏览器会话明细」开关下(读 cookie 需要用户显式同意)。
     /// </summary>
-    private async Task<UsageSnapshot> MergeWebMetersAsync(UsageSnapshot snapshot, CancellationToken token)
+    private async Task<UsageSnapshot> MergeWebMetersAsync(UsageSnapshot snapshot, int instance, CancellationToken token)
     {
         if (!AppSettings.Current.UseBrowserSessionForModelDetail) return snapshot;
         try
@@ -636,11 +637,16 @@ public sealed class UsageEngine : IDisposable
             var merged = snapshot with
             {
                 Windows = snapshot.Windows.Select(w => MergeMeter(w, match)).ToList(),
+                // 账期起点一起带上:用量窗的「本账期」区间要切在重置那一刻,不能靠猜。
+                PeriodStartAt = match.PeriodStart ?? snapshot.PeriodStartAt,
             };
 
-            // 顺手把**官方账期 token** 也带上:卡片头部因此从"本月额度已用 17%"变成
-            // "5.7亿 · 本月已用 Token"(与 GOAT 卡片同一个位置、同一种读法)。百分比回答不了
-            // "一个月到底能用多少 token",官方这个滚动 30 天窗口才回答得了。
+            // 顺手把**官方 30 天 token** 也带上:卡片头部因此从"本月额度已用 17%"变成
+            // "5.7亿 · 近30天已用 Token"(与 GOAT 卡片同一个位置、同一种读法)。
+            // 百分比回答不了"一个月到底能用多少 token",官方这个滚动 30 天窗口才回答得了。
+            // 注意它**不是账期量**:官方没有账期档的聚合,配额重置不会让它归零(它数的是实际
+            // 消耗)。所以头部标签必须写"近30天",不能跟着 GOAT 写"本月"——否则会出现
+            // "三个池刚重置都是 0%、头部却写着本月已用 4458M"的自相矛盾(2026-10-28 用户报的)。
             // 数据源是控制台聚合接口,自带 15 分钟缓存,不会每轮同步都去打服务端。
             // 这一步失败(接口慢/超时)不能拖垮整轮同步:给它单独的短超时,拿不到就只是
             // "卡片这次退回显示百分比",额度读数一点不受影响。外层取消照旧往外抛。
@@ -664,6 +670,37 @@ public sealed class UsageEngine : IDisposable
             {
                 Diagnostics.Note("读取官方 30 天 token 超时,悬浮卡这次退回显示百分比");
             }
+
+            // 再进一步:拿到账期起点(go/status 的 access.startsAt)时,把头部换成**本账期**
+            // 累计。官方聚合没有"账期"档,只能按逐请求明细增量累加(见 OpenCodePeriodUsage)。
+            // 拿不到就保留上面的 30 天值,标签随之退回"近30天"——绝不拿 30 天的数冒充账期。
+            if (match.PeriodStart is { } periodStart && match.WorkspaceId.Length > 0)
+            {
+                try
+                {
+                    string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+                    if (cookie is not null)
+                    {
+                        var period = await OpenCodePeriodTracker.RefreshAsync(
+                            _paths, instance, match.WorkspaceId, periodStart, cookie, token);
+                        if (period is { } p)
+                        {
+                            merged = merged with
+                            {
+                                PeriodTokens = p.Tokens,
+                                PeriodRequests = p.Requests,
+                                PeriodTokensFromAccountPeriod = true,
+                            };
+                        }
+                    }
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    Diagnostics.Note("累计本账期 token 失败", ex);
+                }
+            }
+
             return merged;
         }
         catch (OperationCanceledException) { throw; }
@@ -785,8 +822,9 @@ public sealed class UsageEngine : IDisposable
         _goResolver.SaveAccounts(accounts);
 
         settings.AddOpenCodeAccount(new OpenCodeAccountInfo(id, label));
-        string entry = SourceKeys.InstanceKey(SourceKeys.OpenCode, id);
-        if (!settings.VisibleSources.Contains(entry)) settings.VisibleSources.Add(entry);
+        // 可见性读写走锁内方法:后台同步线程此刻可能正在读这份清单(EnabledInSettings),
+        // 原地 Add 会踩到它——与账号清单(AccountsSnapshot)同一条规矩。
+        settings.AddVisibleSource(SourceKeys.InstanceKey(SourceKeys.OpenCode, id));
         settings.Save();
         RequestRefreshNow();
 
@@ -805,7 +843,7 @@ public sealed class UsageEngine : IDisposable
         _goResolver.SaveAccounts(accounts);
 
         settings.RemoveOpenCodeAccount(id);
-        settings.VisibleSources.Remove(SourceKeys.InstanceKey(SourceKeys.OpenCode, id));
+        settings.RemoveVisibleSource(SourceKeys.InstanceKey(SourceKeys.OpenCode, id));
         settings.Save();
 
         try
@@ -832,14 +870,8 @@ public sealed class UsageEngine : IDisposable
     {
         var settings = AppSettings.Current;
         string entry = SourceKeys.InstanceKey(SourceKeys.OpenCode, id);
-        if (visible)
-        {
-            if (!settings.VisibleSources.Contains(entry)) settings.VisibleSources.Add(entry);
-        }
-        else
-        {
-            settings.VisibleSources.Remove(entry);
-        }
+        if (visible) settings.AddVisibleSource(entry);
+        else settings.RemoveVisibleSource(entry);
         settings.Save();
         RequestRefreshNow();
     }
@@ -873,6 +905,17 @@ public sealed class UsageEngine : IDisposable
     public void Dispose()
     {
         _life.Cancel();
+        // 先等同步循环退出再释放信号量:取消传播是异步的,此刻 Loop 可能还在
+        // _metersGate.WaitAsync / 它的 finally Release() 里——立刻 Dispose 会让它在
+        // 退出时抛 ObjectDisposedException,被 RunRoundAsync 记成一条"同步一轮失败"的
+        // 假诊断。等不到(卡在不响应取消的操作上)也照常释放,退出路径不能被吊死。
+        try
+        {
+            Task? loop;
+            lock (_loopLock) loop = _loopTask;
+            loop?.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception) { /* 旧一轮任务带异常结束:Dispose 路径只管收尾 */ }
         _life.Dispose();
         _signal.Dispose();
         _metersGate.Dispose();

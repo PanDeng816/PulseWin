@@ -116,6 +116,12 @@ public sealed class ChannelUsage
     /// </summary>
     public bool RangeHourlyPartial { get; init; }
 
+    /// <summary>区间内按**真实峰谷口径**（含周末/法定节假日全天谷价）落在峰时的 token。</summary>
+    public long RangePeakTokens => RangeHourly.Sum(h => h.PeakTokens);
+
+    /// <summary>区间内落在峰时的金额（与 <see cref="RangePeakTokens"/> 同一口径）。</summary>
+    public double RangePeakCost => RangeHourly.Sum(h => h.PeakCost);
+
     /// <summary>该渠道用过的模型（按 token 降序）。</summary>
     public IReadOnlyList<ChannelModelRow> Models { get; init; } = [];
 
@@ -142,8 +148,16 @@ public sealed record HourBucket(int Hour, long Input, long Output, long CacheRea
     public long Tokens => Input + Output + CacheRead + CacheWrite;
 }
 
-/// <summary>区间级的一小时聚合（含金额）。时段分布（峰/谷拆分）用。</summary>
-public sealed record RangeHourBucket(int Hour, long Tokens, double Cost, long Requests);
+/// <summary>
+/// 区间级的一小时聚合（含金额）。时段分布（峰/谷拆分）用。
+///
+/// <para><b>PeakTokens / PeakCost 是"按真实计费口径"切出来的子量</b>：同一小时在周二 10 点算峰、
+/// 在周六 10 点算谷，所以峰谷不能由 <see cref="Hour"/> 反推——只能逐条记录按<em>具体日期</em>判断后累加。
+/// 见 <see cref="PeakPricing"/>。</para>
+/// </summary>
+public sealed record RangeHourBucket(
+    int Hour, long Tokens, double Cost, long Requests,
+    long PeakTokens = 0, double PeakCost = 0);
 
 /// <summary>渠道页里的一行模型。</summary>
 public sealed record ChannelModelRow(
@@ -396,7 +410,8 @@ public static class ChannelUsageIndex
             for (int h = 0; h < 24; h++)
             {
                 var v = _rangeHours.TryGetValue(h, out var x) ? x : null;
-                rangeHours.Add(new RangeHourBucket(h, v?.Tokens ?? 0, v?.Cost ?? 0, v?.Requests ?? 0));
+                rangeHours.Add(new RangeHourBucket(h, v?.Tokens ?? 0, v?.Cost ?? 0, v?.Requests ?? 0,
+                    v?.PeakTokens ?? 0, v?.PeakCost ?? 0));
             }
 
             var models = _models
@@ -481,11 +496,21 @@ public static class ChannelUsageIndex
         {
             public long Tokens, Requests;
             public double Cost;
+            /// <summary>按**真实日期**判出的峰价部分（周末/节假日的同类小时不进这里）。</summary>
+            public long PeakTokens;
+            public double PeakCost;
+
             public void Add(SpendEntry e)
             {
-                Tokens += e.TotalTokens;
+                long tokens = e.TotalTokens;
+                Tokens += tokens;
                 Cost += e.Cost.Total;
                 Requests += e.Requests;
+                if (PeakPricing.IsPeak(e.Timestamp))
+                {
+                    PeakTokens += tokens;
+                    PeakCost += e.Cost.Total;
+                }
             }
         }
 

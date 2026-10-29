@@ -29,12 +29,16 @@ public sealed class SnapshotCache
             await using var stream = File.OpenRead(_snapshotFile);
             return await JsonSerializer.DeserializeAsync<UsageSnapshot>(stream, JsonOptions, cancellationToken);
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            // 静默返回 null 会让故障只表现为"没有数据",排查全靠猜——
+            // 与 SnapshotSource.LoadOne 同一条规矩:留一行诊断。
+            Diagnostics.Note($"读取快照失败 {Path.GetFileName(_snapshotFile)}: {ex.GetType().Name} {ex.Message}");
             return null;
         }
-        catch (IOException)
+        catch (IOException ex)
         {
+            Diagnostics.Note($"读取快照失败 {Path.GetFileName(_snapshotFile)}: {ex.GetType().Name} {ex.Message}");
             return null;
         }
     }

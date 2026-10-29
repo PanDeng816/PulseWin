@@ -221,8 +221,31 @@ public sealed class AppSettings
     /// 不是"这是哪个产品"(产品由环心图标表示)。想固定成品牌色是可选行为。
     /// </summary>
 
-    /// <summary>本机某个源当前是否显示。</summary>
-    public bool IsSourceVisible(string key) => VisibleSources.Contains(key);
+    /// <summary>
+    /// 本机某个源当前是否显示。后台同步线程读、UI 线程写的是**同一个 List**(见
+    /// <see cref="AccountsSnapshot"/> 的同一条规矩):Contains 虽然不查版本号不会抛,
+    /// 但只有与锁内写配对,才保证读不到"增删到一半"的中间态。
+    /// </summary>
+    public bool IsSourceVisible(string key)
+    {
+        lock (Gate) return VisibleSources.Contains(key);
+    }
+
+    /// <summary>锁内加一个可见源(去重)。设置页与引擎的直写都收口到这里,
+    /// 免得原地 Add 与后台读并发。</summary>
+    public void AddVisibleSource(string key)
+    {
+        lock (Gate)
+        {
+            if (!VisibleSources.Contains(key)) VisibleSources.Add(key);
+        }
+    }
+
+    /// <summary>锁内移除一个可见源。</summary>
+    public void RemoveVisibleSource(string key)
+    {
+        lock (Gate) VisibleSources.Remove(key);
+    }
 
     /// <summary>某个源的环色(#RRGGBB;null = 按用量自动着色)。</summary>
     public string? TintFor(string sourceKey) =>

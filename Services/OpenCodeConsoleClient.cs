@@ -24,7 +24,10 @@ public sealed record OpenCodeConsoleMeters(
     string WorkspaceName,
     OpenCodeConsoleWindow? FiveHour,
     OpenCodeConsoleWindow? Weekly,
-    OpenCodeConsoleWindow? Monthly);
+    OpenCodeConsoleWindow? Monthly,
+    /// <summary>账期起点(<c>access.startsAt</c>)。官方聚合接口没有任意区间,但逐请求明细
+    /// 能按这个时刻精确切开——"本账期已用 token"就靠它。</summary>
+    DateTimeOffset? PeriodStart = null);
 
 /// <summary>
 /// OpenCode Go 的**网页口径**额度读数——<c>GET /console/api/go/status</c>。
@@ -155,6 +158,7 @@ public static class OpenCodeConsoleClient
         }
 
         DateTimeOffset? periodEnd = ParseDate(Str(access, "endsAt"));
+        DateTimeOffset? periodStart = ParseDate(Str(access, "startsAt"));
         return new OpenCodeConsoleMeters(
             workspaceId,
             workspaceName,
@@ -163,7 +167,8 @@ public static class OpenCodeConsoleClient
             // 返回 null,MergeMeter 会保留 API Key 通道给的重置时间。
             ParseMeter(meters, "fiveHour", null),
             ParseMeter(meters, "week", null),
-            ParseMeter(meters, "month", periodEnd));
+            ParseMeter(meters, "month", periodEnd),
+            periodStart);
     }
 
     private static OpenCodeConsoleWindow? ParseMeter(JsonElement meters, string name, DateTimeOffset? periodEnd)

@@ -399,6 +399,99 @@ public static class OpenCodeUsageStatsClient
         return await JsonDocument.ParseAsync(stream, cancellationToken: token);
     }
 
+    /// <summary>
+    /// 诊断用:探测 <c>usage/summary</c> 是否接受**自定义账期区间**(而不是只有 24h/7d/30d 三档)。
+    /// 背景:用户要"头部 token 也跟着账期重置"走;官方若只给滚动窗口,就只能拿日粒度凑,
+    /// 而逐日聚合是 UTC 自然日——账期在当天中途重置时会多算半天。先把参数试清楚,别靠猜。
+    /// </summary>
+    public static async Task<IReadOnlyList<string>> ProbeRangesAsync(
+        DateTimeOffset periodStart, CancellationToken token = default)
+    {
+        var lines = new List<string>();
+        string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+        if (cookie is null)
+        {
+            lines.Add("读不到 opencode.ai cookie:" + (BrowserCookieStore.LastError ?? "-"));
+            return lines;
+        }
+
+        string fromIso = periodStart.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+        string toIso = DateTimeOffset.UtcNow.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+        string fromDay = periodStart.UtcDateTime.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        string toDay = DateTimeOffset.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+        try
+        {
+            using var orgDoc = await GetJsonAsync("orgs", cookie, null, token);
+            var orgs = ParseOrgs(orgDoc.RootElement).ToList();
+            lines.Add($"工作区 {orgs.Count} 个;账期起点(UTC)= {fromIso}");
+            if (orgs.Count == 0) return lines;
+            string orgId = orgs[0].Id;
+
+            // 先把 go/status 的**原始响应**打出来:账期起点/已用量如果服务端本来就有,
+            // 就不用再去凑区间。meters 只是其中一段。
+            try
+            {
+                using var statusReq = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/go/status");
+                statusReq.Headers.Add("Cookie", cookie);
+                statusReq.Headers.Add("x-org-id", orgId);
+                using var statusResp = await Http.SendAsync(statusReq, token);
+                string raw = await statusResp.Content.ReadAsStringAsync(token);
+                if (raw.Length > 1500) raw = raw[..1500] + "…";
+                lines.Add($"--- go/status 原始(HTTP {(int)statusResp.StatusCode})---");
+                lines.Add(raw);
+            }
+            catch (Exception ex)
+            {
+                lines.Add("go/status 探测失败:" + ex.Message);
+            }
+
+            var probes = new (string Name, string Query)[]
+            {
+                ("基线 range=30d", "usage/summary?range=30d"),
+                ("range=24h", "usage/summary?range=24h"),
+                ("range=2d", "usage/summary?range=2d"),
+                ("range=90d", "usage/summary?range=90d"),
+                ("range=all", "usage/summary?range=all"),
+                ("from/to ISO", $"usage/summary?from={fromIso}&to={toIso}"),
+                ("range=custom&from/to", $"usage/summary?range=custom&from={fromIso}&to={toIso}"),
+                ("start/end 日期", $"usage/summary?start={fromDay}&end={toDay}"),
+                // 逐请求明细:唯一能"按账期起点精确累加"的数据源,先看还在不在、什么形状
+                ("request-logs 一页", "usage/request-logs?limit=5"),
+                ("usage/requests", "usage/requests?limit=5"),
+                ("usage/logs", "usage/logs?limit=5"),
+                ("usage/events", "usage/events?limit=5"),
+                ("usage/details", "usage/details?limit=5"),
+                ("根 request-logs", "request-logs?limit=5"),
+                ("request-logs 结构", "request-logs?limit=2"),
+            };
+
+            foreach (var (name, query) in probes)
+            {
+                try
+                {
+                    using var req = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/" + query);
+                    req.Headers.Add("Cookie", cookie);
+                    req.Headers.Add("x-org-id", orgId);
+                    using var resp = await Http.SendAsync(req, token);
+                    string body = await resp.Content.ReadAsStringAsync(token);
+                    int cap = name.Contains("结构", StringComparison.Ordinal) ? 4000 : 220;
+                    if (body.Length > cap) body = body[..cap] + "…";
+                    lines.Add($"{name} → HTTP {(int)resp.StatusCode}: {body}");
+                }
+                catch (Exception ex)
+                {
+                    lines.Add($"{name} → 异常 {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lines.Add("探测失败:" + ex.Message);
+        }
+        return lines;
+    }
+
     private static string? String(JsonElement o, string name) =>
         o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v)
         && v.ValueKind == JsonValueKind.String

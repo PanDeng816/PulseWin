@@ -164,6 +164,10 @@
                 <WrapPanel x:Name="TabRow" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="SpanToday" Style="{StaticResource SpanToggle}" Content="今天" GroupName="Span" Tag="Today"/>
+                    <!-- 「本账期」:从订阅服务端给的账期起点算起,套餐一重置这一档就只剩新周期。
+                         拿不到账期起点的套餐不显示这一档(见 NormalizeSpan)。 -->
+                    <RadioButton x:Name="SpanPeriod" Style="{StaticResource SpanToggle}" Content="本账期" GroupName="Span"
+                                 Tag="Period" Visibility="Collapsed"/>
                     <RadioButton x:Name="SpanWeek" Style="{StaticResource SpanToggle}" Content="近 7 天" GroupName="Span" Tag="Week"/>
                     <RadioButton x:Name="SpanMonth" Style="{StaticResource SpanToggle}" Content="近 30 天" GroupName="Span" Tag="Month"/>
                     <RadioButton x:Name="SpanCustom" Style="{StaticResource SpanToggle}" Content="自定义" GroupName="Span" Tag="Custom"

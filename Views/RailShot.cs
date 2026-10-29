@@ -80,10 +80,11 @@ internal static class RailShot
             // 5 小时窗口 = 0:内圈**不该出现**,只画总额度外环。
             // 这条源的池用**网页口径**(Unit=%,并带 meters 的微美分金额)——卡片行3
             // 因此走"$6.38 / $60"那条分支,出图能一并核对它。
-            // PeriodTokens 也照真实情形给上(官方 30 天窗口):卡片头部于是走
-            // "5.7亿 · 本月已用 Token"那条分支,与 GOAT 卡片同一读法。
+            // PeriodTokens 也照真实情形给上(官方 30 天窗口,**不是账期**):卡片头部于是走
+            // "5.7亿 · 近30天已用 Token"那条分支,与 GOAT 卡片的"本月"分开表述。
             Key = "opencode", Name = "GO", AccountLabel = "PanDeng",
             PeriodTokens = 570_000_000,
+            PeriodTokensCaption = "近30天已用 Token",
             Pools =
             {
                 new PoolData { Label = "5小时", PoolKind = "FiveHour", Unit = "%",

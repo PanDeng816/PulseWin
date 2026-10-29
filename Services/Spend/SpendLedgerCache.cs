@@ -62,14 +62,23 @@ public static class SpendLedgerCache
 
     private static SpendLedger BuildOnce()
     {
-        var ledger = SpendLedger.Build(ModelPrices.Current);
-        lock (Gate)
+        try
         {
-            _ledger = ledger;
-            _building = null;
-            BuildCount++;
+            var ledger = SpendLedger.Build(ModelPrices.Current);
+            lock (Gate)
+            {
+                _ledger = ledger;
+                BuildCount++;
+            }
+            return ledger;
         }
-        return ledger;
+        finally
+        {
+            // 构建失败(Build 抛异常)也必须清掉 _building:否则 AcquireAsync 会一直
+            // 返回那个 faulted 任务,账本从此无法重建,用户点多少次刷新都拿同一个失败
+            // ——只有重启程序才能恢复。清掉后下次 Acquire 会重新构建。
+            lock (Gate) _building = null;
+        }
     }
 
     /// <summary>还一个引用。计数归零时释放账本。</summary>

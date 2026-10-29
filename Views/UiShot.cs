@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -52,7 +53,69 @@ internal static class UiShot
         {
             Diagnostics.Note("设置页出图失败", ex);
         }
+        RenderTooltipSamples(Path.Combine(dir, "tooltip-samples.png"));
         RenderSpendWindow(dir);
+    }
+
+    /// <summary>
+    /// 悬停卡片的样例出图。工具提示真实出现要鼠标悬停，出图环境造不出来（也不能去动用户的鼠标），
+    /// 所以按同一套外壳（主题里的 ToolTip 模板：圆角 + 描边 + 投影）把三张典型卡片渲染出来看版式。
+    /// </summary>
+    private static void RenderTooltipSamples(string path)
+    {
+        try
+        {
+            var samples = new[]
+            {
+                new TipCard.Data("2026-10-24", "995,547,191 tokens",
+                    ["¥367.85", "1,284 次调用"]),
+                new TipCard.Data("10:00", "312,480,117 tokens",
+                    ["输入 268,100,004 · 输出 44,380,113", "612 次调用"], TipCard.Tag.Peak),
+                new TipCard.Data("14:00", "88,204,560 tokens",
+                    ["¥12.34 · 210 次调用", "其中峰时 12,000,000 tokens"], TipCard.Tag.OffPeak),
+            };
+
+            var back = Application.Current.TryFindResource("TipBackBrush") as Brush ?? Brushes.White;
+            var border = Application.Current.TryFindResource("TipBorderBrush") as Brush ?? Brushes.Gray;
+            var shadow = Application.Current.TryFindResource("TipShadow") as Effect;
+
+            var column = new StackPanel { Margin = new Thickness(16) };
+            foreach (var sample in samples)
+            {
+                column.Children.Add(new Border
+                {
+                    Background = back,
+                    BorderBrush = border,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(10, 8, 10, 8),
+                    Margin = new Thickness(0, 0, 0, 10),
+                    Effect = shadow,
+                    Child = TipCard.Build(sample),
+                });
+            }
+
+            column.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            column.Arrange(new Rect(column.DesiredSize));
+            column.UpdateLayout();
+            Save(column, column.DesiredSize, path);
+
+            // 再单独验一次"真实 ToolTip 控件 + 纯文本内容"：模板如果写坏（比如 ContentPresenter
+            // 不显示内容），全程序的 tooltip 会集体空白——这种事故只能在出图里发现。
+            var plain = new ToolTip
+            {
+                Content = "纯文本提示（非图表处仍走这条路径）\n第二行用于确认行距与换行",
+            };
+            plain.ApplyTemplate();
+            plain.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            plain.Arrange(new Rect(plain.DesiredSize));
+            plain.UpdateLayout();
+            Save(plain, plain.DesiredSize, Path.Combine(Path.GetDirectoryName(path)!, "tooltip-plain.png"));
+        }
+        catch (Exception ex)
+        {
+            Diagnostics.Note("悬停卡片出图失败", ex);
+        }
     }
 
     /// <summary>设置窗的某一页(用同一个不 Start 的引擎,避免重复初始化)。</summary>
@@ -223,6 +286,32 @@ internal static class UiShot
                     string file = $"usage-channel-{index}.png";
                     SaveFullContent(window, Path.Combine(dir, file));
                     Diagnostics.Note($"套餐页已出图 {file} — {label}");
+
+                    // 顶部区间行(含「本账期」按钮)在滚动区外,长图收不到——单独存一张窗口本身,
+                    // 否则"这个套餐到底有没有出现本账期档、默认选中的是哪一档"根本没法验。
+                    window.UpdateLayout();
+                    Save(window, new Size(window.ActualWidth, window.ActualHeight),
+                        Path.Combine(dir, $"usage-channel-{index}-chrome.png"));
+
+                    // 峰谷 KPI 只在「时段分布」的"整个区间"档出现，单独再出一张，
+                    // 好核对"周末/节假日算谷价"之后的口径
+                    window.UiShotShowRange();
+                    string rangeFile = $"usage-channel-{index}-range.png";
+                    SaveFullContent(window, Path.Combine(dir, rangeFile));
+                    Diagnostics.Note($"套餐页已出图 {rangeFile} — {label}（整个区间）");
+
+                    // 再切到"全部"区间：跨过周末才看得出峰时占比有没有被周末抬起来
+                    window.UiShotShowAllSpan();
+                    string allFile = $"usage-channel-{index}-all.png";
+                    SaveFullContent(window, Path.Combine(dir, allFile));
+                    Diagnostics.Note($"套餐页已出图 {allFile} — {label}（全部区间）");
+
+                    // 再切回"本账期":验"按钮高亮 == 区间真的生效"(SpanPeriod 漏挂事件时
+                    // 会出现"亮着本账期、数字还是全部"这种骗人的状态)
+                    window.UiShotShowPeriodSpan();
+                    string periodFile = $"usage-channel-{index}-period.png";
+                    SaveFullContent(window, Path.Combine(dir, periodFile));
+                    Diagnostics.Note($"套餐页已出图 {periodFile} — {label}（本账期）");
                 }
                 catch (Exception ex)
                 {

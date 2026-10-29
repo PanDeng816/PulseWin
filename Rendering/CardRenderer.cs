@@ -153,8 +153,9 @@ public static class CardRenderer
     }
 
     /// <summary>
-    /// 头部右侧读数。有 token 数据的源(GOAT、OpenCode Go)显示"X.X亿 · 本月已用 Token";
-    /// 无 token 的源回退显示月度用量百分比;余额型(DeepSeek)直接显示余额。
+    /// 头部右侧读数。有 token 数据的源(GOAT、OpenCode Go)显示"X.X亿 · 窗口说明";
+    /// 窗口说明由数据源自己给(<see cref="SubData.PeriodTokensCaption"/>):GOAT 是真账期,
+    /// OpenCode Go 是滚动 30 天。无 token 的源回退显示月度用量百分比;余额型(DeepSeek)直接显示余额。
     /// </summary>
     private static void DrawHeaderReadout(DrawingContext dc, SubData sub, Point p, double contentW, double dpi)
     {
@@ -163,7 +164,7 @@ public static class CardRenderer
             var tokenFt = Text(FormatTokens(tokens), Pt.P(17), FontWeights.Bold,
                 Solid(PanelPalette.Primary), dpi);
             dc.DrawText(tokenFt, new Point(p.X + contentW - tokenFt.Width, p.Y - 1));
-            var labelFt = Text("本月已用 Token", Pt.P(10.5), FontWeights.Normal,
+            var labelFt = Text(sub.PeriodTokensCaption, Pt.P(10.5), FontWeights.Normal,
                 Solid(PanelPalette.Dim), dpi);
             dc.DrawText(labelFt, new Point(p.X + contentW - labelFt.Width, p.Y - 1 + tokenFt.Height + Pt.P(1)));
         }

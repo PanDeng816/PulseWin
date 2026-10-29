@@ -87,8 +87,19 @@ public sealed class SubData
     public required string Key { get; init; }
     public required string Name { get; init; }
     public required string AccountLabel { get; init; }
-    public long? PeriodTokens { get; init; }   // 账期已用 token(GOAT 与 OpenCode Go 有;服务端计量,覆盖所有设备/key)
-    /// <summary>账期已用请求数(GOAT 与 OpenCode Go 有,服务端计量)。</summary>
+    public long? PeriodTokens { get; init; }   // 服务端计量的已用 token(覆盖所有设备/key);窗口随源而变,见 PeriodTokensCaption
+    /// <summary>
+    /// 头部 token 读数下方的窗口说明。GOAT = 官方**账期**(重置会归零);
+    /// OpenCode Go = 官方**滚动 30 天**(配额重置不影响它——它数的是实际消耗,不是账期扣减)。
+    /// </summary>
+    public string PeriodTokensCaption { get; init; } = "本月已用 Token";
+
+    /// <summary>
+    /// 这条订阅**本账期的起点**(服务端给的确切时刻)。null = 拿不到。
+    /// 用量窗的「本账期」区间用它把时段分布、逐模型、性能统计切在重置那一刻。
+    /// </summary>
+    public DateTimeOffset? PeriodStartAt { get; init; }
+    /// <summary>服务端计量的已用请求数(窗口同 <see cref="PeriodTokensCaption"/>)。</summary>
     public long? PeriodRequests { get; init; }
     /// <summary>账期已扣费用(仅 GOAT 有,单位与额度池相同 = credits)。</summary>
     public double? PeriodCost { get; init; }
@@ -177,10 +188,11 @@ public static class Money
 }
 
 /// <summary>
-/// 一个数据源的显示身份。三个源的差别只在标题和"月池"的叫法上,
+/// 一个数据源的显示身份。三个源的差别只在标题、"月池"的叫法和头部 token 的窗口上,
 /// 加载逻辑是同一套。
 /// </summary>
-public sealed record SourceProfile(string Key, string Name, string MonthlyLabel);
+public sealed record SourceProfile(
+    string Key, string Name, string MonthlyLabel, string PeriodTokenCaption);
 
 /// <summary>
 /// 把内置引擎(移植自 GOAT-Go-Usage-Monitor)落盘的快照映射到 UI 模型。
@@ -309,7 +321,7 @@ public static class SnapshotSource
         string key = SourceKeys.InstanceKey(source.Key, instance);
         string name = source.RailName;
         if (instance >= 2) name = $"{source.RailName}·{AppSettings.Current.OpenCodeAccountLabel(instance)}";
-        return new SourceProfile(key, name, source.MonthlyLabel);
+        return new SourceProfile(key, name, source.MonthlyLabel, source.PeriodTokenCaption);
     }
 
     private static SubData? LoadOne(string file, SourceProfile profile)
@@ -362,6 +374,12 @@ public static class SnapshotSource
                 Name = profile.Name,
                 AccountLabel = snapshot.AccountLabel,
                 PeriodTokens = snapshot.PeriodTokens,
+                // 账期口径(重置即归零)说"本账期";只有滚动 30 天时如实说"近30天"。
+                // 两个标签对应的数字不是一回事,混用就会出现"配额 0% 却已用 4458M"。
+                PeriodTokensCaption = snapshot.PeriodTokensFromAccountPeriod
+                    ? "本账期已用 Token"
+                    : profile.PeriodTokenCaption,
+                PeriodStartAt = snapshot.PeriodStartAt,
                 PeriodRequests = snapshot.PeriodRequests,
                 PeriodCost = snapshot.PeriodCost,
                 FetchedAt = snapshot.FetchedAt,

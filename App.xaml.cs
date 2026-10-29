@@ -164,6 +164,24 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:探测 usage/summary 能否按**自定义账期区间**取值(决定"本账期 token"能不能
+        // 精确拿到,还是只能退回日粒度)。结果写 Data\opencode-period.txt 后退出。
+        if (e.Args.Any(a => string.Equals(a, "--opencode-period", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunOpenCodePeriodProbe();
+            Shutdown();
+            return;
+        }
+
+        // 诊断用:按账期起点累计本账期 token(真实 cookie + 逐请求明细),连跑三轮看增量是否
+        // 只吃新增。结果写 Data\opencode-period-usage.txt 后退出。
+        if (e.Args.Any(a => string.Equals(a, "--opencode-period-usage", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunOpenCodePeriodUsageCheck();
+            Shutdown();
+            return;
+        }
+
         // 诊断用:走一遍网页控制台的额度通道(读 cookie → orgs → go/status),
         // 把每个工作区的 meters 原值、网页口径百分比、以及它与 API Key 通道的差值
         // 打到 Data\go-meters.txt 后退出。用来核对"网页 11% / API 10%"这类差异。
@@ -309,6 +327,111 @@ public partial class App : System.Windows.Application
         {
             File.WriteAllLines(file, ["EXCEPTION", ex.ToString()]);
         }
+    }
+
+    /// <summary>
+    /// 探测 usage/summary 是否支持自定义账期区间。结果写 Data\opencode-period.txt。
+    /// 账期起点从快照里月窗口的 ResetAt 往回推一个月(订阅锚点日,不是自然月首日)。
+    /// </summary>
+    private static void RunOpenCodePeriodProbe() =>
+        Task.Run(RunOpenCodePeriodProbeCore).GetAwaiter().GetResult();
+
+    private static void RunOpenCodePeriodProbeCore()
+    {
+        var paths = new AppDataPaths();
+        Diagnostics.Attach(paths);
+        AppSettings.Attach(paths);
+        BrowserCookieStore.Attach(paths);
+        OpenCodeUsageStatsClient.Attach(paths);
+        var file = Path.Combine(paths.RootDirectory, "opencode-period.txt");
+        var lines = new List<string>();
+        try
+        {
+            UsageSnapshot? snapshot = null;
+            if (File.Exists(paths.OpenCodeSnapshotFile))
+            {
+                snapshot = System.Text.Json.JsonSerializer.Deserialize<UsageSnapshot>(
+                    AtomicFile.ReadAllTextShared(paths.OpenCodeSnapshotFile),
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            var month = snapshot?.Windows.FirstOrDefault(w => w.Kind == QuotaKind.Monthly);
+            var resetAt = month?.ResetAt;
+            var periodStart = resetAt?.AddMonths(-1) ?? DateTimeOffset.UtcNow.AddDays(-30);
+            lines.Add($"月窗口 ResetAt = {(resetAt is { } r ? r.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "—")}"
+                + $";推定账期起点 = {periodStart.ToLocalTime():yyyy-MM-dd HH:mm}");
+            lines.AddRange(OpenCodeUsageStatsClient.ProbeRangesAsync(periodStart).GetAwaiter().GetResult());
+        }
+        catch (Exception ex)
+        {
+            lines.Add("EXCEPTION " + ex);
+        }
+        File.WriteAllLines(file, lines);
+        Diagnostics.Note($"账期区间探测完成 {file}");
+    }
+
+    /// <summary>
+    /// 本账期累计的自检:真实读 cookie 与 go/status 的账期起点,按逐请求明细连跑三轮,
+    /// 验"第二轮只吃新增"。结果写 Data\opencode-period-usage.txt,仅诊断用。
+    /// </summary>
+    private static void RunOpenCodePeriodUsageCheck() =>
+        Task.Run(RunOpenCodePeriodUsageCheckCore).GetAwaiter().GetResult();
+
+    private static void RunOpenCodePeriodUsageCheckCore()
+    {
+        var paths = new AppDataPaths();
+        Diagnostics.Attach(paths);
+        AppSettings.Attach(paths);
+        BrowserCookieStore.Attach(paths);
+        OpenCodeUsageStatsClient.Attach(paths);
+        AppSettings.Current.UseBrowserSessionForModelDetail = true;   // 仅本诊断进程内存中强制开,不落盘
+        var file = Path.Combine(paths.RootDirectory, "opencode-period-usage.txt");
+        var lines = new List<string>();
+        try
+        {
+            var meters = OpenCodeConsoleClient.TryFetchMetersAsync(CancellationToken.None)
+                .GetAwaiter().GetResult();
+            lines.Add("console: " + (OpenCodeConsoleClient.LastStatus ?? "-"));
+            if (meters is null)
+            {
+                lines.Add("(网页通道读不到,原因见上)");
+            }
+            else
+            {
+                foreach (var m in meters)
+                {
+                    lines.Add($"工作区 {m.WorkspaceName} ({m.WorkspaceId}) · 账期起点 "
+                        + (m.PeriodStart is { } ps ? ps.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "—"));
+                    if (m.PeriodStart is not { } periodStart) { lines.Add("  没有 startsAt,跳过"); continue; }
+
+                    string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+                    if (cookie is null) { lines.Add("  读不到 cookie:" + BrowserCookieStore.LastError); continue; }
+
+                    // 先做一次**只读审计**:账期内明细到底有多少条、有没有重复 requestID
+                    lines.AddRange(OpenCodePeriodTracker.AuditAsync(
+                        m.WorkspaceId, periodStart, cookie, CancellationToken.None).GetAwaiter().GetResult());
+
+                    for (int round = 1; round <= 3; round++)
+                    {
+                        var usage = OpenCodePeriodTracker.RefreshAsync(
+                            paths, 1, m.WorkspaceId, periodStart, cookie, CancellationToken.None)
+                            .GetAwaiter().GetResult();
+                        lines.Add($"  第 {round} 轮: {OpenCodePeriodTracker.LastStatus}");
+                        if (usage is { } u)
+                        {
+                            lines.Add($"    tokens={u.Tokens:N0} requests={u.Requests:N0}"
+                                + $" incomplete={u.Incomplete}"
+                                + $" lastSeen={DateTimeOffset.FromUnixTimeMilliseconds(u.LastSeenMs).ToLocalTime():HH:mm:ss}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lines.Add("EXCEPTION " + ex);
+        }
+        File.WriteAllLines(file, lines);
+        Diagnostics.Note($"本账期累计自检完成 {file}");
     }
 
     /// <summary>
@@ -1219,6 +1342,7 @@ internal sealed class SingleInstance : IDisposable
 
     private readonly Mutex _mutex;
     private EventWaitHandle? _signal;
+    private EventWaitHandle? _settingsSignal;
     private CancellationTokenSource? _listenCts;
     private Thread? _listener;
 
@@ -1264,13 +1388,15 @@ internal sealed class SingleInstance : IDisposable
     {
         if (!IsOwner) return;
         _signal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName);
-        var settingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName + ".Settings");
+        // 存字段而不是留在局部变量:Dispose 要释放它——命名事件是内核句柄,
+        // 不释放就一直挂到进程退出(与 _signal 同一条规矩)。
+        _settingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName + ".Settings");
 
         _listenCts = new CancellationTokenSource();
         var token = _listenCts.Token;
         _listener = new Thread(() =>
         {
-            var handles = new WaitHandle[] { _signal, settingsSignal };
+            var handles = new WaitHandle[] { _signal!, _settingsSignal! };
             while (!token.IsCancellationRequested)
             {
                 try
@@ -1289,7 +1415,14 @@ internal sealed class SingleInstance : IDisposable
     public void Dispose()
     {
         _listenCts?.Cancel();
+        // 先等监听线程退出再关句柄:WaitAny 正拿着这两个句柄等,直接 Dispose 是
+        // "关闭正被等待的内核句柄"(未定义行为,以前只靠 WaitAny 抛 ODE 兜底)。
+        // 线程每 500ms 查一次取消标志,600ms 足够;等不到(意外卡住)就照旧释放,
+        // 退出路径不能被吊死。
+        try { _listener?.Join(TimeSpan.FromMilliseconds(600)); }
+        catch (ThreadStateException) { }
         _signal?.Dispose();
+        _settingsSignal?.Dispose();
         _listenCts?.Dispose();
         if (IsOwner)
         {

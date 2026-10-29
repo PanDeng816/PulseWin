@@ -250,7 +250,13 @@ public enum SpendSpan
     Today,
     Week,
     Month,
-    All
+    All,
+    /// <summary>
+    /// **本账期**:从订阅服务端给的账期起点(重置那一刻)到现在。套餐一重置,这一档就自动
+    /// 只剩新周期的数据——"时段分布/逐模型/性能"因此不会把上个周期的量混进来。
+    /// 拿不到账期起点的源(DeepSeek、或没开浏览器会话时的 OpenCode)退化成"今天"。
+    /// </summary>
+    Period
 }
 
 /// <summary>
@@ -349,7 +355,8 @@ public sealed class SpendSummary
         HourlyTokens = hourly;
     }
 
-    public static (DateTime From, DateTime To) Range(SpendSpan span, DateTime nowLocal)
+    public static (DateTime From, DateTime To) Range(
+        SpendSpan span, DateTime nowLocal, DateTime? periodStart = null)
     {
         var today = nowLocal.Date;
         return span switch
@@ -357,6 +364,13 @@ public sealed class SpendSummary
             SpendSpan.Today => (today, today.AddDays(1)),
             SpendSpan.Week => (today.AddDays(-6), today.AddDays(1)),
             SpendSpan.Month => (today.AddDays(-29), today.AddDays(1)),
+            // 账期起点**按天对齐**取整点:本机库里当天一旦归档就只剩"天级聚合行",
+            // 它的时间戳是当天 12:00 的占位值(见 v1.25.3 的坑)。按时刻切(14:57)会把
+            // 这条 12:00 的整天行整个排除掉——实测 KPI 全变 0,而时段分布还有数,自相矛盾。
+            // 所以起点取"那一天 00:00":账期当天重置时会多含重置前那几小时,但那是数据粒度
+            // 决定的,界面上如实写"本账期",不假装能切到分钟。
+            SpendSpan.Period when periodStart is { } start => (start.Date, today.AddDays(1)),
+            SpendSpan.Period => (today, today.AddDays(1)),
             _ => (DateTime.MinValue, today.AddDays(1))
         };
     }

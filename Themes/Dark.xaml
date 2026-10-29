@@ -38,4 +38,10 @@
     <SolidColorBrush x:Key="ComboHoverBorderBrush" Color="#4A4A52"/>
     <SolidColorBrush x:Key="SliderThumbBorderBrush" Color="#4A4A52"/>
     <SolidColorBrush x:Key="SelectionBrush" Color="#2C5A8A"/>
+
+    <!-- 悬停提示（浅色主题里定义模板与排版，这里只换三个观感键：更深更实，投影加重） -->
+    <SolidColorBrush x:Key="TipBackBrush" Color="#2B2B32"/>
+    <SolidColorBrush x:Key="TipBorderBrush" Color="#3E3E48"/>
+    <DropShadowEffect x:Key="TipShadow" BlurRadius="14" ShadowDepth="3" Direction="270"
+                      Opacity="0.55" Color="#000000"/>
 </ResourceDictionary>

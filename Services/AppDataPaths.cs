@@ -57,6 +57,15 @@ public sealed class AppDataPaths
         : Path.Combine(RootDirectory, $"opencode-go-snapshot-{instance}.json");
 
     /// <summary>
+    /// OpenCode Go 某个账号的**本账期累计量**(按服务端逐请求明细增量累加,见
+    /// <see cref="OpenCodePeriodUsage"/>)。每个账号一份:账期起点不同,不能混。
+    /// </summary>
+    public string OpenCodePeriodUsageFileFor(int instance) => Path.Combine(
+        RootDirectory, instance <= 1
+            ? "opencode-period-usage.json"
+            : $"opencode-period-usage-{instance}.json");
+
+    /// <summary>
     /// 磁盘上实际存在的附加实例快照:(实例号, 文件路径)。附加账号删除后快照会被
     /// 引擎删掉,但万一残留(进程中断),调用方还要拿设置里的账号清单再筛一遍。
     /// </summary>
@@ -116,11 +125,13 @@ public sealed class AppDataPaths
 internal static class AtomicFile
 {
     /// <summary>
-    /// 先写 .tmp 再 Move。临时名带进程号:多个实例(或旧版 monitor)同时落盘时,
-    /// 共用同一个 .tmp 会互相踩,Move 抛 IOException 把快照写坏。
+    /// 先写 .tmp 再 Move。临时名带进程号 + 线程号:进程号防多个实例(或旧版 monitor)
+    /// 同时落盘,线程号防**本进程内**并发写同一目标——Diagnostics 的落盘在锁外合并写
+    /// (见它的说明),两个线程同时过 300ms 门槛就会并写 diagnostics.json,共用同一个
+    /// .tmp 会互相踩,Move 抛 IOException 把快照写坏。
     /// </summary>
     private static string TempPath(string path) =>
-        $"{path}.{Environment.ProcessId}.tmp";
+        $"{path}.{Environment.ProcessId}.{Environment.CurrentManagedThreadId}.tmp";
 
     /// <summary>
     /// 与原子替换共存地读:允许别的线程/进程正把新文件 Move 上来。
