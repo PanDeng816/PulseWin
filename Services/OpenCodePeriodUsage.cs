@@ -12,13 +12,22 @@ namespace PulseWin;
 /// <param name="Requests">本账期已计的推理请求数。</param>
 /// <param name="LastSeenMs">已经累计到的最新 <c>startedAt</c>(毫秒);下一轮只拉它之后的。</param>
 /// <param name="Incomplete">建立状态时账期已经进行了很久(程序没从头跑),账期开头那段缺了。</param>
+/// <param name="LastSeenIds">
+/// 已经计入过的、<c>startedAt == LastSeenMs</c> 那几条明细的 requestID。
+/// **为什么需要它**:服务端的 <c>since</c> 是**闭区间**(实测 <c>since=t</c> 会返回
+/// <c>startedAt == t</c> 的那条),而下一轮的 <c>since</c> 正是上一轮的最新 startedAt,
+/// 只靠毫秒数推进就会把边界那条每轮再计一次(2026-10-30 实测:账期真值 4,991 条 /
+/// 8.18 亿,界面记成了 5,882 条 / 10.3 亿,多出来的 891 条就是 891 个同步轮次的边界)。
+/// 记 ID 而不是把 LastSeenMs +1:同一毫秒里有第二条新请求时,+1 会把它整条漏掉。
+/// </param>
 public sealed record OpenCodePeriodUsage(
     DateTimeOffset PeriodStart,
     long Tokens,
     long Requests,
     long LastSeenMs,
     bool Incomplete,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string[]? LastSeenIds = null);
 
 /// <summary>
 /// OpenCode Go **本账期**的 token 累计——回答"重置之后用了多少"。
@@ -159,6 +168,17 @@ public static class OpenCodePeriodTracker
         int pages = 0;
         bool truncated = false;
 
+        // 边界去重:since 是**闭区间**,上一轮计入过的 startedAt==sinceMs 那几条会被再返回一次。
+        // 用上一轮记下的 requestID 把它们挡掉(同一毫秒的新请求 ID 不在集合里,照常计入)。
+        var skipIds = new HashSet<string>(StringComparer.Ordinal);
+        if (!newPeriod && state!.LastSeenIds is { Length: > 0 } knownIds)
+        {
+            foreach (var id in knownIds)
+                if (!string.IsNullOrEmpty(id)) skipIds.Add(id);
+        }
+        // 本批里 startedAt == maxSeen 的那些 ID:落盘后作为下一轮的边界集合。
+        var maxSeenIds = new HashSet<string>(StringComparer.Ordinal);
+
         try
         {
             while (true)
@@ -186,6 +206,11 @@ public static class OpenCodePeriodTracker
                             continue;
 
                         long started = Long(item, "startedAt");
+                        string rid = Str(item, "requestID") ?? Str(item, "id") ?? "";
+                        // 边界那条上一轮已经计过(闭区间会再返回一次),跳过——否则每轮多算一条。
+                        if (started == sinceMs && rid.Length > 0 && skipIds.Contains(rid))
+                            continue;
+
                         // 与官方 summary 同口径:输出里已经含推理分量,不再单独加 reasoningTokens
                         long tokens = Long(item, "inputTokens")
                             + Long(item, "outputTokens")
@@ -193,7 +218,12 @@ public static class OpenCodePeriodTracker
                             + Long(item, "cacheWriteTokens");
                         addTokens += tokens;
                         addRequests++;
-                        if (started > maxSeen) maxSeen = started;
+                        if (started > maxSeen)
+                        {
+                            maxSeen = started;
+                            maxSeenIds.Clear();   // 边界移到新的一毫秒,旧的 ID 不再需要
+                        }
+                        if (started == maxSeen && rid.Length > 0) maxSeenIds.Add(rid);
                     }
                 }
 
@@ -220,13 +250,24 @@ public static class OpenCodePeriodTracker
             return null;
         }
 
-        // since 是"毫秒级闭区间"的粗过滤:把已经数过的那一毫秒让开,避免边界条目重复计入。
-        // 极端情况下同一毫秒有两条请求会漏一条——比起重复计数,漏一条的代价小得多。
+        // 边界那一毫秒**停在原地**:靠 LastSeenIds 挡重复,而不是把 LastSeenMs 往前挪 1ms——
+        // 同一毫秒里若还有一条没拉过的新请求,+1 会把整条漏掉(实测 since 是闭区间)。
+        var boundaryIds = new HashSet<string>(StringComparer.Ordinal);
+        if (maxSeen == sinceMs)
+        {
+            // 本轮没有更新的条目:沿用上一轮的边界集合,再把同毫秒新见到的 ID 并进去。
+            if (state!.LastSeenIds is { Length: > 0 } carried)
+                foreach (var id in carried)
+                    if (!string.IsNullOrEmpty(id)) boundaryIds.Add(id);
+        }
+        boundaryIds.UnionWith(maxSeenIds);
+
         var updated = state! with
         {
             Tokens = state.Tokens + addTokens,
             Requests = state.Requests + addRequests,
-            LastSeenMs = Math.Max(maxSeen, sinceMs + 1),
+            LastSeenMs = maxSeen,
+            LastSeenIds = boundaryIds.Count > 0 ? boundaryIds.ToArray() : null,
             Incomplete = incomplete,
             UpdatedAt = DateTimeOffset.Now,
         };
