@@ -13,12 +13,18 @@ namespace PulseWin;
 /// <param name="LastSeenMs">已经累计到的最新 <c>startedAt</c>(毫秒);下一轮只拉它之后的。</param>
 /// <param name="Incomplete">建立状态时账期已经进行了很久(程序没从头跑),账期开头那段缺了。</param>
 /// <param name="LastSeenIds">
-/// 已经计入过的、<c>startedAt == LastSeenMs</c> 那几条明细的 requestID。
-/// **为什么需要它**:服务端的 <c>since</c> 是**闭区间**(实测 <c>since=t</c> 会返回
-/// <c>startedAt == t</c> 的那条),而下一轮的 <c>since</c> 正是上一轮的最新 startedAt,
-/// 只靠毫秒数推进就会把边界那条每轮再计一次(2026-10-30 实测:账期真值 4,991 条 /
-/// 8.18 亿,界面记成了 5,882 条 / 10.3 亿,多出来的 891 条就是 891 个同步轮次的边界)。
+/// 近期已经计入过的 requestID(最多 <see cref="OpenCodePeriodTracker.MaxRecentIds"/> 个),去重用。
+/// **为什么需要它**:①服务端的 <c>since</c> 是**闭区间**(实测 <c>since=t</c> 会返回
+/// <c>startedAt == t</c> 的那条),而下一轮的 <c>since</c> 正是上一轮的 startedAt,
+/// 只靠毫秒数推进就会把边界那条每轮再计一次(2026-10-30:真值 4,991 条 / 8.18 亿,
+/// 界面记成 5,882 条 / 10.3 亿,多出的 891 条就是 891 个同步轮次的边界);
+/// ②每轮把 <c>since</c> 回退 <see cref="OpenCodePeriodTracker.OverlapMs"/> 去捡晚入库的条目,
+/// 回退区间的那些必须靠这份 ID 集合挡住。
 /// 记 ID 而不是把 LastSeenMs +1:同一毫秒里有第二条新请求时,+1 会把它整条漏掉。
+/// </param>
+/// <param name="TruncatedRounds">
+/// 连续"单轮翻不完"的轮数。攒到 <see cref="OpenCodePeriodTracker.GiveUpAfterTruncatedRounds"/>
+/// 就放弃补齐、从当前时刻重开(停机太久导致积压超过单轮上限时,否则读数会永久冻住)。
 /// </param>
 public sealed record OpenCodePeriodUsage(
     DateTimeOffset PeriodStart,
@@ -27,7 +33,8 @@ public sealed record OpenCodePeriodUsage(
     long LastSeenMs,
     bool Incomplete,
     DateTimeOffset UpdatedAt,
-    string[]? LastSeenIds = null);
+    string[]? LastSeenIds = null,
+    int TruncatedRounds = 0);
 
 /// <summary>
 /// OpenCode Go **本账期**的 token 累计——回答"重置之后用了多少"。
@@ -55,8 +62,29 @@ public static class OpenCodePeriodTracker
     /// <summary>官方逐请求明细每页最多 100 条。</summary>
     private const int PageSize = 100;
 
-    /// <summary>单轮最多翻几页。程序常开时是 1 页;停机几天后补翻会多几页,再多就留到下一轮。</summary>
-    private const int MaxPagesPerRound = 12;
+    /// <summary>
+    /// 单轮最多翻几页。程序常开时是 1 页;停机后补翻会多几页,再多就留到下一轮。
+    ///
+    /// **12 页不够用过一次**(2026-10-31):`request-logs` 里混着 <c>category=api</c> 的控制台审计
+    /// 记录,三小时就有 1,325 条 api、只有 17 条 inference —— 12 页 1,200 条连三个小时都覆盖不了,
+    /// 于是每轮都判"截断"、`since` 永远推不动、浮窗头部退回"近30天"(读数被冻在 14:28)。
+    /// 现在请求端带 <c>category=inference</c>(实测服务端支持,返回全 inference),页数立刻降一个量级;
+    /// 上限仍放宽到 40 页,给"停机一天再启动"留余量。
+    /// </summary>
+    private const int MaxPagesPerRound = 40;
+
+    /// <summary>连续多少轮截断后放弃补齐、从当前时刻重开(见 RefreshCoreAsync 里兜底段)。</summary>
+    private const int GiveUpAfterTruncatedRounds = 3;
+
+    /// <summary>
+    /// 每轮把 <c>since</c> 往回收多少。官方明细**入库有延迟**(几十秒到几分钟),晚入库的条目
+    /// startedAt 早于已推进的 <c>LastSeenMs</c>;不回退的话它们永远拉不到(2026-10-31 实测:
+    /// 重启补拉后比官方全量少 39 条 / 0.8%)。回退这段 + 按 requestID 去重,就能把它们捡回来。
+    /// </summary>
+    private const long OverlapMs = 10 * 60 * 1000;
+
+    /// <summary>近期已计入的 requestID 最多留多少个(去重用)。10 分钟窗口实测只有几十条,500 足够。</summary>
+    private const int MaxRecentIds = 500;
 
     /// <summary>账期已经过去多久以内,才认为"从账期起点开始累计"是完整的。</summary>
     private static readonly TimeSpan FreshWindow = TimeSpan.FromHours(6);
@@ -168,16 +196,20 @@ public static class OpenCodePeriodTracker
         int pages = 0;
         bool truncated = false;
 
-        // 边界去重:since 是**闭区间**,上一轮计入过的 startedAt==sinceMs 那几条会被再返回一次。
-        // 用上一轮记下的 requestID 把它们挡掉(同一毫秒的新请求 ID 不在集合里,照常计入)。
-        var skipIds = new HashSet<string>(StringComparer.Ordinal);
+        // 查询下界往回收一个重叠窗口:官方明细入库有延迟,不回退就永远漏掉晚到的条目。
+        long querySince = Math.Max(periodStart.ToUnixTimeMilliseconds(), sinceMs - OverlapMs);
+        if (newPeriod) querySince = sinceMs;   // 新建状态时按原规则(账期起点或"现在")
+
+        // 去重:近期已计入的 requestID。既挡住"since 闭区间"返回的边界那条,也挡住重叠窗口里
+        // 已经数过的条目;重叠窗口内**新入库**的旧条目 ID 不在集合里,照常计入。
+        var recentIds = new HashSet<string>(StringComparer.Ordinal);
         if (!newPeriod && state!.LastSeenIds is { Length: > 0 } knownIds)
         {
             foreach (var id in knownIds)
-                if (!string.IsNullOrEmpty(id)) skipIds.Add(id);
+                if (!string.IsNullOrEmpty(id)) recentIds.Add(id);
         }
-        // 本批里 startedAt == maxSeen 的那些 ID:落盘后作为下一轮的边界集合。
-        var maxSeenIds = new HashSet<string>(StringComparer.Ordinal);
+        // 本批计入的 ID:落盘后并进近期集合。
+        var countedIds = new List<string>();
 
         try
         {
@@ -189,7 +221,9 @@ public static class OpenCodePeriodTracker
                     break;
                 }
 
-                string query = $"?limit={PageSize}&since={sinceMs}"
+                // category=inference:服务端实测支持,只回模型请求。不带它,控制台审计的 api
+                // 记录会把每页名额吃光(2026-10-31:3 小时 1,325 条 api / 17 条 inference)。
+                string query = $"?limit={PageSize}&since={querySince}&category=inference"
                     + (cursor is null ? "" : "&cursor=" + Uri.EscapeDataString(cursor));
                 using var doc = await GetJsonAsync("request-logs" + query, cookie, workspaceId, token);
                 var root = doc.RootElement;
@@ -207,8 +241,8 @@ public static class OpenCodePeriodTracker
 
                         long started = Long(item, "startedAt");
                         string rid = Str(item, "requestID") ?? Str(item, "id") ?? "";
-                        // 边界那条上一轮已经计过(闭区间会再返回一次),跳过——否则每轮多算一条。
-                        if (started == sinceMs && rid.Length > 0 && skipIds.Contains(rid))
+                        // 近期已经计过的条目(边界那条 + 重叠窗口里的)跳过,否则每轮都会重复加一次。
+                        if (rid.Length > 0 && recentIds.Contains(rid))
                             continue;
 
                         // 与官方 summary 同口径:输出里已经含推理分量,不再单独加 reasoningTokens
@@ -218,12 +252,8 @@ public static class OpenCodePeriodTracker
                             + Long(item, "cacheWriteTokens");
                         addTokens += tokens;
                         addRequests++;
-                        if (started > maxSeen)
-                        {
-                            maxSeen = started;
-                            maxSeenIds.Clear();   // 边界移到新的一毫秒,旧的 ID 不再需要
-                        }
-                        if (started == maxSeen && rid.Length > 0) maxSeenIds.Add(rid);
+                        if (rid.Length > 0) countedIds.Add(rid);
+                        if (started > maxSeen) maxSeen = started;
                     }
                 }
 
@@ -246,29 +276,61 @@ public static class OpenCodePeriodTracker
 
         if (truncated)
         {
-            LastStatus = $"本账期明细超过 {MaxPagesPerRound} 页,本轮不更新(下轮从同一点重试)";
+            // **兜底**:连续几轮都截断说明积压已经超过单轮上限(停机太久)。再"下轮重试"就是
+            // 永久卡死——since 永远落在上限之外,读数冻住、浮窗退回"近30天"(2026-10-31 实际踩到)。
+            // 这时放弃补齐,从当前时刻重开并标 Incomplete:承认少了一段,但读数能继续涨。
+            int rounds = state!.TruncatedRounds + 1;
+            if (rounds >= GiveUpAfterTruncatedRounds)
+            {
+                var restarted = state with
+                {
+                    LastSeenMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    LastSeenIds = null,
+                    Incomplete = true,
+                    TruncatedRounds = 0,
+                    UpdatedAt = DateTimeOffset.Now,
+                };
+                try
+                {
+                    AtomicFile.WriteText(file, JsonSerializer.Serialize(restarted, JsonOptions));
+                }
+                catch (Exception ex)
+                {
+                    LastStatus = "本账期累计落盘失败:" + ex.Message;
+                    return null;
+                }
+                LastStatus = "积压明细超过单轮上限,已从当前时刻重新累计(中间一段未计入)";
+                return restarted;
+            }
+
+            var pending = state with { TruncatedRounds = rounds, UpdatedAt = DateTimeOffset.Now };
+            try
+            {
+                AtomicFile.WriteText(file, JsonSerializer.Serialize(pending, JsonOptions));
+            }
+            catch { /* 计数写失败不致命,下轮还会再截断 */ }
+            LastStatus = $"本账期明细超过 {MaxPagesPerRound} 页,本轮不更新(第 {rounds} 轮,"
+                + $"连续 {GiveUpAfterTruncatedRounds} 轮后将从当前时刻重开)";
             return null;
         }
 
-        // 边界那一毫秒**停在原地**:靠 LastSeenIds 挡重复,而不是把 LastSeenMs 往前挪 1ms——
-        // 同一毫秒里若还有一条没拉过的新请求,+1 会把整条漏掉(实测 since 是闭区间)。
-        var boundaryIds = new HashSet<string>(StringComparer.Ordinal);
-        if (maxSeen == sinceMs)
-        {
-            // 本轮没有更新的条目:沿用上一轮的边界集合,再把同毫秒新见到的 ID 并进去。
-            if (state!.LastSeenIds is { Length: > 0 } carried)
-                foreach (var id in carried)
-                    if (!string.IsNullOrEmpty(id)) boundaryIds.Add(id);
-        }
-        boundaryIds.UnionWith(maxSeenIds);
+        // 近期已计入的 ID = 旧集合 + 本批新计入的,只留最后 MaxRecentIds 个(越靠后越新)。
+        var recent = new List<string>();
+        if (state!.LastSeenIds is { Length: > 0 } carried)
+            recent.AddRange(carried.Where(id => !string.IsNullOrEmpty(id)));
+        recent.AddRange(countedIds);
+        if (recent.Count > MaxRecentIds)
+            recent = recent.Skip(recent.Count - MaxRecentIds).ToList();
 
         var updated = state! with
         {
             Tokens = state.Tokens + addTokens,
             Requests = state.Requests + addRequests,
+            // 有新增才推进边界;空转轮保持不动,靠 ID 集合挡重复(否则 +1ms 会漏同毫秒的第二条)。
             LastSeenMs = maxSeen,
-            LastSeenIds = boundaryIds.Count > 0 ? boundaryIds.ToArray() : null,
+            LastSeenIds = recent.Count > 0 ? recent.ToArray() : null,
             Incomplete = incomplete,
+            TruncatedRounds = 0,
             UpdatedAt = DateTimeOffset.Now,
         };
 
