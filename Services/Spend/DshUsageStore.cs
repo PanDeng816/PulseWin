@@ -53,8 +53,17 @@ public sealed class DshUsageStore : IUsageStore
     /// <summary>文件名带格式版本(v4),通配匹配是为了将来 v5 也能进来而不是静默漏掉。</summary>
     private const string SessionFilePattern = "session.v*.jsonl.zstd";
 
-    /// <summary>缓存的会话文件数上限(超出按最近使用时间淘汰四分之一)。</summary>
-    private const int MaxCachedFiles = 512;
+    /// <summary>
+    /// 缓存的会话文件数上限(超出按最近使用时间淘汰)。
+    ///
+    /// **必须大于本机实际会话文件数**——旧值 512 小于本机的 688,后果是每轮读完
+    /// 都触发淘汰、下一轮从第一个文件开始读时那些已全被淘汰,于是**每轮都是全量
+    /// 解压**(实测命中 0 / 未命中 1376 = 688×2,冷读 9.1 秒、热读也 3.3 秒)。
+    /// 真正的内存闸门交给记录数上限(<see cref="MaxCachedRecords"/>):本机实测一个
+    /// 会话文件平均 36 条记录,688 个文件 2.5 万条、几 MB;文件数涨到四位数时
+    /// 先撞的是记录数那条线,不会无限吃内存。
+    /// </summary>
+    private const int MaxCachedFiles = 4096;
 
     /// <summary>
     /// 缓存的记录条数上限:这份缓存常驻(见类注释),所以必须有硬上限——
@@ -84,7 +93,11 @@ public sealed class DshUsageStore : IUsageStore
     /// <see cref="ChildSessionIds"/> 来自本会话里的 <c>subagent/catalog</c> 事件,
     /// 即它派出去的每个子代理会话的会话号。
     /// </summary>
-    private sealed record ParsedFile(
+    /// <remarks>
+    /// <c>internal</c> 而不是 <c>private</c>:落盘缓存(<see cref="DshParseCache"/>)要按这个
+    /// 形状读写,它只在本程序集内可见,对外仍是实现细节。
+    /// </remarks>
+    internal sealed record ParsedFile(
         string SessionId,
         string? Project,
         string? Title,
@@ -109,7 +122,13 @@ public sealed class DshUsageStore : IUsageStore
 
     public IReadOnlyList<AgentUsageRecord> Read()
     {
+        EnsurePersistentCacheLoaded();
         var files = new List<ParsedFile>();
+        // 本轮实际读到、且完整解析的会话 —— 落盘缓存只写这些:文件被 DSH 删掉的条目
+        // 不该留在缓存里,否则下次启动会拿一条"已经不存在的会话"去统计。
+        var complete = new List<DshParseCache.Entry>();
+        bool dirty = false;
+
         foreach (var (path, sessionId) in EnumerateSessionFiles())
         {
             var info = new FileInfo(path);
@@ -136,13 +155,93 @@ public sealed class DshUsageStore : IUsageStore
             if (parsed is null)
             {
                 parsed = Parse(path, sessionId);
+                dirty = true;
                 // 中途被中断的结果不落缓存:否则文件继续增长后仍从同一处中断,
                 // 那一段历史会被缓存永久固化,重开程序也不恢复。
                 if (!parsed.Truncated) lock (CacheGate) Store(path, info.Length, ticks, parsed, now);
             }
             files.Add(parsed);
+            if (!parsed.Truncated) complete.Add(new DshParseCache.Entry(path, info.Length, ticks, parsed));
         }
+
+        // 只在真有新解析时重写整份缓存:全部命中时不碰磁盘(用量窗反复开关不该有写放大)。
+        if (dirty) Persist(complete);
         return FoldSubagents(files);
+    }
+
+    /// <summary>
+    /// 把解析结果落盘(同步写,几十毫秒)。Read 本身就跑在线程池上
+    /// (见 <see cref="SpendLedgerCache"/>),不会卡 UI。
+    /// </summary>
+    private static void Persist(List<DshParseCache.Entry> entries)
+    {
+        try
+        {
+            DshParseCache.Save(entries);
+        }
+        catch (Exception ex)
+        {
+            // 缓存写不进去不影响统计:下次启动重解析一遍而已
+            Diagnostics.Note("DSH 解析缓存写入失败,下次启动将重新解析会话", ex);
+        }
+    }
+
+    /// <summary>落盘缓存只读一次(进程生命周期内)。</summary>
+    private static bool _persistentLoaded;
+
+    /// <summary>
+    /// 加载用独立锁:要在"加载完成"之前挡住第二个调用方。用 <see cref="CacheGate"/> 的话
+    /// 加载 IO 期间得一直持着它,而这里只需要"加载恰好一次"这一个语义。
+    /// </summary>
+    private static readonly object LoadGate = new();
+
+    /// <summary>
+    /// 冷启动时先把上次的解析结果装进内存缓存。命中与否仍由 (长度, 修改时间) 决定,
+    /// 所以历史会话直接可用、只有活动会话会重解析——本机实测把"每次开机后第一次
+    /// 打开用量窗"从 5~9 秒压到亚秒级。
+    /// </summary>
+    private static void EnsurePersistentCacheLoaded()
+    {
+        int loadedCount = 0;
+        lock (LoadGate)
+        {
+            if (_persistentLoaded) return;
+            _persistentLoaded = true;
+
+            List<DshParseCache.Entry> loaded;
+            try
+            {
+                loaded = DshParseCache.Load();
+            }
+            catch (Exception ex)
+            {
+                Diagnostics.Note("DSH 解析缓存读取失败,本次全量解析", ex);
+                return;
+            }
+            if (loaded.Count == 0) return;
+
+            lock (CacheGate)
+            {
+                long now = Environment.TickCount64;
+                foreach (var entry in loaded)
+                {
+                    Cache[entry.Path] = new CachedFile
+                    {
+                        Length = entry.Length,
+                        LastWriteTicks = entry.Ticks,
+                        Parsed = entry.Parsed,
+                        LastUsed = now
+                    };
+                    _cachedRecords += entry.Parsed.Records.Count;
+                }
+                PruneIfNeeded();
+            }
+            loadedCount = loaded.Count;
+        }
+
+        // 写诊断放在锁外:它要落盘,别在锁里做 IO
+        if (loadedCount > 0)
+            Diagnostics.Note($"DSH 解析缓存:载入 {loadedCount} 个会话的解析结果(免解压)");
     }
 
     /// <summary>
@@ -230,14 +329,22 @@ public sealed class DshUsageStore : IUsageStore
         PruneIfNeeded();
     }
 
-    /// <summary>淘汰按最近使用时间:历史会话被读到一次之后就长期不再被碰,先淘汰它们。</summary>
+    /// <summary>
+    /// 淘汰按最近使用时间:历史会话被读到一次之后就长期不再被碰,先淘汰它们。
+    ///
+    /// **淘汰到上限的八成,而不是"当前数的四分之一"**:后者在上限被撞时一次砍掉一大块,
+    /// 下一轮从第一个文件读起时被砍的全不在,又得全量重解压——旧上限 512 撞上本机
+    /// 688 个会话文件时就退化成"每轮都全量"(实测命中 0)。小步淘汰让缓存留在上限附近,
+    /// 命中率才稳。
+    /// </summary>
     private static void PruneIfNeeded()
     {
         if (Cache.Count <= MaxCachedFiles && _cachedRecords <= MaxCachedRecords) return;
-        foreach (string key in Cache.OrderBy(kv => kv.Value.LastUsed)
-                     .Take(Math.Max(1, Cache.Count / 4))
-                     .Select(kv => kv.Key).ToList())
+        int fileTarget = MaxCachedFiles * 4 / 5;
+        long recordTarget = MaxCachedRecords * 4 / 5;
+        foreach (string key in Cache.OrderBy(kv => kv.Value.LastUsed).Select(kv => kv.Key).ToList())
         {
+            if (Cache.Count <= fileTarget && _cachedRecords <= recordTarget) break;
             if (Cache.Remove(key, out var gone)) _cachedRecords -= gone.Parsed.Records.Count;
         }
     }
