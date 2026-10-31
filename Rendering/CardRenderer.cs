@@ -164,7 +164,18 @@ public static class CardRenderer
             var tokenFt = Text(FormatTokens(tokens), Pt.P(17), FontWeights.Bold,
                 Solid(PanelPalette.Primary), dpi);
             dc.DrawText(tokenFt, new Point(p.X + contentW - tokenFt.Width, p.Y - 1));
-            var labelFt = Text(sub.PeriodTokensCaption, Pt.P(10.5), FontWeights.Normal,
+            // 增量通道(OpenCode Go 的本账期)某轮没拉到新明细时会沿用上次累计值,读数是真的、
+            // 但不新鲜。停超过 10 分钟就把"停 X 分"挂到说明后面——数字照旧给,别让人当成刚算的。
+            string caption = sub.PeriodTokensCaption;
+            if (sub.PeriodTokensAt is { } at)
+            {
+                var lag = DateTimeOffset.Now - at;
+                if (lag >= TimeSpan.FromMinutes(10))
+                    caption += lag >= TimeSpan.FromHours(1)
+                        ? $" · 停 {(int)lag.TotalHours} 时"
+                        : $" · 停 {(int)lag.TotalMinutes} 分";
+            }
+            var labelFt = Text(caption, Pt.P(10.5), FontWeights.Normal,
                 Solid(PanelPalette.Dim), dpi);
             dc.DrawText(labelFt, new Point(p.X + contentW - labelFt.Width, p.Y - 1 + tokenFt.Height + Pt.P(1)));
         }

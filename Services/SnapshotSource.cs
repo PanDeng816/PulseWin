@@ -95,6 +95,13 @@ public sealed class SubData
     public string PeriodTokensCaption { get; init; } = "本月已用 Token";
 
     /// <summary>
+    /// <c>PeriodTokens</c> 这份读数真正算出来的时刻。增量通道某一轮拉不到新明细时会沿用
+    /// 上次的累计值,那时这个时刻就旧了——卡片据此标"停 X 分",不把旧数当新数。
+    /// null = 这条源没有增量通道(GOAT/DeepSeek 每轮都是服务端最新读数)。
+    /// </summary>
+    public DateTimeOffset? PeriodTokensAt { get; init; }
+
+    /// <summary>
     /// 这条订阅**本账期的起点**(服务端给的确切时刻)。null = 拿不到。
     /// 用量窗的「本账期」区间用它把时段分布、逐模型、性能统计切在重置那一刻。
     /// </summary>
@@ -379,6 +386,7 @@ public static class SnapshotSource
                 PeriodTokensCaption = snapshot.PeriodTokensFromAccountPeriod
                     ? "本账期已用 Token"
                     : profile.PeriodTokenCaption,
+                PeriodTokensAt = snapshot.PeriodTokensAt,
                 PeriodStartAt = snapshot.PeriodStartAt,
                 PeriodRequests = snapshot.PeriodRequests,
                 PeriodCost = snapshot.PeriodCost,

@@ -673,25 +673,40 @@ public sealed class UsageEngine : IDisposable
 
             // 再进一步:拿到账期起点(go/status 的 access.startsAt)时,把头部换成**本账期**
             // 累计。官方聚合没有"账期"档,只能按逐请求明细增量累加(见 OpenCodePeriodUsage)。
-            // 拿不到就保留上面的 30 天值,标签随之退回"近30天"——绝不拿 30 天的数冒充账期。
+            //
+            // **失败时不退回 30 天**(2026-10-31 用户点名要永久避免):本账期是增量滚出来的,
+            // 某一轮拉不到(网络抖/锁争用/登录态/截断兜底后仍失败)就退回滚动 30 天,等于把
+            // "读不到"显示成"另一个数",标签也跟着跳变。这里改成:优先用本轮结果,其次用
+            // 落盘的上次累计(PeriodStart 必须对得上),两者都没有才退回 30 天——那时是
+            // 真没数(新账期刚开始/从未成功过),标签说"近30天"才诚实。
             if (match.PeriodStart is { } periodStart && match.WorkspaceId.Length > 0)
             {
                 try
                 {
                     string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+                    OpenCodePeriodUsage? period = null;
                     if (cookie is not null)
                     {
-                        var period = await OpenCodePeriodTracker.RefreshAsync(
+                        period = await OpenCodePeriodTracker.RefreshAsync(
                             _paths, instance, match.WorkspaceId, periodStart, cookie, token);
-                        if (period is { } p)
+                    }
+
+                    if (period is null
+                        && OpenCodePeriodTracker.TryLoadCached(_paths, instance, periodStart, out var cached))
+                    {
+                        period = cached;
+                        Diagnostics.Note($"本账期累计这轮未更新,沿用 {cached.UpdatedAt:MM-dd HH:mm:ss} 的读数");
+                    }
+
+                    if (period is { } p)
+                    {
+                        merged = merged with
                         {
-                            merged = merged with
-                            {
-                                PeriodTokens = p.Tokens,
-                                PeriodRequests = p.Requests,
-                                PeriodTokensFromAccountPeriod = true,
-                            };
-                        }
+                            PeriodTokens = p.Tokens,
+                            PeriodRequests = p.Requests,
+                            PeriodTokensFromAccountPeriod = true,
+                            PeriodTokensAt = p.UpdatedAt,
+                        };
                     }
                 }
                 catch (OperationCanceledException) { throw; }

@@ -122,7 +122,13 @@ public sealed record UsageSnapshot(
     /// OpenCode Go 取 <c>go/status</c> 的 <c>access.startsAt</c>,GOAT 取 <c>currentPeriodStart</c>。
     /// null = 这条源拿不到账期边界,用量窗会退回"今天"。
     /// </summary>
-    DateTimeOffset? PeriodStartAt = null)
+    DateTimeOffset? PeriodStartAt = null,
+    /// <summary>
+    /// <c>PeriodTokens</c> 这份读数**真正算出来的时刻**。本账期累计是增量滚出来的,
+    /// 某一轮拉不到新明细时仍会沿用上次的值(见 UsageEngine),这时这个时刻就旧了——
+    /// 卡片据此标"停 X 分",免得把一份几小时前的读数当成刚刚的数。
+    /// </summary>
+    DateTimeOffset? PeriodTokensAt = null)
 {
     public double ExtraCredits => Math.Max(0, PurchasedCredits) + Math.Max(0, FreeCredits);
 

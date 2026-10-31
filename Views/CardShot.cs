@@ -147,6 +147,42 @@ internal static class CardShot
             },
         }, false);
 
+        // 7) 本账期读数**停滞**:某一轮没拉到新明细时界面沿用上次累计值,说明行挂"停 25 分"。
+        //    验的是"数字照旧给、但要让人看出它不新鲜",以及加了后缀之后说明行不被卡片右缘裁掉。
+        yield return ("opencode-period-stale", new SubData
+        {
+            Key = "opencode",
+            Name = "GO",
+            AccountLabel = "PanDeng",
+            PeriodTokens = 13_834_533,
+            PeriodTokensCaption = "本账期已用 Token",
+            PeriodTokensAt = DateTimeOffset.Now.AddMinutes(-25),
+            Pools = new List<PoolData>
+            {
+                new()
+                {
+                    Label = "5小时", PoolKind = "FiveHour", Unit = "%", IsAvailable = true,
+                    Used = 1.4, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 12,
+                    ResetAt = DateTimeOffset.UtcNow.AddHours(4.5),
+                },
+                new()
+                {
+                    Label = "本周", PoolKind = "Weekly", Unit = "%", IsAvailable = true,
+                    Used = 0.56, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 30,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(4.6),
+                },
+                new()
+                {
+                    Label = "本月", PoolKind = "Monthly", Unit = "%", IsAvailable = true,
+                    Used = 0.28, Cap = 100, ReadingFrom = "网页控制台",
+                    UsedAmount = 0.17, LimitAmount = 60,
+                    ResetAt = DateTimeOffset.UtcNow.AddDays(30.9),
+                },
+            },
+        }, false);
+
         static SubData Goat(PoolData[] pools, DateTimeOffset? fetched = null) => new()
         {
             Key = "goat", Name = "GOAT", AccountLabel = "PanDeng816",

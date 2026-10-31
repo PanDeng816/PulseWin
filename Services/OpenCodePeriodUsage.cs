@@ -292,8 +292,7 @@ public static class OpenCodePeriodTracker
                 };
                 try
                 {
-                    AtomicFile.WriteText(file, JsonSerializer.Serialize(restarted, JsonOptions));
-                }
+                    Save(file, restarted);                }
                 catch (Exception ex)
                 {
                     LastStatus = "本账期累计落盘失败:" + ex.Message;
@@ -306,7 +305,7 @@ public static class OpenCodePeriodTracker
             var pending = state with { TruncatedRounds = rounds, UpdatedAt = DateTimeOffset.Now };
             try
             {
-                AtomicFile.WriteText(file, JsonSerializer.Serialize(pending, JsonOptions));
+                Save(file, pending);
             }
             catch { /* 计数写失败不致命,下轮还会再截断 */ }
             LastStatus = $"本账期明细超过 {MaxPagesPerRound} 页,本轮不更新(第 {rounds} 轮,"
@@ -336,7 +335,7 @@ public static class OpenCodePeriodTracker
 
         try
         {
-            AtomicFile.WriteText(file, JsonSerializer.Serialize(updated, JsonOptions));
+            Save(file, updated);
         }
         catch (Exception ex)
         {
@@ -406,7 +405,41 @@ public static class OpenCodePeriodTracker
         return lines;
     }
 
+    /// <summary>
+    /// 读落盘的本账期累计(不联网)。给"这一轮没拉到"兜底用:与其把卡片退回滚动 30 天
+    /// (数字和标签一起跳变),不如继续显示上次的累计值 + 它有多旧(见 <c>PeriodTokensAt</c>)。
+    /// <paramref name="periodStart"/> 对不上 = 账期已重置,旧值不代表新账期,返回 false。
+    /// </summary>
+    public static bool TryLoadCached(AppDataPaths paths, int instance, DateTimeOffset periodStart,
+        out OpenCodePeriodUsage usage)
+    {
+        usage = null!;
+        var cached = Load(paths.OpenCodePeriodUsageFileFor(instance));
+        if (cached is null || cached.PeriodStart != periodStart) return false;
+        usage = cached;
+        return true;
+    }
+
+    /// <summary>
+    /// 落盘(主文件 + 备份)。备份是为了扛"主文件写坏/被清掉":那种情况下重建会把累计
+    /// 从 0 开始,界面上等于读数突然归零——比"稍旧"难解释得多。
+    /// </summary>
+    private static void Save(string file, OpenCodePeriodUsage state)
+    {
+        string json = JsonSerializer.Serialize(state, JsonOptions);
+        AtomicFile.WriteText(file, json);
+        try { AtomicFile.WriteText(file + ".bak", json); }
+        catch { /* 备份失败不影响主文件 */ }
+    }
+
     private static OpenCodePeriodUsage? Load(string file)
+    {
+        if (LoadOne(file) is { } primary) return primary;
+        // 主文件读不出来(被清/写坏/JSON 截断)时退回备份;备份也没有才当"没有状态"。
+        return LoadOne(file + ".bak");
+    }
+
+    private static OpenCodePeriodUsage? LoadOne(string file)
     {
         try
         {
@@ -415,7 +448,7 @@ public static class OpenCodePeriodTracker
         }
         catch
         {
-            return null;   // 坏了就当没有:重建时最多丢掉本轮之前的累计
+            return null;
         }
     }
 
