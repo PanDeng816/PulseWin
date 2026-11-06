@@ -200,26 +200,6 @@ internal static class UiShot
         Save(host, host.DesiredSize, path);
     }
 
-    /// <summary>
-    /// 出图用的合成官方读数。真实数据要浏览器登录态(读 cookie),而出图环境里浏览器
-    /// cookie 库是锁着的——用它把「官方 vs 本机」对照格与逐模型榜渲染出来看。
-    /// </summary>
-    private static OpenCodeUsageStats SampleOfficialUsage()
-    {
-        var now = DateTimeOffset.Now;
-        var models = new List<OpenCodeModelStat>
-        {
-            new("deepseek-v4.1-flash", "opencode-go", 5100, 22_000_000, 3_900_000, 498_000_000, 0, 8.82),
-            new("glm-5.3-flash", "opencode-go", 420, 1_500_000, 210_000, 24_000_000, 0, 0.61),
-            new("mimo-v2.5", "opencode-go", 250, 600_000, 90_000, 1_200_000, 0, 0.22),
-        };
-        var days = Enumerable.Range(0, 7).Select(i => new OpenCodeDayStat(
-            now.AddDays(-i).ToString("yyyy-MM-dd"),
-            800 - i * 60, 82_000_000 - i * 5_000_000, 1.38 - i * 0.08)).ToList();
-        return new OpenCodeUsageStats(
-            "30d", 5770, 23_556_932, 4_104_268, 523_265_190, 0, 9.65, models, days, now);
-    }
-
     private static void RenderSpendWindow(string dir)
     {
         var window = new SpendWindow
@@ -278,11 +258,6 @@ internal static class UiShot
                 {
                     window.UiShotOpenTab(index);
                     string label = window.UiShotTabLabel(index);
-                    // OpenCode Go 页的官方读数要浏览器登录态才拿得到,出图环境读不到 cookie——
-                    // 注入一份合成读数,好让「官方 vs 本机」对照格与逐模型榜真的被渲染出来看一眼
-                    //(项目里 --rail-shot 也是这么干的)。
-                    if (label.Contains("OpenCode", StringComparison.OrdinalIgnoreCase))
-                        window.UiShotInjectOfficialUsage(SampleOfficialUsage());
                     string file = $"usage-channel-{index}.png";
                     SaveFullContent(window, Path.Combine(dir, file));
                     Diagnostics.Note($"套餐页已出图 {file} — {label}");

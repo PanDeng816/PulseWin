@@ -292,9 +292,6 @@
                             <TextBlock x:Name="ChannelTitle" FontSize="15" FontWeight="SemiBold"/>
                             <TextBlock x:Name="ChannelSubtitle" Style="{StaticResource Dim}" Margin="0,3,0,0"/>
                             <UniformGrid x:Name="ChannelKpiGrid" Columns="3" Margin="0,12,0,2"/>
-                            <Border Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,10,0,10"/>
-                            <TextBlock Text="Token 构成" Style="{StaticResource SectionTitle}" Margin="1,0,0,0"/>
-                            <UniformGrid x:Name="ChannelTokenGrid" Columns="3" Margin="0,4,0,2"/>
                         </StackPanel>
                     </Border>
 
@@ -304,27 +301,6 @@
                             <TextBlock Text="订阅额度" Style="{StaticResource SectionTitle}"/>
                             <StackPanel x:Name="ChannelQuotaPanel"/>
                             <TextBlock x:Name="ChannelQuotaHint" Style="{StaticResource Dim}" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 官方口径对照(每个套餐一张,内容按渠道能拿到的官方读数生成):
-                         GOAT = 官方账期 vs 本机(差值是其他设备/CLI);DeepSeek = 官方余额 vs 本机;
-                         OpenCode Go = 官方只给百分比、本机给 token;BigModel = 手填预算 vs 本机估算 -->
-                    <Border x:Name="AccountMeterCard" Style="{StaticResource Card}" Visibility="Collapsed">
-                        <StackPanel>
-                            <TextBlock x:Name="AccountMeterTitle" Text="官方口径对照" Style="{StaticResource SectionTitle}"/>
-                            <TextBlock x:Name="AccountMeterHint" Style="{StaticResource Dim}" Margin="0,-2,0,8" TextWrapping="Wrap"/>
-                            <UniformGrid x:Name="AccountMeterGrid" Columns="3" Margin="0,0,0,2"/>
-                            <!-- 只有 GOAT 与 OpenCode Go 有账号级用量接口(GOAT 走 charts,
-                                 OpenCode 走 console api/usage/*);别的渠道这块折叠 -->
-                            <StackPanel x:Name="AccountModelSection">
-                                <Border Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,10,0,10"/>
-                                <Grid Margin="0,0,0,6">
-                                    <TextBlock Text="官方逐模型明细(账号级)" Style="{StaticResource SectionTitle}" Margin="0"/>
-                                </Grid>
-                                <TextBlock x:Name="AccountModelHint" Style="{StaticResource Dim}" Margin="0,-4,0,8" TextWrapping="Wrap"/>
-                                <ItemsControl x:Name="AccountModelList" ItemTemplate="{StaticResource RowTemplate}"/>
-                            </StackPanel>
                         </StackPanel>
                     </Border>
 

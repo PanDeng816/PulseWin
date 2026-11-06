@@ -165,16 +165,6 @@ public static class OpenCodeUsageStatsClient
             : $"{(int)span.TotalDays} 天";
     }
 
-    /// <summary>把界面区间映射到官方提供的窗口。「今天」用 24h(滚动 24 小时,官方没有
-    /// "自然日"这一档),「近 7 天」用 7d,其余(近 30 天 / 自定义 / 全部)一律 30d——
-    /// 官方最多只给 30 天。</summary>
-    public static (string Range, string Label) WindowFor(SpendSpan span) => span switch
-    {
-        SpendSpan.Today => ("24h", "近 24 小时"),
-        SpendSpan.Week => ("7d", "近 7 天"),
-        _ => ("30d", "近 30 天"),
-    };
-
     private static HttpClient CreateClient()
     {
         var client = ProxyHttp.Create(TimeSpan.FromSeconds(30));
