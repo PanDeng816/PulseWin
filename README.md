@@ -376,6 +376,11 @@ HttpOnly 也拿得到),DPAPI 加密保存在本机,之后长期复用。命令�
 > 所以改用逐请求明细 `/console/api/request-logs?since=ms` 按 `go/status` 的
 > `access.startsAt` **增量累加**本账期,累计值落盘 `Data/opencode-period-usage.json`
 > (见 `Services/OpenCodePeriodUsage.cs`)。账期一变就清零,于是"重置即归零"是结构上成立的。
+> 增量累加要处理两件麻烦事:①`since` 是**闭区间**,边界那条每轮都会被返回;②明细**入库有延迟**,
+> 所以每轮把 `since` 往回退 10 分钟去捡晚到的条目。这两件事都靠一份"近期已计入的 requestID"
+> 挡重复,**而且这份集合必须按"多久以前"裁**(保留 20 分钟)→ 不能按条数裁:实测突发时
+> 10 分钟内有 934 条明细,按 500 条裁会把老 ID 挤掉、同一批请求每轮重计一次
+> (v1.27.0 修的,修前虚高 15%)。
 > 拿不到账期数据时(没开浏览器会话、明细超页数上限、账期中途才启动程序)才退回显示
 > 官方滚动 30 天,标签同时变成「近30天已用 Token」——两个数不是一回事,标签必须跟着窗口走
 > (v1.26.1 就是因为两处共用一句"本月",才在账期重置时出现"三个池全是 0%、头部还说
@@ -432,6 +437,7 @@ dotnet publish -c Release -r win-x64 --self-contained false `
 | `--go-meters` | 真实走一遍**网页口径额度**通道(读 cookie → 工作区列表 → `go/status`),把每个工作区的 meters 原值、网页百分比与 API Key 口径并排打出,并附一段**离线自测**(合成响应验证解析与公式、工作区指纹匹配) | `Data\go-meters.txt` |
 | `--opencode-period` | 探测 `usage/summary` 到底认哪些 `range`(并打出 `go/status` 原始响应)——用来回答"能不能按账期任意区间取数" | `Data\opencode-period.txt` |
 | `--opencode-period-usage` | 按 `access.startsAt` 从逐请求明细**增量累计本账期 token**,连跑三轮验"第二轮只吃新增" | `Data\opencode-period-usage.txt` |
+| `--opencode-period-rebuild` | **从账期起点重扫**本账期累计(6 小时切片连跑到追上"现在"),把盘上旧口径的读数当场重算;累计口径改过之后用它,不用等界面一轮一轮补 | `Data\opencode-period-rebuild.txt` |
 | `--login-opencode` | **唯一会开界面**的参数:直接弹内嵌浏览器登录窗(与设置页「登录 opencode.ai」是同一个窗口)。平时从设置页进,这个用于已有实例在跑时补一次登录 | 无(是界面) |
 | `--login-commandcode` | 同上,登录 commandcode.ai(设置页「登录 commandcode.ai」的同一个窗口) | 无(是界面) |
 

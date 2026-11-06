@@ -182,6 +182,16 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 诊断用:把本账期累计**从账期起点重扫一遍**(6 小时切片连跑,直到追上"现在")。
+        // 累计口径改过之后(如 v1.27.0 修重复计入),盘上那份旧读数不可信,用它当场重算,
+        // 不用等程序自己一轮一轮补。结果写 Data\opencode-period-rebuild.txt 后退出。
+        if (e.Args.Any(a => string.Equals(a, "--opencode-period-rebuild", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunOpenCodePeriodRebuild();
+            Shutdown();
+            return;
+        }
+
         // 诊断用:走一遍网页控制台的额度通道(读 cookie → orgs → go/status),
         // 把每个工作区的 meters 原值、网页口径百分比、以及它与 API Key 通道的差值
         // 打到 Data\go-meters.txt 后退出。用来核对"网页 11% / API 10%"这类差异。
@@ -432,6 +442,66 @@ public partial class App : System.Windows.Application
         }
         File.WriteAllLines(file, lines);
         Diagnostics.Note($"本账期累计自检完成 {file}");
+    }
+
+    /// <summary>
+    /// 本账期累计的**重扫**:从账期起点按 6 小时切片连跑,直到追上"现在"或连续两轮没有推进。
+    /// 累计口径一改(去重集合按时间裁 / 窗口按 until 切片),盘上的旧读数就得重算——
+    /// 靠界面上每 30 秒一轮自己补,要十几分钟;诊断里一次跑完,顺手把结果打到
+    /// Data\opencode-period-rebuild.txt。仅诊断用。
+    /// </summary>
+    private static void RunOpenCodePeriodRebuild() =>
+        Task.Run(RunOpenCodePeriodRebuildCore).GetAwaiter().GetResult();
+
+    private static void RunOpenCodePeriodRebuildCore()
+    {
+        var paths = new AppDataPaths();
+        Diagnostics.Attach(paths);
+        AppSettings.Attach(paths);
+        BrowserCookieStore.Attach(paths);
+        var file = Path.Combine(paths.RootDirectory, "opencode-period-rebuild.txt");
+        var lines = new List<string>();
+        try
+        {
+            var meters = OpenCodeConsoleClient.TryFetchMetersAsync(CancellationToken.None)
+                .GetAwaiter().GetResult();
+            lines.Add("console: " + (OpenCodeConsoleClient.LastStatus ?? "-"));
+            if (meters is null)
+            {
+                lines.Add("(网页通道读不到,原因见上)");
+            }
+            else
+            {
+                string? cookie = BrowserCookieStore.GetCookieHeader("opencode", forceRefresh: false);
+                foreach (var m in meters)
+                {
+                    if (m.PeriodStart is not { } periodStart) continue;
+                    lines.Add($"工作区 {m.WorkspaceName} ({m.WorkspaceId}) · 账期起点 "
+                        + periodStart.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+                    if (cookie is null) { lines.Add("  读不到 cookie:" + BrowserCookieStore.LastError); continue; }
+
+                    long last = -1;
+                    for (int round = 1; round <= 60; round++)
+                    {
+                        var u = OpenCodePeriodTracker.RefreshAsync(
+                            paths, 1, m.WorkspaceId, periodStart, cookie, CancellationToken.None)
+                            .GetAwaiter().GetResult();
+                        lines.Add($"  第 {round} 轮: {OpenCodePeriodTracker.LastStatus}");
+                        if (u is null) break;
+                        if (u.LastSeenMs == last && !u.Incomplete) break;
+                        last = u.LastSeenMs;
+                        if (!u.Incomplete && u.LastSeenMs >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 120_000)
+                            break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lines.Add("EXCEPTION " + ex);
+        }
+        File.WriteAllLines(file, lines);
+        Diagnostics.Note($"本账期累计重扫完成 {file}");
     }
 
     /// <summary>
