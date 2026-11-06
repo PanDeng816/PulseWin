@@ -44,10 +44,25 @@ public static class Diagnostics
         if (snapshot is not null) WriteSnapshot(snapshot);
     }
 
-    /// <summary>把异常记成一行(类型 + 消息 + 内层异常的第一个非空消息)。</summary>
+    /// <summary>
+    /// 把异常记成一行(类型 + 消息 + 内层异常的第一个非空消息),**外加最多 3 层调用栈**。
+    /// 只记类型和消息在 2026-11-06 那次 <c>OutOfMemoryException</c> 上吃过亏:日志里
+    /// 只有"Insufficient memory",没有栈就无从判断是哪一处分配炸的,只能靠猜。
+    /// 栈只取前面几帧——诊断日志是 100 行的环形缓冲,不能让它被一条栈占满。
+    /// </summary>
     public static void Note(string context, Exception ex) =>
         Note($"{context}: {ex.GetType().Name} {ex.Message}" +
-             (ex.InnerException is { } inner ? $" <- {inner.GetType().Name} {inner.Message}" : ""));
+             (ex.InnerException is { } inner ? $" <- {inner.GetType().Name} {inner.Message}" : "") +
+             Stack(ex));
+
+    /// <summary>异常栈的前 3 帧(去空行、压成一行一条,便于在 100 行里读)。</summary>
+    private static string Stack(Exception ex)
+    {
+        if (ex.StackTrace is not { Length: > 0 } trace) return "";
+        var frames = trace.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var kept = frames.Take(3).Select(f => "\n    " + f);
+        return "\n  @" + string.Concat(kept);
+    }
 
     public static IReadOnlyList<string> Recent()
     {

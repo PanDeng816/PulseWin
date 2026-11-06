@@ -99,15 +99,15 @@ internal static class Backdrop
         double screenH = GetSystemMetrics(SM_CYSCREEN);
         if (screenW <= 0 || screenH <= 0) return null;
 
-        var raw = Capture();
+        var raw = RecentShot();
         if (raw is null) return null;
-
         double px = (windowTopLeft.X + body.X) * scale;
         double py = (windowTopLeft.Y + body.Y) * scale;
         double pw = body.Width * scale;
         double ph = body.Height * scale;
 
-        var frost = ComposeFrost(raw);
+        var frost = RecentFrost();
+        if (frost is null) return null;
         var brush = new ImageBrush(frost)
         {
             Stretch = Stretch.Fill,
@@ -118,6 +118,52 @@ internal static class Backdrop
         };
         brush.Freeze();
         return brush;
+    }
+
+    /// <summary>
+    /// 抓屏结果的**复用窗口**。抓一次全屏 = 一张 WPF 位图(桌面 1440×900 DIP / 2880×1800 物理,
+    /// 每张 5~20 MB,**不归托管堆管**),而 <see cref="FrostedFill"/> 是"每次挪卡片都调一次":
+    /// rail 滑入/展开时卡片跟着走,一帧一调 —— 2026-11-06 实测这会把进程直接按进
+    /// <c>OutOfMemoryException</c>(日志里 5 秒内几十条,rail 的环也一起画不出来了)。
+    /// 磨砂底本来就是糊的,半秒前的画面不会有任何差别,所以这里按时间复用。
+    /// </summary>
+    private const int ShotReuseMs = 500;
+    private static readonly object ShotGate = new();
+    private static ImageSource? _lastShot;
+    private static ImageSource? _lastFrost;
+    private static DateTime _lastShotUtc = DateTime.MinValue;
+
+    /// <summary>半秒内的磨砂底(抓屏 + 压色都只做一次)。</summary>
+    private static ImageSource? RecentFrost()
+    {
+        lock (ShotGate)
+        {
+            if (_lastFrost is not null && (DateTime.UtcNow - _lastShotUtc).TotalMilliseconds < ShotReuseMs)
+                return _lastFrost;
+            var shot = Capture();
+            if (shot is null) return _lastFrost;
+            _lastShot = shot;
+            _lastFrost = ComposeFrost(shot);
+            _lastShotUtc = DateTime.UtcNow;
+            return _lastFrost;
+        }
+    }
+
+    private static ImageSource? RecentShot()
+    {
+        lock (ShotGate)
+        {
+            if (_lastShot is not null && (DateTime.UtcNow - _lastShotUtc).TotalMilliseconds < ShotReuseMs)
+                return _lastShot;
+            var shot = Capture();
+            if (shot is not null)
+            {
+                _lastShot = shot;
+                _lastFrost = ComposeFrost(shot);
+                _lastShotUtc = DateTime.UtcNow;
+            }
+            return shot ?? _lastShot;
+        }
     }
 
     /// <summary>磨砂图层往主题色里压多少：只为压对比度，不为改色。见 <see cref="FrostedFill"/>。
@@ -180,7 +226,7 @@ internal static class Backdrop
         }
         else
         {
-            var raw = RawShots.GetValue(w, _ => Capture()!);
+            var raw = RawShots.GetValue(w, _ => RecentShot()!);
             if (raw is not null)
             {
                 // 先合成再当背景：原始抓屏对比度太高（DSH 的深色卡片会缩成一大块灰），
