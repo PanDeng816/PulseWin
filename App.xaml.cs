@@ -40,6 +40,10 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         _headless = e.Args.Any(a => a.StartsWith("--", StringComparison.Ordinal));
 
+        // 启动留痕(见 LogStartup):diagnostics.json 每次启动覆盖,开机自启到底
+        // 有没有被拉起、什么时候被拉起,事后才有据可查。诊断模式不记,免得刷屏。
+        if (!_headless) LogStartup("start");
+
         // 后台任务上死掉的 Task 走不到下面那个 DispatcherUnhandledException(它不是 UI
         // 线程的异常),默认被静默吞掉——2026-10-12 那次"同步循环悄悄停摆、诊断日志里
         // 一行错都没有"就是这么无声无息的。这里至少让它在日志里留个名字。
@@ -247,6 +251,9 @@ public partial class App : System.Windows.Application
         _instance = SingleInstance.Acquire();
         if (!_instance.IsOwner)
         {
+            // 留痕:开机自启与手动启动撞车时,退让的这一份也要在 startup.log 里留下,
+            // 否则"系统明明执行了启动项,程序还是没起来"看起来像启动项失效。
+            LogStartup("exit", "已有实例在跑,按单实例约定退让");
             _instance.SignalExistingInstance(openSettings);
             Shutdown();
             return;
@@ -277,6 +284,7 @@ public partial class App : System.Windows.Application
 
         _main.Show();
         SetupTray();
+        LogStartup("ready");
         if (openSettings) OpenSettings();
         if (e.Args.Any(a => string.Equals(a, "--spend-window", StringComparison.OrdinalIgnoreCase)))
             OpenSpend();
@@ -1360,8 +1368,54 @@ public partial class App : System.Windows.Application
 
     private static bool IsStartupEnabled()
     {
+        // 老实现只看值里有没有 "PulseWin" 四个字,路径指到别处(比如已删除的旧目录、
+        // 或者从 publish\ 副本运行时)也会显示"已开启"。现在要求:值指向的 exe 存在,
+        // 并且就是当前这个 exe——否则菜单里那个勾是骗人的。
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
-        return key?.GetValue(RunValueName) is string path && path.Contains("PulseWin");
+        if (key?.GetValue(RunValueName) is not string value) return false;
+        string raw = value.Trim().Trim('"');
+        if (!string.Equals(Path.GetFileName(raw), "PulseWin.exe", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!File.Exists(raw)) return false;
+        string? self = Environment.ProcessPath;
+        return string.IsNullOrEmpty(self)
+            || string.Equals(Path.GetFullPath(raw), Path.GetFullPath(self), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// 启动留痕:每次启动往 Data\startup.log 追加一行(时间 / PID / 命令行 / 距登录秒数 /
+    /// 走到哪一步)。diagnostics.json 是内存里 100 条的环形缓冲、每次启动覆盖,所以
+    /// "哪天开机没自启"事后查不到(2026-11-20 排查那次只能去翻系统 Shell-Core 日志)。
+    /// 留痕失败绝不能影响启动,整段吞异常。
+    /// </summary>
+    private static void LogStartup(string phase, string? extra = null)
+    {
+        try
+        {
+            string dir = new AppDataPaths().RootDirectory;
+            double sinceLogon = -1;
+            try
+            {
+                int session = System.Diagnostics.Process.GetCurrentProcess().SessionId;
+                var logon = System.Diagnostics.Process.GetProcessesByName("explorer")
+                    .Where(p => p.SessionId == session)
+                    .OrderBy(p => p.StartTime)
+                    .FirstOrDefault()?.StartTime;
+                if (logon is { } t) sinceLogon = (DateTime.Now - t).TotalSeconds;
+            }
+            catch { /* 拿不到登录时刻就记 ? */ }
+
+            string args = string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
+            string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} pid={Environment.ProcessId} "
+                + $"sinceLogon={(sinceLogon < 0 ? "?" : sinceLogon.ToString("0"))}s "
+                + $"args=[{args}] {phase}"
+                + (extra is null ? "" : $" {extra}");
+            string file = Path.Combine(dir, "startup.log");
+            if (File.Exists(file) && new FileInfo(file).Length > 512 * 1024)
+                File.Move(file, file + ".1", overwrite: true);
+            File.AppendAllText(file, line + Environment.NewLine);
+        }
+        catch { }
     }
 
     private static void SetStartupEnabled(bool enable)

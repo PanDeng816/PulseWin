@@ -91,9 +91,6 @@ public sealed class AppDataPaths
     /// <summary>模型牌价缓存(从 models.dev 拉取后裁剪;不存在时用内置表)。</summary>
     public string ModelPricesFile => Path.Combine(RootDirectory, "model-prices.json");
 
-    /// <summary>对账历史(JSONL,每次渲染「官方 vs 本机」对照卡追加一条)。</summary>
-    public string ReconcileFile => Path.Combine(RootDirectory, "reconcile.jsonl");
-
     /// <summary>首次启动:把旧目录的快照/加密凭据/设置复制过来(不删除旧目录)。</summary>
     public void MigrateFromLegacy()
     {

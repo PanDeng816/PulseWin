@@ -121,6 +121,12 @@ public partial class MainWindow : Window
     private const bool AutoHideEnabled = true;
     private const double HotZoneWidth = 16;
     private const double HideDelaySeconds = 0.9;
+    /// <summary>
+    /// 启动后的宽限期:这段时间不自动收起。开机自启时 rail 一出现,0.9 秒就滑成
+    /// 屏幕边缘 6pt 细条,用户看不到"它起来了"(2026-11-20 排查的观感问题之一)。
+    /// 只影响首屏,之后照旧。
+    /// </summary>
+    private const double StartupGraceSeconds = 5;
     private const double PeekStep = 0.5;
     /// <summary>点击刷新后动画的安全上限(正常情况下 SnapshotsChanged 会提前结束它)。</summary>
     private const double RefreshAnimationTimeoutS = 45;
@@ -758,6 +764,11 @@ public partial class MainWindow : Window
         // 这正是用户觉得这个开关"没什么用"的原因。退出全屏后(_fullScreenHide 归 false)
         // 热区恢复正常,不自动弹回,不打扰。
         if (_fullScreenHide) return;
+
+        // 启动宽限期:刚起来的前几秒不收起(见 StartupGraceSeconds 的注释)。返回前把
+        // _hideSince 清掉,免得宽限期一结束就按"早就该收了"的旧时间戳立刻滑走。
+        if (now < StartupGraceSeconds) { _hideSince = -1; return; }
+
         var wa = Native.WorkingAreaUnderPointer(DpiScale);
 
         // 热区只覆盖 rail 自己所在的那段区域(垂直居中的主界面高度范围),
